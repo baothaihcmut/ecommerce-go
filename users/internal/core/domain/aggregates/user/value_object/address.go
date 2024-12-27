@@ -5,7 +5,6 @@ type Address struct {
 	Town     string
 	City     string
 	Province string
-	Country  string
 }
 
 func NewAddress(
@@ -13,13 +12,11 @@ func NewAddress(
 	town string,
 	city string,
 	province string,
-	country string,
 ) *Address {
 	return &Address{
 		Town:     town,
 		City:     city,
 		Street:   street,
 		Province: province,
-		Country:  country,
 	}
 }
