@@ -18,6 +18,8 @@ type PostgresUserRepo struct {
 	conn    *sql.DB
 }
 
+// FindByEmail implements outbound.UserRepository.
+
 func NewPostgresUserRepo(db *sql.DB) outbound.UserRepository {
 	return &PostgresUserRepo{
 		conn:    db,
@@ -133,10 +135,22 @@ func (repo *PostgresUserRepo) FindById(ctx context.Context, id valueobject.UserI
 		return nil, err
 	}
 	addressRes, err := repo.queries.FindAllAddressOfUser(ctx, uuid.NullUUID{UUID: uuid.UUID(id)})
+	if err != nil {
+		return nil, err
+	}
 	user, err := repo.toUserDomain(&userRes, addressRes)
 	if err != nil {
 		return nil, err
 	}
 	return user, nil
 
+}
+
+func (repo *PostgresUserRepo) FindByEmail(context.Context, valueobject.Email) (*user.User, error) {
+	panic("unimplemented")
+}
+
+// FindByPhoneNumber implements outbound.UserRepository.
+func (repo *PostgresUserRepo) FindByPhoneNumber(context.Context, valueobject.PhoneNumber) (*user.User, error) {
+	panic("unimplemented")
 }

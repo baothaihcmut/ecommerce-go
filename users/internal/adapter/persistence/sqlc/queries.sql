@@ -42,3 +42,15 @@ LIMIT 1;
 
 -- name: FindAllAddressOfUser :many
 SELECT * FROM addresses WHERE user_id = sqlc.narg('userId');
+
+-- name: FindUserByEmail :one
+SELECT *
+FROM users u
+WHERE u.email = sqlc.narg('email')
+LIMIT 1;
+
+-- name: FindUserByPhoneNumber :one
+SELECT *
+FROM users u
+WHERE u.phone_number = sqlc.narg('phoneNumber')
+LIMIT 1;

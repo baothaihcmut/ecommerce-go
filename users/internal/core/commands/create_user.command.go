@@ -1,9 +1,26 @@
 package commands
 
+import "github.com/baothaihcmut/Ecommerce-Go/users/internal/core/domain/enums"
 
+type Address struct {
+	Street   string
+	Town     string
+	City     string
+	Province string
+}
+type CustomerInfo struct {
+}
 
+type ShopOwnerInfo struct {
+	BussinessLincese string
+}
 type CreateUserCommand struct {
-	email string
-	phoneNumber string
-	
+	Email         string
+	PhoneNumber   string
+	Addresses     []*Address
+	FirstName     string
+	LastName      string
+	Role          enums.Role
+	CustomerInfo  *CustomerInfo
+	ShopOwnerInfo *ShopOwnerInfo
 }
