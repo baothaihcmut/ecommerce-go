@@ -1,0 +1,46 @@
+syntax = "proto3";
+
+option go_package = "internal/adapter/grpc/proto";
+
+service UserService{
+    rpc CreateUser(CreateUserRequest) returns (CreateUserResponse) {}
+}
+
+enum Role {
+    CUSTOMER = 0;
+    SHOP_OWNER = 1;
+}
+message Address {
+    string street = 1;
+    string town = 2;
+    string city = 3;
+    string province = 4;
+}
+message CustomerInfo {
+
+}
+message ShopOwnerInfo {
+    string bussinessLincese=1;
+}
+message CreateUserRequest {
+    string email = 1;
+    string phoneNumber = 2;
+    repeated Address addresses = 3;
+    string firstName = 4;
+    string lastName = 5;
+    Role role = 6;
+    optional CustomerInfo customerInfo=7;
+    optional ShopOwnerInfo shopOwnerInfo = 8;
+}
+
+message CreateUserResponse {
+    string id = 1;
+    string email = 2;
+    string phoneNumber = 3;
+    repeated Address addresses = 4;
+    string firstName = 5;
+    string lastName = 6;
+    Role role = 7;
+    optional CustomerInfo customerInfo=8;
+    optional ShopOwnerInfo shopOwnerInfo = 9;
+}
