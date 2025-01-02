@@ -3,7 +3,7 @@ package enums
 type Role string
 
 const (
-	CUSTOMER   Role = "customer"
-	SHIPPER    Role = "shipper"
-	SHOP_OWNER Role = "shop_owner"
+	CUSTOMER   Role = "CUSTOMER"
+	SHIPPER    Role = "SHIPPER"
+	SHOP_OWNER Role = "SHOP_OWNER"
 )

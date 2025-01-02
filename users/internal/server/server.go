@@ -7,8 +7,10 @@ import (
 	"os"
 	"os/signal"
 	"syscall"
+	"time"
 
 	"github.com/baothaihcmut/Ecommerce-Go/users/internal/adapter/grpc/endpoints"
+	"github.com/baothaihcmut/Ecommerce-Go/users/internal/adapter/grpc/interceptors"
 	"github.com/baothaihcmut/Ecommerce-Go/users/internal/adapter/grpc/mapper/request"
 	"github.com/baothaihcmut/Ecommerce-Go/users/internal/adapter/grpc/mapper/response"
 	"github.com/baothaihcmut/Ecommerce-Go/users/internal/adapter/grpc/proto"
@@ -18,6 +20,7 @@ import (
 	"github.com/go-kit/log"
 	"github.com/go-kit/log/level"
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/keepalive"
 )
 
 type Server struct {
@@ -56,8 +59,23 @@ func (s *Server) Start() {
 		s.logger.Log("during", "Listen", "err", err)
 		os.Exit(1)
 	}
+	// grpc options
+	serverOptions := []grpc.ServerOption{
+		// Unary option
+		grpc.ChainUnaryInterceptor(
+			grpc.UnaryServerInterceptor(interceptors.LoggingInterceptor(s.logger)),
+		),
+		//keep alive option
+		grpc.KeepaliveParams(keepalive.ServerParameters{
+			MaxConnectionIdle: 5 * time.Minute,
+			MaxConnectionAge:  10 * time.Minute,
+			Time:              2 * time.Minute,
+			Timeout:           20 * time.Second,
+		}),
+	}
+
 	go func() {
-		baseServer := grpc.NewServer()
+		baseServer := grpc.NewServer(serverOptions...)
 		proto.RegisterUserServiceServer(baseServer, grpcServer)
 		level.Info(s.logger).Log("msg", "Server started successfully 🚀")
 		baseServer.Serve(grpcListener)

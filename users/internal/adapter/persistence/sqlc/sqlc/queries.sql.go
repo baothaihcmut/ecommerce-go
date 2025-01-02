@@ -13,17 +13,19 @@ import (
 )
 
 const createAddress = `-- name: CreateAddress :exec
-INSERT INTO addresses(street, town, city, province,user_id)
+INSERT INTO addresses(priority,street, town, city, province,user_id)
 VALUES (
     $1,
     $2,
     $3,
     $4,
-    $5
+    $5,
+    $6
 )
 `
 
 type CreateAddressParams struct {
+	Priority sql.NullInt32
 	Street   sql.NullString
 	Town     sql.NullString
 	City     sql.NullString
@@ -33,6 +35,7 @@ type CreateAddressParams struct {
 
 func (q *Queries) CreateAddress(ctx context.Context, arg CreateAddressParams) error {
 	_, err := q.db.ExecContext(ctx, createAddress,
+		arg.Priority,
 		arg.Street,
 		arg.Town,
 		arg.City,
@@ -108,7 +111,7 @@ func (q *Queries) CreateUser(ctx context.Context, arg CreateUserParams) error {
 }
 
 const findAllAddressOfUser = `-- name: FindAllAddressOfUser :many
-SELECT id, street, town, city, province, user_id FROM addresses WHERE user_id = $1
+SELECT priority, street, town, city, province, user_id FROM addresses WHERE user_id = $1
 `
 
 func (q *Queries) FindAllAddressOfUser(ctx context.Context, userid uuid.NullUUID) ([]Address, error) {
@@ -121,7 +124,7 @@ func (q *Queries) FindAllAddressOfUser(ctx context.Context, userid uuid.NullUUID
 	for rows.Next() {
 		var i Address
 		if err := rows.Scan(
-			&i.ID,
+			&i.Priority,
 			&i.Street,
 			&i.Town,
 			&i.City,
@@ -147,13 +150,13 @@ FROM users u
 LEFT JOIN customers c ON u.id = c.user_id
 LEFT JOIN shop_owners s ON u.id = s.user_id
 WHERE
-    (
-        ($1 = 'email' AND u.email = $2) OR
-        ($1 = 'phoneNumber' AND u.phone_number = $2) OR
-        ($1 = 'id' AND u.id = $2) OR
-        ($1 = 'firstName' AND u.first_name = $2) OR
-        ($1 = 'lastName' AND u.last_name = $2)
-    )
+    CASE $1
+        WHEN 'email' THEN u.email = $2::text
+        WHEN 'phone_number' THEN u.phone_number = $2::text
+        WHEN 'id' THEN u.id = $2::uuid
+        WHEN 'firstName' THEN u.first_name = $2::text
+        WHEN 'lastName' THEN u.last_name = $2::text
+    END
 LIMIT 1
 `
 
@@ -191,4 +194,101 @@ func (q *Queries) FindUserByCriteria(ctx context.Context, arg FindUserByCriteria
 		&i.BussinessLicense,
 	)
 	return i, err
+}
+
+const updateAddress = `-- name: UpdateAddress :exec
+UPDATE addresses
+SET
+    street = COALESCE($1,street),
+    town = COALESCE($2,town),
+    city = COALESCE($3,city),
+    province = COALESCE($4,province)
+WHERE user_id = $5 AND priority = $6
+`
+
+type UpdateAddressParams struct {
+	Street   sql.NullString
+	Town     sql.NullString
+	City     sql.NullString
+	Province sql.NullString
+	UserId   uuid.NullUUID
+	Priority sql.NullInt32
+}
+
+func (q *Queries) UpdateAddress(ctx context.Context, arg UpdateAddressParams) error {
+	_, err := q.db.ExecContext(ctx, updateAddress,
+		arg.Street,
+		arg.Town,
+		arg.City,
+		arg.Province,
+		arg.UserId,
+		arg.Priority,
+	)
+	return err
+}
+
+const updateCustomer = `-- name: UpdateCustomer :exec
+UPDATE customers
+SET
+    loyal_point = COALESCE($1,loyal_point)
+WHERE user_id = $2
+`
+
+type UpdateCustomerParams struct {
+	LoyalPoint sql.NullInt32
+	UserId     uuid.NullUUID
+}
+
+func (q *Queries) UpdateCustomer(ctx context.Context, arg UpdateCustomerParams) error {
+	_, err := q.db.ExecContext(ctx, updateCustomer, arg.LoyalPoint, arg.UserId)
+	return err
+}
+
+const updateShopOwner = `-- name: UpdateShopOwner :exec
+UPDATE shop_owners
+SET
+    bussiness_license = COALESCE($1,bussiness_license)
+WHERE user_id = $2
+`
+
+type UpdateShopOwnerParams struct {
+	BussinessLicense sql.NullString
+	UserId           uuid.NullUUID
+}
+
+func (q *Queries) UpdateShopOwner(ctx context.Context, arg UpdateShopOwnerParams) error {
+	_, err := q.db.ExecContext(ctx, updateShopOwner, arg.BussinessLicense, arg.UserId)
+	return err
+}
+
+const updateUser = `-- name: UpdateUser :exec
+UPDATE users
+SET
+    email = COALESCE($1,email),
+    phone_number = COALESCE($2,phone_number),
+    first_name = COALESCE($3,first_name),
+    last_name = COALESCE($4,last_name),
+    role = COALESCE($5,role)
+WHERE id = $6
+`
+
+type UpdateUserParams struct {
+	Email       sql.NullString
+	PhoneNumber sql.NullString
+	FirstName   sql.NullString
+	LastName    sql.NullString
+	Role        NullRoleEnum
+	ID          uuid.NullUUID
+}
+
+func (q *Queries) UpdateUser(ctx context.Context, arg UpdateUserParams) error {
+	_, err := q.db.ExecContext(ctx, updateUser,
+		arg.Email,
+		arg.PhoneNumber,
+		arg.FirstName,
+		arg.LastName,
+		arg.Role,
+		arg.ID,
+	)
+	return err
 }

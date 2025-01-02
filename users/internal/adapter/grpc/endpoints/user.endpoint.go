@@ -21,8 +21,8 @@ func MakeUserEndpoints(s inbound.UserService) UserEnpoints {
 
 func makeCreateUserEndpoint(s inbound.UserService) endpoint.Endpoint {
 	return func(ctx context.Context, request interface{}) (response interface{}, err error) {
-		req := request.(commands.CreateUserCommand)
-		res, err := s.CreateUser(ctx, &req)
+		req := request.(*commands.CreateUserCommand)
+		res, err := s.CreateUser(ctx, req)
 		if err != nil {
 			return nil, err
 		}

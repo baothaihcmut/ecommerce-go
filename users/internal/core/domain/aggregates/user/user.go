@@ -61,7 +61,7 @@ func NewCustomer(
 	if err != nil {
 		return nil, err
 	}
-	customer, err := entities.NewCustomer(*id)
+	customer, err := entities.NewCustomer()
 	if err != nil {
 		return nil, err
 	}
@@ -92,13 +92,13 @@ func NewShopOwner(
 	if err != nil {
 		return nil, err
 	}
-	shopOwner := entities.NewShopOwner(*id, bussinessLincese)
+	shopOwner := entities.NewShopOwner(bussinessLincese)
 	return &User{
 		Id:          *id,
 		Email:       email,
 		PhoneNumber: phoneNumber,
 		Address:     address,
-		Role:        enums.CUSTOMER,
+		Role:        enums.SHOP_OWNER,
 		FirstName:   firstName,
 		LastName:    lastName,
 		ShopOwner:   shopOwner,
