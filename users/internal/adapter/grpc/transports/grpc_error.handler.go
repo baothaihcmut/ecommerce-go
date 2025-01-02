@@ -3,22 +3,29 @@ package transports
 import (
 	"context"
 
-	"github.com/go-kit/kit/transport"
+	"github.com/baothaihcmut/Ecommerce-Go/users/internal/adapter/grpc/proto"
 	"github.com/go-kit/log"
+	"google.golang.org/grpc/codes"
 )
 
-type GrpcErrorHandler struct {
-	logger log.Logger
-}
-
-func (h *GrpcErrorHandler) Handle(ctx context.Context, err error) {
-	if err != nil {
-		h.logger.Log("msg", "Request Failed", "err", err)
-	}
-}
-
-func NewGrpcErrorHandler(logger log.Logger) transport.ErrorHandler {
-	return &GrpcErrorHandler{
-		logger: logger,
+func ErrorHandle(logger log.Logger) func(ctx context.Context, req interface{}, resp GrpcResponse, err error) (interface{}, error) {
+	return func(ctx context.Context, req interface{}, resp GrpcResponse, err error) (interface{}, error) {
+		if err != nil {
+			logger.Log("event", "error", "error", err)
+			errorResp := &proto.Status{
+				Success: false,
+				Code:    mapErrorToGrpcStatus(err).String(),
+				Message: err.Error(),
+				Details: []string{err.Error()},
+			}
+			resp.Status = errorResp
+			return resp, nil
+		}
+		resp.Status = &proto.Status{
+			Success: true,
+			Code:    codes.OK.String(),
+			Message: "Success",
+		}
+		return resp, nil
 	}
 }

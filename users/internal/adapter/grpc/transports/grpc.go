@@ -18,9 +18,11 @@ type GrpcServer struct {
 // CreateUser implements proto.UserServiceServer.
 func (g *GrpcServer) CreateUser(ctx context.Context, req *proto.CreateUserRequest) (*proto.CreateUserResponse, error) {
 	_, resp, err := g.createUser.ServeGRPC(ctx, req)
+	if err != nil {
+		return nil, err
+	}
+	return &proto.CreateUserResponse{Data: resp.(*proto.CreateUserData)}, nil
 }
-
-// mustEmbedUnimplementedUserServiceServer implements proto.UserServiceServer.
 
 func NewGrpcServer(
 	endpoints endpoints.UserEnpoints,

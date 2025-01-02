@@ -60,7 +60,7 @@ func (repo *PostgresUserRepo) toCreateShopOwnerArg(shopOwner *entities.ShopOwner
 	}
 }
 
-func (repo *PostgresUserRepo) toUserDomain(result *sqlc.FindUserByIdRow, addresses []sqlc.Address) (*user.User, error) {
+func (repo *PostgresUserRepo) toUserDomain(result *sqlc.FindUserByCriteriaRow, addresses []sqlc.Address) (*user.User, error) {
 	userId, err := valueobject.NewUserId(result.ID)
 	if err != nil {
 		return nil, err
@@ -130,7 +130,10 @@ func (repo *PostgresUserRepo) Save(ctx context.Context, user *user.User, tx *sql
 }
 
 func (repo *PostgresUserRepo) FindById(ctx context.Context, id valueobject.UserId) (*user.User, error) {
-	userRes, err := repo.queries.FindUserById(ctx, uuid.NullUUID{UUID: uuid.UUID(id)})
+	userRes, err := repo.queries.FindUserByCriteria(ctx, sqlc.FindUserByCriteriaParams{
+		Criteria: "id",
+		Value:    sql.NullString{String: uuid.UUID(id).String(), Valid: true},
+	})
 	if err != nil {
 		return nil, err
 	}
@@ -146,11 +149,40 @@ func (repo *PostgresUserRepo) FindById(ctx context.Context, id valueobject.UserI
 
 }
 
-func (repo *PostgresUserRepo) FindByEmail(context.Context, valueobject.Email) (*user.User, error) {
-	panic("unimplemented")
+func (repo *PostgresUserRepo) FindByEmail(ctx context.Context, email valueobject.Email) (*user.User, error) {
+	userRes, err := repo.queries.FindUserByCriteria(ctx, sqlc.FindUserByCriteriaParams{
+		Criteria: "email",
+		Value:    sql.NullString{String: string(email), Valid: true},
+	})
+	if err != nil {
+		return nil, err
+	}
+	addressRes, err := repo.queries.FindAllAddressOfUser(ctx, uuid.NullUUID{UUID: uuid.UUID(userRes.ID)})
+	if err != nil {
+		return nil, err
+	}
+	user, err := repo.toUserDomain(&userRes, addressRes)
+	if err != nil {
+		return nil, err
+	}
+	return user, nil
 }
 
-// FindByPhoneNumber implements outbound.UserRepository.
-func (repo *PostgresUserRepo) FindByPhoneNumber(context.Context, valueobject.PhoneNumber) (*user.User, error) {
-	panic("unimplemented")
+func (repo *PostgresUserRepo) FindByPhoneNumber(ctx context.Context, phoneNumber valueobject.PhoneNumber) (*user.User, error) {
+	userRes, err := repo.queries.FindUserByCriteria(ctx, sqlc.FindUserByCriteriaParams{
+		Criteria: "phoneNumber",
+		Value:    sql.NullString{String: string(phoneNumber), Valid: true},
+	})
+	if err != nil {
+		return nil, err
+	}
+	addressRes, err := repo.queries.FindAllAddressOfUser(ctx, uuid.NullUUID{UUID: uuid.UUID(userRes.ID)})
+	if err != nil {
+		return nil, err
+	}
+	user, err := repo.toUserDomain(&userRes, addressRes)
+	if err != nil {
+		return nil, err
+	}
+	return user, nil
 }

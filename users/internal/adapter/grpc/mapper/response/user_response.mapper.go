@@ -17,10 +17,13 @@ type UserResponseMapperImpl struct {
 
 func (m *UserResponseMapperImpl) ToCreateUserResponse(_ context.Context, response interface{}) (interface{}, error) {
 	res := response.(*user.User)
-	dest := &proto.CreateUserResponse{}
+	dest := &proto.CreateUserData{}
 	err := mapstructure.Decode(res, dest)
 	if err != nil {
 		return nil, err
 	}
 	return dest, nil
+}
+func NewUserResponseMapper() UserResponseMapper {
+	return &UserResponseMapperImpl{}
 }

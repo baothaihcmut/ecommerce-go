@@ -15,6 +15,10 @@ type UserRequestMapper interface {
 type UserRequestMapperImpl struct {
 }
 
+func NewUserRequestMapper() UserRequestMapper {
+	return &UserRequestMapperImpl{}
+}
+
 func (m *UserRequestMapperImpl) ToCreateUserCommand(_ context.Context, request interface{}) (interface{}, error) {
 	req := request.(*proto.CreateUserRequest)
 	dest := &commands.CreateUserCommand{}

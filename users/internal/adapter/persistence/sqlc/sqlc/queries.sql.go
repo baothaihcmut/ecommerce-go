@@ -80,7 +80,7 @@ func (q *Queries) CreateShopOwner(ctx context.Context, arg CreateShopOwnerParams
 
 const createUser = `-- name: CreateUser :exec
 INSERT INTO users(id,email, phone_number, first_name,last_name)
-VALUES ($1, 
+VALUES ($1,
         $2,
         $3,
         $4,
@@ -141,16 +141,28 @@ func (q *Queries) FindAllAddressOfUser(ctx context.Context, userid uuid.NullUUID
 	return items, nil
 }
 
-const findUserById = `-- name: FindUserById :one
+const findUserByCriteria = `-- name: FindUserByCriteria :one
 SELECT id, email, phone_number, first_name, last_name, role, c.user_id, loyal_point, s.user_id, bussiness_license
 FROM users u
 LEFT JOIN customers c ON u.id = c.user_id
 LEFT JOIN shop_owners s ON u.id = s.user_id
-WHERE id = $1
+WHERE
+    (
+        ($1 = 'email' AND u.email = $2) OR
+        ($1 = 'phoneNumber' AND u.phone_number = $2) OR
+        ($1 = 'id' AND u.id = $2) OR
+        ($1 = 'firstName' AND u.first_name = $2) OR
+        ($1 = 'lastName' AND u.last_name = $2)
+    )
 LIMIT 1
 `
 
-type FindUserByIdRow struct {
+type FindUserByCriteriaParams struct {
+	Criteria interface{}
+	Value    sql.NullString
+}
+
+type FindUserByCriteriaRow struct {
 	ID               uuid.UUID
 	Email            string
 	PhoneNumber      string
@@ -163,9 +175,9 @@ type FindUserByIdRow struct {
 	BussinessLicense sql.NullString
 }
 
-func (q *Queries) FindUserById(ctx context.Context, userid uuid.NullUUID) (FindUserByIdRow, error) {
-	row := q.db.QueryRowContext(ctx, findUserById, userid)
-	var i FindUserByIdRow
+func (q *Queries) FindUserByCriteria(ctx context.Context, arg FindUserByCriteriaParams) (FindUserByCriteriaRow, error) {
+	row := q.db.QueryRowContext(ctx, findUserByCriteria, arg.Criteria, arg.Value)
+	var i FindUserByCriteriaRow
 	err := row.Scan(
 		&i.ID,
 		&i.Email,
