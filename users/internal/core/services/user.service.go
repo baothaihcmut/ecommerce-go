@@ -36,7 +36,7 @@ func (u *UserService) toUserDomain(command *commands.CreateUserCommand) (*user.U
 	address := make([]valueobject.Address, len(command.Addresses))
 	for idx, addr := range command.Addresses {
 		address[idx] = *valueobject.NewAddress(
-			addr.Street, addr.Town, addr.City, addr.Province,
+			addr.Priority, addr.Street, addr.Town, addr.City, addr.Province,
 		)
 	}
 
@@ -59,7 +59,7 @@ func (u *UserService) CreateUser(ctx context.Context, command *commands.CreateUs
 	}
 	//check if email exist
 	emailExist, err := u.userRepo.FindByEmail(ctx, user.Email)
-	if err != nil {
+	if err != nil && err != sql.ErrNoRows {
 		return nil, err
 	}
 	if emailExist != nil {
@@ -68,7 +68,7 @@ func (u *UserService) CreateUser(ctx context.Context, command *commands.CreateUs
 
 	//check if phone number exist
 	phoneExist, err := u.userRepo.FindByPhoneNumber(ctx, user.PhoneNumber)
-	if err != nil {
+	if err != nil && err != sql.ErrNoRows {
 		return nil, err
 	}
 	if phoneExist != nil {

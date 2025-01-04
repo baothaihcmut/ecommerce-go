@@ -3,6 +3,7 @@ package commands
 import "github.com/baothaihcmut/Ecommerce-Go/users/internal/core/domain/enums"
 
 type Address struct {
+	Priority int
 	Street   string
 	Town     string
 	City     string

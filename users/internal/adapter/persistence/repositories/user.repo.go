@@ -3,6 +3,7 @@ package repositories
 import (
 	"context"
 	"database/sql"
+	"sync"
 
 	"github.com/baothaihcmut/Ecommerce-Go/users/internal/adapter/persistence/sqlc/sqlc"
 	"github.com/baothaihcmut/Ecommerce-Go/users/internal/core/domain/aggregates/user"
@@ -39,6 +40,7 @@ func (repo *PostgresUserRepo) toCreateUserArg(user *user.User) *sqlc.CreateUserP
 
 func (repo *PostgresUserRepo) toCreateAddressArg(userId valueobject.UserId, address valueobject.Address) *sqlc.CreateAddressParams {
 	return &sqlc.CreateAddressParams{
+		Priority: sql.NullInt32{Int32: int32(address.Priority), Valid: true},
 		Street:   sql.NullString{String: address.Street, Valid: true},
 		Town:     sql.NullString{String: address.Town, Valid: true},
 		City:     sql.NullString{String: address.City, Valid: true},
@@ -47,20 +49,20 @@ func (repo *PostgresUserRepo) toCreateAddressArg(userId valueobject.UserId, addr
 	}
 }
 
-func (repo *PostgresUserRepo) toCreateCustomerArg(customer *entities.Customer) *sqlc.CreateCustomerParams {
+func (repo *PostgresUserRepo) toCreateCustomerArg(userId uuid.UUID, customer *entities.Customer) *sqlc.CreateCustomerParams {
 	return &sqlc.CreateCustomerParams{
-		UserId:     uuid.NullUUID{UUID: uuid.UUID(customer.Id), Valid: true},
+		UserId:     uuid.NullUUID{UUID: userId, Valid: true},
 		LoyalPoint: sql.NullInt32{Int32: int32(customer.LoyaltyPoint), Valid: true},
 	}
 }
-func (repo *PostgresUserRepo) toCreateShopOwnerArg(shopOwner *entities.ShopOwner) *sqlc.CreateShopOwnerParams {
+func (repo *PostgresUserRepo) toCreateShopOwnerArg(userId uuid.UUID, shopOwner *entities.ShopOwner) *sqlc.CreateShopOwnerParams {
 	return &sqlc.CreateShopOwnerParams{
-		UserId:           uuid.NullUUID{UUID: uuid.UUID(shopOwner.Id), Valid: true},
+		UserId:           uuid.NullUUID{UUID: userId, Valid: true},
 		BussinessLicense: sql.NullString{String: shopOwner.BussinessLicense, Valid: true},
 	}
 }
 
-func (repo *PostgresUserRepo) toUserDomain(result *sqlc.FindUserByIdRow, addresses []sqlc.Address) (*user.User, error) {
+func (repo *PostgresUserRepo) toUserDomain(result *sqlc.FindUserByCriteriaRow, addresses []sqlc.Address) (*user.User, error) {
 	userId, err := valueobject.NewUserId(result.ID)
 	if err != nil {
 		return nil, err
@@ -76,15 +78,15 @@ func (repo *PostgresUserRepo) toUserDomain(result *sqlc.FindUserByIdRow, address
 	userAddresses := make([]valueobject.Address, len(addresses))
 	for _, address := range addresses {
 		userAddresses = append(userAddresses, *valueobject.NewAddress(
-			address.Street, address.Town, address.City, address.Province,
+			int(address.Priority), address.Street, address.Town, address.City, address.Province,
 		))
 	}
 	var customer *entities.Customer
 	var shopOwner *entities.ShopOwner
 	if result.Role.RoleEnum == sqlc.RoleEnum(enums.CUSTOMER) {
-		customer = entities.NewCustomerWithPoint(*userId, valueobject.LoyaltyPoint(result.LoyalPoint.Int32))
+		customer = entities.NewCustomerWithPoint(valueobject.LoyaltyPoint(result.LoyalPoint.Int32))
 	} else {
-		shopOwner = entities.NewShopOwner(*userId, result.BussinessLicense.String)
+		shopOwner = entities.NewShopOwner(result.BussinessLicense.String)
 	}
 
 	return &user.User{
@@ -101,36 +103,143 @@ func (repo *PostgresUserRepo) toUserDomain(result *sqlc.FindUserByIdRow, address
 }
 
 func (repo *PostgresUserRepo) Save(ctx context.Context, user *user.User, tx *sql.Tx) error {
-	//create user
-	err := repo.queries.WithTx(tx).CreateUser(ctx, *repo.toCreateUserArg(user))
-	if err != nil {
+	//check if user exist
+	_, err := repo.queries.FindUserByCriteria(ctx, sqlc.FindUserByCriteriaParams{
+		Criteria: "id",
+		Value:    sql.NullString{String: uuid.UUID(user.Id).String(), Valid: true},
+	})
+	if err != nil && err != sql.ErrNoRows {
 		return err
 	}
+	ctx, cancel := context.WithCancel(ctx)
+	var isUpdate bool
+	if err == sql.ErrNoRows {
+		isUpdate = false
+	} else {
+		isUpdate = true
+	}
+	wg := sync.WaitGroup{}
+	errCh := make(chan error, 1)
+	//create user
+	wg.Add(1)
+	go func() {
+		defer wg.Done()
+		if isUpdate {
+			err = repo.queries.WithTx(tx).UpdateUser(ctx, sqlc.UpdateUserParams{
+				ID:          uuid.NullUUID{UUID: uuid.UUID(user.Id), Valid: true},
+				Email:       sql.NullString{String: string(user.Email), Valid: true},
+				FirstName:   sql.NullString{String: user.FirstName, Valid: true},
+				LastName:    sql.NullString{String: user.LastName, Valid: true},
+				PhoneNumber: sql.NullString{String: string(user.PhoneNumber), Valid: true},
+				Role:        sqlc.NullRoleEnum{RoleEnum: sqlc.RoleEnum(user.Role), Valid: true},
+			})
+		} else {
+			err = repo.queries.WithTx(tx).CreateUser(ctx, *repo.toCreateUserArg(user))
+		}
+		select {
+		case <-ctx.Done():
+			return
+		default:
+			if err != nil {
+				cancel()
+				errCh <- err
+			}
+		}
+	}()
 	//create in address table
 	for _, address := range user.Address {
-		err = repo.queries.WithTx(tx).CreateAddress(ctx, *repo.toCreateAddressArg(user.Id, address))
-		if err != nil {
-			return err
-		}
+		wg.Add(1)
+		go func() {
+			defer wg.Done()
+			if isUpdate {
+				err = repo.queries.WithTx(tx).UpdateAddress(ctx, sqlc.UpdateAddressParams{
+					Street:   sql.NullString{String: address.Street, Valid: true},
+					Town:     sql.NullString{String: address.Town, Valid: true},
+					City:     sql.NullString{String: address.City, Valid: true},
+					Province: sql.NullString{String: address.Province, Valid: true},
+					UserId:   uuid.NullUUID{UUID: uuid.UUID(user.Id), Valid: true},
+					Priority: sql.NullInt32{Int32: int32(address.Priority), Valid: true},
+				})
+			} else {
+				err = repo.queries.WithTx(tx).CreateAddress(ctx, *repo.toCreateAddressArg(user.Id, address))
+			}
+			select {
+			case <-ctx.Done():
+				return
+			default:
+				if err != nil {
+					cancel()
+					errCh <- err
+				}
+			}
+		}()
 	}
 
 	//create in sub entity
 	if user.Role == enums.CUSTOMER {
-		err = repo.queries.WithTx(tx).CreateCustomer(ctx, *repo.toCreateCustomerArg(user.Customer))
-		if err != nil {
-			return err
-		}
+		wg.Add(1)
+		go func() {
+			defer wg.Done()
+			if isUpdate {
+				err = repo.queries.WithTx(tx).UpdateCustomer(ctx, sqlc.UpdateCustomerParams{
+					LoyalPoint: sql.NullInt32{Int32: int32(user.Customer.LoyaltyPoint), Valid: true},
+					UserId:     uuid.NullUUID{UUID: uuid.UUID(user.Id), Valid: true},
+				})
+			} else {
+				err = repo.queries.WithTx(tx).CreateCustomer(ctx, *repo.toCreateCustomerArg(uuid.UUID(user.Id), user.Customer))
+			}
+			select {
+			case <-ctx.Done():
+				return
+			default:
+				if err != nil {
+					cancel()
+					errCh <- err
+				}
+			}
+		}()
 	} else {
-		err = repo.queries.WithTx(tx).CreateShopOwner(ctx, *repo.toCreateShopOwnerArg(user.ShopOwner))
-		if err != nil {
-			return err
-		}
+		wg.Add(1)
+		go func() {
+			defer wg.Done()
+			if isUpdate {
+				err = repo.queries.WithTx(tx).UpdateShopOwner(ctx, sqlc.UpdateShopOwnerParams{
+					BussinessLicense: sql.NullString{String: user.ShopOwner.BussinessLicense, Valid: true},
+					UserId:           uuid.NullUUID{UUID: uuid.UUID(user.Id), Valid: true},
+				})
+			} else {
+				err = repo.queries.WithTx(tx).CreateShopOwner(ctx, *repo.toCreateShopOwnerArg(uuid.UUID(user.Id), user.ShopOwner))
+			}
+			select {
+			case <-ctx.Done():
+				return
+			default:
+				if err != nil {
+					cancel()
+					errCh <- err
+				}
+			}
+		}()
 	}
-	return nil
+	done := make(chan error)
+	go func() {
+		wg.Wait()
+		done <- nil
+	}()
+	go func() {
+		err = <-errCh
+		close(errCh)
+		done <- err
+	}()
+	return <-done
+
 }
 
 func (repo *PostgresUserRepo) FindById(ctx context.Context, id valueobject.UserId) (*user.User, error) {
-	userRes, err := repo.queries.FindUserById(ctx, uuid.NullUUID{UUID: uuid.UUID(id)})
+	userRes, err := repo.queries.FindUserByCriteria(ctx, sqlc.FindUserByCriteriaParams{
+		Criteria: "id",
+		Value:    sql.NullString{String: uuid.UUID(id).String(), Valid: true},
+	})
 	if err != nil {
 		return nil, err
 	}
@@ -146,11 +255,40 @@ func (repo *PostgresUserRepo) FindById(ctx context.Context, id valueobject.UserI
 
 }
 
-func (repo *PostgresUserRepo) FindByEmail(context.Context, valueobject.Email) (*user.User, error) {
-	panic("unimplemented")
+func (repo *PostgresUserRepo) FindByEmail(ctx context.Context, email valueobject.Email) (*user.User, error) {
+	userRes, err := repo.queries.FindUserByCriteria(ctx, sqlc.FindUserByCriteriaParams{
+		Criteria: "email",
+		Value:    sql.NullString{String: string(email), Valid: true},
+	})
+	if err != nil {
+		return nil, err
+	}
+	addressRes, err := repo.queries.FindAllAddressOfUser(ctx, uuid.NullUUID{UUID: uuid.UUID(userRes.ID)})
+	if err != nil {
+		return nil, err
+	}
+	user, err := repo.toUserDomain(&userRes, addressRes)
+	if err != nil {
+		return nil, err
+	}
+	return user, nil
 }
 
-// FindByPhoneNumber implements outbound.UserRepository.
-func (repo *PostgresUserRepo) FindByPhoneNumber(context.Context, valueobject.PhoneNumber) (*user.User, error) {
-	panic("unimplemented")
+func (repo *PostgresUserRepo) FindByPhoneNumber(ctx context.Context, phoneNumber valueobject.PhoneNumber) (*user.User, error) {
+	userRes, err := repo.queries.FindUserByCriteria(ctx, sqlc.FindUserByCriteriaParams{
+		Criteria: "phoneNumber",
+		Value:    sql.NullString{String: string(phoneNumber), Valid: true},
+	})
+	if err != nil {
+		return nil, err
+	}
+	addressRes, err := repo.queries.FindAllAddressOfUser(ctx, uuid.NullUUID{UUID: uuid.UUID(userRes.ID)})
+	if err != nil {
+		return nil, err
+	}
+	user, err := repo.toUserDomain(&userRes, addressRes)
+	if err != nil {
+		return nil, err
+	}
+	return user, nil
 }

@@ -1,6 +1,8 @@
 syntax = "proto3";
+package proto;
+import "shared.proto";
 
-option go_package = "internal/adapter/grpc/proto";
+option go_package = "github.com/baothaihcmut/Ecommerce-Go/users/internal/adapter/grpc/proto";
 
 service UserService{
     rpc CreateUser(CreateUserRequest) returns (CreateUserResponse) {}
@@ -11,10 +13,11 @@ enum Role {
     SHOP_OWNER = 1;
 }
 message Address {
-    string street = 1;
-    string town = 2;
-    string city = 3;
-    string province = 4;
+    int32 priority = 1;
+    string street = 2;
+    string town = 3;
+    string city = 4;
+    string province = 5;
 }
 message CustomerInfo {
 
@@ -33,7 +36,7 @@ message CreateUserRequest {
     optional ShopOwnerInfo shopOwnerInfo = 8;
 }
 
-message CreateUserResponse {
+message CreateUserData {
     string id = 1;
     string email = 2;
     string phoneNumber = 3;
@@ -43,4 +46,8 @@ message CreateUserResponse {
     Role role = 7;
     optional CustomerInfo customerInfo=8;
     optional ShopOwnerInfo shopOwnerInfo = 9;
+}
+message CreateUserResponse {
+    CreateUserData data = 1;
+    Status status = 2;  
 }

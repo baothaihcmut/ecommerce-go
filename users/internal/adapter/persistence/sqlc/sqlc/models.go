@@ -56,7 +56,7 @@ func (ns NullRoleEnum) Value() (driver.Value, error) {
 }
 
 type Address struct {
-	ID       int32
+	Priority int32
 	Street   string
 	Town     string
 	City     string

@@ -6,5 +6,6 @@ ALTER TABLE users ADD COLUMN role role_enum DEFAULT 'customer';
 
 -- +goose Down
 -- +goose StatementBegin
-ALTER TABLE DROP COLUMN role;
+ALTER TABLE users DROP COLUMN role;
+DROP TYPE role_enum;
 -- +goose StatementEnd

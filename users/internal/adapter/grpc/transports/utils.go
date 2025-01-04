@@ -10,6 +10,5 @@ func mapErrorToGrpcStatus(err error) error {
 	switch {
 	case err == valueobject.InvalidEmail || err == valueobject.InvalidPhonenumber || err == valueobject.InvalidPoint:
 		return status.Error(codes.InvalidArgument, err.Error())
-
 	}
 }
