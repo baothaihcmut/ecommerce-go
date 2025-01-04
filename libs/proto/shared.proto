@@ -1,0 +1,11 @@
+syntax ="proto3";
+package proto;
+option go_package = "github.com/baothaihcmut/Ecommerce-Go/users/internal/adapter/grpc/proto";
+
+
+message Status {
+    bool success = 1;
+    string code = 2;
+    string message = 3;
+    repeated string details = 4;
+}
