@@ -49,6 +49,7 @@ FROM users u
 WHERE u.email = sqlc.narg('email')
 LIMIT 1;
 
+
 -- name: FindUserByPhoneNumber :one
 SELECT *
 FROM users u
