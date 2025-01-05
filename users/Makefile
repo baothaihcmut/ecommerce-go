@@ -1,15 +1,16 @@
 gen-proto:
-	protoc \
-		--proto_path=../libs/proto/ "../libs/proto/shared.proto" \
-		--go_out=./internal/adapter/grpc/proto/ --go_opt=paths=source_relative \
-  	--go-grpc_out=./internal/adapter/grpc/proto/ --go-grpc_opt=paths=source_relative
-	@protoc \
-		--proto_path=../libs/proto/ "../libs/proto/user.proto" \
-		--go_out=./internal/adapter/grpc/proto/ --go_opt=paths=source_relative \
-  	--go-grpc_out=./internal/adapter/grpc/proto/ --go-grpc_opt=paths=source_relative
+	@go run cmd/proto-gen/main.go
 gen-sqlc:
 	@cd internal/adapter/persistence/sqlc && sqlc generate
 	@cd ../../../../
+migrate-up-dev:
+	@go run cmd/migrations/main.go up dev
 
-run:
-	@go run cmd/users/main.go
+migrate-up-prod:
+	@go run cmd/migrations/main.go up prod
+
+run-dev:
+	@go run cmd/users/main.go dev
+
+run-prod:
+	@go run cmd/users/main.go prod

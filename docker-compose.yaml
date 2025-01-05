@@ -1,0 +1,86 @@
+services:
+  postgres:
+    image: postgres:15
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
+      - POSTGRES_DB=user
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+    networks:
+      - app-network
+
+  consul:
+      image: consul:1.15.0
+      container_name: consul
+      environment:
+        - CONSUL_BIND_INTERFACE=eth0
+      ports:
+        - "8500:8500"  # HTTP UI
+        - "8600:8600"  # DNS and gRPC port
+      volumes:
+        - consul-data:/consul/data
+      restart: always
+      networks:
+        - healthcheck-network
+        - app-network
+  api-gateway:
+    image: baothaihcmut/api-gateway:v1
+    environment:
+      - SERVER_HOST=localhost
+      - SERVER_PORT=8080
+      - CONSUL_HOST=consul
+      - CONSUL_PORT=8500
+    ports:
+      - "8080:8080"
+    networks:
+      - app-network
+    depends_on:
+      - consul
+    links:
+      - consul
+    entrypoint:
+      - ./main
+      - prod
+  user-service:
+    image: baothaihcmut/user-service:v1
+    environment:
+      - SERVER_HOST=user-service
+      - SERVER_PORT=50051
+      - DB_HOST=postgres
+      - DB_PORT=5432
+      - DB_USER=postgres
+      - DB_PASSWORD=postgres
+      - DB_NAME=user
+      - CONSUL_HOST=consul
+      - CONSUL_PORT=8500
+    depends_on:
+      - postgres
+      - consul
+    links:
+      - postgres
+      - consul
+    entrypoint:
+      - /bin/sh
+      - -c
+      - |
+        until ./migrate --env=prod --migrationsFolder=./migrations --action=up prod; do
+          echo "Migrations failed.  Respawning.." >&2
+          sleep 1
+        done
+        until ./main prod; do
+          echo "Server 'user-service' crashed with exit code $?.  Respawning.." >&2
+          sleep 1
+        done
+    networks:
+      - healthcheck-network
+      - app-network
+
+volumes:
+  postgres-data:
+  consul-data:
+networks:
+  healthcheck-network:
+  app-network:

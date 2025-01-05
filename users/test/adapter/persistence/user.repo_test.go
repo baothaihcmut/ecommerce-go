@@ -25,12 +25,15 @@ func TestCreateUser(t *testing.T) {
 	phoneNumber, err := valueobject.NewPhoneNumber("0828537679")
 	assert.NoError(t, err)
 	address := []valueobject.Address{
-		*valueobject.NewAddress("1", "1", "1", "1"),
+		*valueobject.NewAddress(1, "1", "1", "1", "1"),
 	}
 	user, err := user.NewCustomer(*email, *phoneNumber, address, "thai", "bao")
 	assert.NoError(t, err)
 	tx, err := db.Begin()
 	defer tx.Rollback()
+	if err != nil {
+		return
+	}
 	err = repo.Save(context.Background(), user, tx)
 	assert.NoError(t, err)
 	if err != nil {

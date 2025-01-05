@@ -2,13 +2,20 @@ package transports
 
 import (
 	valueobject "github.com/baothaihcmut/Ecommerce-Go/users/internal/core/domain/aggregates/user/value_object"
+	"github.com/baothaihcmut/Ecommerce-Go/users/internal/core/services"
 	"google.golang.org/grpc/codes"
-	"google.golang.org/grpc/status"
 )
 
-func mapErrorToGrpcStatus(err error) error {
+func MapErrorToGrpcStatus(err error) codes.Code {
 	switch {
-	case err == valueobject.InvalidEmail || err == valueobject.InvalidPhonenumber || err == valueobject.InvalidPoint:
-		return status.Error(codes.InvalidArgument, err.Error())
+	case err == valueobject.InvalidEmail ||
+		err == valueobject.InvalidPhonenumber ||
+		err == valueobject.InvalidPoint:
+		return codes.InvalidArgument
+	case err == services.ErrEmailExist ||
+		err == services.ErrPhoneNumberExist:
+		return codes.AlreadyExists
+	default:
+		return codes.Internal
 	}
 }

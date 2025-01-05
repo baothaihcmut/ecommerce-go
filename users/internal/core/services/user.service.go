@@ -9,9 +9,12 @@ import (
 	"github.com/baothaihcmut/Ecommerce-Go/users/internal/core/domain/aggregates/user"
 	valueobject "github.com/baothaihcmut/Ecommerce-Go/users/internal/core/domain/aggregates/user/value_object"
 	"github.com/baothaihcmut/Ecommerce-Go/users/internal/core/domain/enums"
-	"github.com/baothaihcmut/Ecommerce-Go/users/internal/core/port/inbound"
+	inboundcommand "github.com/baothaihcmut/Ecommerce-Go/users/internal/core/port/inbound/command"
+	inboundquery "github.com/baothaihcmut/Ecommerce-Go/users/internal/core/port/inbound/query"
 	"github.com/baothaihcmut/Ecommerce-Go/users/internal/core/port/outbound"
 	"github.com/baothaihcmut/Ecommerce-Go/users/internal/core/queries"
+	resultCommand "github.com/baothaihcmut/Ecommerce-Go/users/internal/core/results/command"
+	resultquery "github.com/baothaihcmut/Ecommerce-Go/users/internal/core/results/query"
 )
 
 var (
@@ -52,7 +55,7 @@ func (u *UserService) toUserDomain(command *commands.CreateUserCommand) (*user.U
 }
 
 // CreateUser implements inbound.UserService.
-func (u *UserService) CreateUser(ctx context.Context, command *commands.CreateUserCommand) (*user.User, error) {
+func (u *UserService) CreateUser(ctx context.Context, command *commands.CreateUserCommand) (*resultCommand.CreateUserCommandResult, error) {
 	user, err := u.toUserDomain(command)
 	if err != nil {
 		return nil, err
@@ -91,7 +94,15 @@ func (u *UserService) CreateUser(ctx context.Context, command *commands.CreateUs
 
 	select {
 	case <-doneCh:
-		return user, tx.Commit()
+		return &resultCommand.CreateUserCommandResult{
+			Id:          user.Id,
+			Email:       user.Email,
+			PhoneNumber: user.PhoneNumber,
+			FirstName:   user.FirstName,
+			LastName:    user.LastName,
+			Customer:    user.Customer,
+			ShopOwner:   user.ShopOwner,
+		}, tx.Commit()
 	case err := <-errCh:
 		return nil, err
 	case <-ctx.Done():
@@ -100,7 +111,7 @@ func (u *UserService) CreateUser(ctx context.Context, command *commands.CreateUs
 }
 
 // FindUserById implements inbound.UserService.
-func (u *UserService) FindUserById(ctx context.Context, q *queries.FindUserByIdQuery) (*user.User, error) {
+func (u *UserService) FindUserById(ctx context.Context, q *queries.FindUserByIdQuery) (*resultquery.UserQueryResult, error) {
 	userId, err := valueobject.NewUserId(q.Id)
 	if err != nil {
 		return nil, err
@@ -116,7 +127,15 @@ func (u *UserService) FindUserById(ctx context.Context, q *queries.FindUserByIdQ
 	}()
 	select {
 	case user := <-doneCh:
-		return user, nil
+		return &resultquery.UserQueryResult{
+			Id:          user.Id,
+			Email:       user.Email,
+			PhoneNumber: user.PhoneNumber,
+			FirstName:   user.FirstName,
+			LastName:    user.LastName,
+			Customer:    user.Customer,
+			ShopOwner:   user.ShopOwner,
+		}, nil
 	case err := <-errCh:
 		return nil, err
 	case <-ctx.Done():
@@ -124,9 +143,15 @@ func (u *UserService) FindUserById(ctx context.Context, q *queries.FindUserByIdQ
 	}
 }
 
-func NewUserService(userRepo outbound.UserRepository, dbSource *sql.DB) inbound.UserService {
+func NewUserCommandPort(userRepo outbound.UserRepository, dbSource *sql.DB) inboundcommand.UserCommandPort {
 	return &UserService{
 		userRepo: userRepo,
 		dbSource: dbSource,
+	}
+}
+
+func NewUserQueryPort(userRepo outbound.UserRepository) inboundquery.UserQueryPort {
+	return &UserService{
+		userRepo: userRepo,
 	}
 }
