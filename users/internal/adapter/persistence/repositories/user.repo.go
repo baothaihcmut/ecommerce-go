@@ -32,6 +32,7 @@ func (repo *PostgresUserRepo) toCreateUserArg(user *user.User) *sqlc.CreateUserP
 	return &sqlc.CreateUserParams{
 		ID:          uuid.NullUUID{UUID: uuid.UUID(user.Id), Valid: true},
 		Email:       sql.NullString{String: string(user.Email), Valid: true},
+		Password:    sql.NullString{String: string(user.Password), Valid: true},
 		FirstName:   sql.NullString{String: user.FirstName, Valid: true},
 		LastName:    sql.NullString{String: user.LastName, Valid: true},
 		PhoneNumber: sql.NullString{String: string(user.PhoneNumber), Valid: true},
@@ -92,6 +93,7 @@ func (repo *PostgresUserRepo) toUserDomain(result *sqlc.FindUserByCriteriaRow, a
 	return &user.User{
 		Id:          *userId,
 		Email:       *email,
+		Password:    valueobject.Password(result.Password),
 		PhoneNumber: *phoneNumber,
 		Address:     userAddresses,
 		Role:        enums.Role(result.Role.RoleEnum),
@@ -128,6 +130,7 @@ func (repo *PostgresUserRepo) Save(ctx context.Context, user *user.User, tx *sql
 			err = repo.queries.WithTx(tx).UpdateUser(ctx, sqlc.UpdateUserParams{
 				ID:          uuid.NullUUID{UUID: uuid.UUID(user.Id), Valid: true},
 				Email:       sql.NullString{String: string(user.Email), Valid: true},
+				Password:    sql.NullString{String: string(user.Password), Valid: true},
 				FirstName:   sql.NullString{String: user.FirstName, Valid: true},
 				LastName:    sql.NullString{String: user.LastName, Valid: true},
 				PhoneNumber: sql.NullString{String: string(user.PhoneNumber), Valid: true},

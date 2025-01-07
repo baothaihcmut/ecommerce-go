@@ -9,4 +9,5 @@ import (
 
 type UserQueryPort interface {
 	FindUserById(context.Context, *queries.FindUserByIdQuery) (*result.UserQueryResult, error)
+	ValidateUser(context.Context, *queries.ValidateUserQuery) (*result.ValidateUserResult, error)
 }

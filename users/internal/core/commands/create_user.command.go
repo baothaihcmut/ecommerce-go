@@ -17,6 +17,7 @@ type ShopOwnerInfo struct {
 }
 type CreateUserCommand struct {
 	Email         string
+	Password      string
 	PhoneNumber   string
 	Addresses     []*Address
 	FirstName     string

@@ -18,8 +18,9 @@ import (
 )
 
 var (
-	ErrEmailExist       = errors.New("email exist")
-	ErrPhoneNumberExist = errors.New("phone number exist")
+	ErrEmailExist             = errors.New("email exist")
+	ErrPhoneNumberExist       = errors.New("phone number exist")
+	ErrInvalidEmailOrPassword = errors.New("User name or password incorrect")
 )
 
 type UserService struct {
@@ -36,6 +37,10 @@ func (u *UserService) toUserDomain(command *commands.CreateUserCommand) (*user.U
 	if err != nil {
 		return nil, err
 	}
+	password, err := valueobject.NewPassword(command.Password)
+	if err != nil {
+		return nil, err
+	}
 	address := make([]valueobject.Address, len(command.Addresses))
 	for idx, addr := range command.Addresses {
 		address[idx] = *valueobject.NewAddress(
@@ -45,11 +50,11 @@ func (u *UserService) toUserDomain(command *commands.CreateUserCommand) (*user.U
 
 	if command.Role == enums.CUSTOMER {
 		return user.NewCustomer(
-			*email, *phoneNumber, address, command.FirstName, command.LastName,
+			*email, password, *phoneNumber, address, command.FirstName, command.LastName,
 		)
 	} else {
 		return user.NewShopOwner(
-			*email, *phoneNumber, address, command.FirstName, command.LastName, command.ShopOwnerInfo.BussinessLincese,
+			*email, password, *phoneNumber, address, command.FirstName, command.LastName, command.ShopOwnerInfo.BussinessLincese,
 		)
 	}
 }
@@ -148,6 +153,32 @@ func NewUserCommandPort(userRepo outbound.UserRepository, dbSource *sql.DB) inbo
 		userRepo: userRepo,
 		dbSource: dbSource,
 	}
+}
+
+// ValidateUser implements inbound.UserQueryPort.
+func (u *UserService) ValidateUser(ctx context.Context, q *queries.ValidateUserQuery) (*resultquery.ValidateUserResult, error) {
+	email, err := valueobject.NewEmail(q.Email)
+	if err != nil {
+		return nil, err
+	}
+	//find user by email
+	user, err := u.userRepo.FindByEmail(ctx, *email)
+	if err != nil {
+		return nil, err
+	}
+	// if user not exist
+	if user == nil {
+		return nil, ErrInvalidEmailOrPassword
+	}
+	// if password mismatch
+	if !user.Password.Compare(q.Password) {
+		return nil, ErrInvalidEmailOrPassword
+	}
+	return &resultquery.ValidateUserResult{
+		Id:   user.Id,
+		Role: user.Role,
+	}, nil
+
 }
 
 func NewUserQueryPort(userRepo outbound.UserRepository) inboundquery.UserQueryPort {

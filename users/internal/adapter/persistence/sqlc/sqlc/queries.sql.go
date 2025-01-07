@@ -82,18 +82,20 @@ func (q *Queries) CreateShopOwner(ctx context.Context, arg CreateShopOwnerParams
 }
 
 const createUser = `-- name: CreateUser :exec
-INSERT INTO users(id,email, phone_number, first_name,last_name)
+INSERT INTO users(id,email, password ,phone_number, first_name,last_name)
 VALUES ($1,
         $2,
         $3,
         $4,
-        $5
+        $5,
+        $6
         )
 `
 
 type CreateUserParams struct {
 	ID          uuid.NullUUID
 	Email       sql.NullString
+	Password    sql.NullString
 	PhoneNumber sql.NullString
 	FirstName   sql.NullString
 	LastName    sql.NullString
@@ -103,6 +105,7 @@ func (q *Queries) CreateUser(ctx context.Context, arg CreateUserParams) error {
 	_, err := q.db.ExecContext(ctx, createUser,
 		arg.ID,
 		arg.Email,
+		arg.Password,
 		arg.PhoneNumber,
 		arg.FirstName,
 		arg.LastName,
@@ -145,7 +148,7 @@ func (q *Queries) FindAllAddressOfUser(ctx context.Context, userid uuid.NullUUID
 }
 
 const findUserByCriteria = `-- name: FindUserByCriteria :one
-SELECT id, email, phone_number, first_name, last_name, role, c.user_id, loyal_point, s.user_id, bussiness_license
+SELECT id, email, password, phone_number, first_name, last_name, role, c.user_id, loyal_point, s.user_id, bussiness_license
 FROM users u
 LEFT JOIN customers c ON u.id = c.user_id
 LEFT JOIN shop_owners s ON u.id = s.user_id
@@ -168,6 +171,7 @@ type FindUserByCriteriaParams struct {
 type FindUserByCriteriaRow struct {
 	ID               uuid.UUID
 	Email            string
+	Password         string
 	PhoneNumber      string
 	FirstName        string
 	LastName         string
@@ -184,6 +188,7 @@ func (q *Queries) FindUserByCriteria(ctx context.Context, arg FindUserByCriteria
 	err := row.Scan(
 		&i.ID,
 		&i.Email,
+		&i.Password,
 		&i.PhoneNumber,
 		&i.FirstName,
 		&i.LastName,
@@ -192,6 +197,28 @@ func (q *Queries) FindUserByCriteria(ctx context.Context, arg FindUserByCriteria
 		&i.LoyalPoint,
 		&i.UserID_2,
 		&i.BussinessLicense,
+	)
+	return i, err
+}
+
+const findUserByPhoneNumber = `-- name: FindUserByPhoneNumber :one
+SELECT id, email, password, phone_number, first_name, last_name, role
+FROM users u
+WHERE u.phone_number = $1
+LIMIT 1
+`
+
+func (q *Queries) FindUserByPhoneNumber(ctx context.Context, phonenumber sql.NullString) (User, error) {
+	row := q.db.QueryRowContext(ctx, findUserByPhoneNumber, phonenumber)
+	var i User
+	err := row.Scan(
+		&i.ID,
+		&i.Email,
+		&i.Password,
+		&i.PhoneNumber,
+		&i.FirstName,
+		&i.LastName,
+		&i.Role,
 	)
 	return i, err
 }
@@ -265,15 +292,17 @@ const updateUser = `-- name: UpdateUser :exec
 UPDATE users
 SET
     email = COALESCE($1,email),
-    phone_number = COALESCE($2,phone_number),
-    first_name = COALESCE($3,first_name),
-    last_name = COALESCE($4,last_name),
-    role = COALESCE($5,role)
-WHERE id = $6
+    password = COALESCE($2,password),
+    phone_number = COALESCE($3,phone_number),
+    first_name = COALESCE($4,first_name),
+    last_name = COALESCE($5,last_name),
+    role = COALESCE($6,role)
+WHERE id = $7
 `
 
 type UpdateUserParams struct {
 	Email       sql.NullString
+	Password    sql.NullString
 	PhoneNumber sql.NullString
 	FirstName   sql.NullString
 	LastName    sql.NullString
@@ -284,6 +313,7 @@ type UpdateUserParams struct {
 func (q *Queries) UpdateUser(ctx context.Context, arg UpdateUserParams) error {
 	_, err := q.db.ExecContext(ctx, updateUser,
 		arg.Email,
+		arg.Password,
 		arg.PhoneNumber,
 		arg.FirstName,
 		arg.LastName,

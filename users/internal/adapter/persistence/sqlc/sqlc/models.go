@@ -77,6 +77,7 @@ type ShopOwner struct {
 type User struct {
 	ID          uuid.UUID
 	Email       string
+	Password    string
 	PhoneNumber string
 	FirstName   string
 	LastName    string

@@ -15,6 +15,8 @@ func MapErrorToGrpcStatus(err error) codes.Code {
 	case err == services.ErrEmailExist ||
 		err == services.ErrPhoneNumberExist:
 		return codes.AlreadyExists
+	case err == services.ErrInvalidEmailOrPassword:
+		return codes.Unauthenticated
 	default:
 		return codes.Internal
 	}

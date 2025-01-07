@@ -47,6 +47,8 @@ func (m *UserRequestMapperImpl) ToCreateUserCommand(_ context.Context, request i
 		}
 
 	}
-
 	return dest, nil
+}
+func (m *UserRequestMapperImpl) toValidateUserCommand(_ context.Context, request interface{}) (interface{}, error) {
+	req := request.(*proto.)
 }

@@ -1,7 +1,8 @@
 -- name: CreateUser :exec
-INSERT INTO users(id,email, phone_number, first_name,last_name)
+INSERT INTO users(id,email, password ,phone_number, first_name,last_name)
 VALUES (sqlc.narg('id'),
         sqlc.narg('email'),
+        sqlc.narg('password'),
         sqlc.narg('phoneNumber'),
         sqlc.narg('firstName'),
         sqlc.narg('lastName')
@@ -11,6 +12,7 @@ VALUES (sqlc.narg('id'),
 UPDATE users
 SET
     email = COALESCE(sqlc.narg('email'),email),
+    password = COALESCE(sqlc.narg('password'),password),
     phone_number = COALESCE(sqlc.narg('phoneNumber'),phone_number),
     first_name = COALESCE(sqlc.narg('firstName'),first_name),
     last_name = COALESCE(sqlc.narg('lastName'),last_name),

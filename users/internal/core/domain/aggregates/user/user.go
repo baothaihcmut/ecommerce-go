@@ -18,6 +18,7 @@ var (
 type User struct {
 	Id          valueobject.UserId
 	Email       valueobject.Email
+	Password    valueobject.Password
 	PhoneNumber valueobject.PhoneNumber
 	Address     []valueobject.Address
 	Role        enums.Role
@@ -50,6 +51,7 @@ func validate(
 
 func NewCustomer(
 	email valueobject.Email,
+	password valueobject.Password,
 	phoneNumber valueobject.PhoneNumber,
 	address []valueobject.Address,
 	firstName string,
@@ -70,6 +72,7 @@ func NewCustomer(
 	return &User{
 		Id:          *id,
 		Email:       email,
+		Password:    password,
 		PhoneNumber: phoneNumber,
 		Address:     address,
 		Role:        enums.CUSTOMER,
@@ -81,6 +84,7 @@ func NewCustomer(
 
 func NewShopOwner(
 	email valueobject.Email,
+	passwod valueobject.Password,
 	phoneNumber valueobject.PhoneNumber,
 	address []valueobject.Address,
 	firstName string,
@@ -96,6 +100,7 @@ func NewShopOwner(
 	return &User{
 		Id:          *id,
 		Email:       email,
+		Password:    passwod,
 		PhoneNumber: phoneNumber,
 		Address:     address,
 		Role:        enums.SHOP_OWNER,
