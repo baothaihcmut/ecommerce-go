@@ -1,8 +1,8 @@
 syntax = "proto3";
 package proto;
-import "shared.proto";
+import "shared/shared.proto";
 
-option go_package = "github.com/baothaihcmut/Ecommerce-Go/users/internal/adapter/grpc/proto";
+option go_package = "github.com/baothaihcmut/Ecommerce-Go/api-gateway/internal/modules/users/proto/users";
 
 service UserService{
     rpc CreateUser(CreateUserRequest) returns (CreateUserResponse) {}
@@ -11,6 +11,7 @@ service UserService{
 enum Role {
     CUSTOMER = 0;
     SHOP_OWNER = 1;
+    ADMIN = 2;
 }
 message Address {
     int32 priority = 1;

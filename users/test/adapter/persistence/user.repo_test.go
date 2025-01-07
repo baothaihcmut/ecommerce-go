@@ -31,6 +31,9 @@ func TestCreateUser(t *testing.T) {
 	assert.NoError(t, err)
 	tx, err := db.Begin()
 	defer tx.Rollback()
+	if err != nil {
+		return
+	}
 	err = repo.Save(context.Background(), user, tx)
 	assert.NoError(t, err)
 	if err != nil {

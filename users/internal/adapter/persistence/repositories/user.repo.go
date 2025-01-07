@@ -198,7 +198,8 @@ func (repo *PostgresUserRepo) Save(ctx context.Context, user *user.User, tx *sql
 				}
 			}
 		}()
-	} else {
+	}
+	if user.Role == enums.SHOP_OWNER {
 		wg.Add(1)
 		go func() {
 			defer wg.Done()
