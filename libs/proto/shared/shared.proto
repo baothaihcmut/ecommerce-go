@@ -1,6 +1,6 @@
 syntax ="proto3";
 package proto;
-option go_package = "github.com/baothaihcmut/Ecommerce-Go/api-gateway/internal/common/proto/shared";
+// option go_package = "github.com/baothaihcmut/Ecommerce-Go/users/internal/adapter/grpc/proto";
 
 
 message Status {

@@ -2,10 +2,12 @@ syntax = "proto3";
 package proto;
 import "shared/shared.proto";
 
-option go_package = "github.com/baothaihcmut/Ecommerce-Go/api-gateway/internal/modules/users/proto/users";
+// option go_package = "github.com/baothaihcmut/Ecommerce-Go/users/internal/adapter/grpc/proto";
 
 service UserService{
     rpc CreateUser(CreateUserRequest) returns (CreateUserResponse) {}
+    rpc FindUserByEmail(FindUserByEmailRequest) returns (FindUserByEmailResponse) {}
+    rpc ValidateUser(ValidateUserRequest) returns (ValidateUserResponse) {}
 }
 
 enum Role {
@@ -28,16 +30,17 @@ message ShopOwnerInfo {
 }
 message CreateUserRequest {
     string email = 1;
-    string phoneNumber = 2;
-    repeated Address addresses = 3;
-    string firstName = 4;
-    string lastName = 5;
-    Role role = 6;
-    optional CustomerInfo customerInfo=7;
-    optional ShopOwnerInfo shopOwnerInfo = 8;
+    string password = 2;
+    string phoneNumber = 3;
+    repeated Address addresses = 4;
+    string firstName = 5;
+    string lastName = 6;
+    Role role = 7;
+    optional CustomerInfo customerInfo=8;
+    optional ShopOwnerInfo shopOwnerInfo = 9;
 }
 
-message CreateUserData {
+message UserData {
     string id = 1;
     string email = 2;
     string phoneNumber = 3;
@@ -49,6 +52,28 @@ message CreateUserData {
     optional ShopOwnerInfo shopOwnerInfo = 9;
 }
 message CreateUserResponse {
-    CreateUserData data = 1;
+    UserData data = 1;
     Status status = 2;  
+}
+
+message FindUserByEmailRequest {
+    string email = 1;
+}
+
+message FindUserByEmailResponse {
+    UserData data = 1;
+    Status status = 2;
+}
+
+message ValidateUserRequest {
+    string email = 1;
+    string password = 2;
+}
+message ValidateUserData {
+    string id = 1;
+    Role role = 2;
+}
+message ValidateUserResponse {
+    ValidateUserData data = 1;
+    Status status = 2;
 }
