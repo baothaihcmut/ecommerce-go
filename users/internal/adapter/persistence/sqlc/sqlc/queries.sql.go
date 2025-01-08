@@ -82,23 +82,27 @@ func (q *Queries) CreateShopOwner(ctx context.Context, arg CreateShopOwnerParams
 }
 
 const createUser = `-- name: CreateUser :exec
-INSERT INTO users(id,email, password ,phone_number, first_name,last_name)
+INSERT INTO users(id,email, password ,phone_number, first_name,last_name,role, current_refresh_token)
 VALUES ($1,
         $2,
         $3,
         $4,
         $5,
-        $6
+        $6,
+        $7,
+        $8
         )
 `
 
 type CreateUserParams struct {
-	ID          uuid.NullUUID
-	Email       sql.NullString
-	Password    sql.NullString
-	PhoneNumber sql.NullString
-	FirstName   sql.NullString
-	LastName    sql.NullString
+	ID                  uuid.NullUUID
+	Email               sql.NullString
+	Password            sql.NullString
+	PhoneNumber         sql.NullString
+	FirstName           sql.NullString
+	LastName            sql.NullString
+	Role                NullRoleEnum
+	CurrentRefreshToken sql.NullString
 }
 
 func (q *Queries) CreateUser(ctx context.Context, arg CreateUserParams) error {
@@ -109,6 +113,8 @@ func (q *Queries) CreateUser(ctx context.Context, arg CreateUserParams) error {
 		arg.PhoneNumber,
 		arg.FirstName,
 		arg.LastName,
+		arg.Role,
+		arg.CurrentRefreshToken,
 	)
 	return err
 }
@@ -148,7 +154,7 @@ func (q *Queries) FindAllAddressOfUser(ctx context.Context, userid uuid.NullUUID
 }
 
 const findUserByCriteria = `-- name: FindUserByCriteria :one
-SELECT id, email, password, phone_number, first_name, last_name, role, c.user_id, loyal_point, s.user_id, bussiness_license
+SELECT id, email, password, phone_number, first_name, last_name, role, current_refresh_token, c.user_id, loyal_point, s.user_id, bussiness_license
 FROM users u
 LEFT JOIN customers c ON u.id = c.user_id
 LEFT JOIN shop_owners s ON u.id = s.user_id
@@ -169,17 +175,18 @@ type FindUserByCriteriaParams struct {
 }
 
 type FindUserByCriteriaRow struct {
-	ID               uuid.UUID
-	Email            string
-	Password         string
-	PhoneNumber      string
-	FirstName        string
-	LastName         string
-	Role             NullRoleEnum
-	UserID           uuid.NullUUID
-	LoyalPoint       sql.NullInt32
-	UserID_2         uuid.NullUUID
-	BussinessLicense sql.NullString
+	ID                  uuid.UUID
+	Email               string
+	Password            string
+	PhoneNumber         string
+	FirstName           string
+	LastName            string
+	Role                NullRoleEnum
+	CurrentRefreshToken sql.NullString
+	UserID              uuid.NullUUID
+	LoyalPoint          sql.NullInt32
+	UserID_2            uuid.NullUUID
+	BussinessLicense    sql.NullString
 }
 
 func (q *Queries) FindUserByCriteria(ctx context.Context, arg FindUserByCriteriaParams) (FindUserByCriteriaRow, error) {
@@ -193,6 +200,7 @@ func (q *Queries) FindUserByCriteria(ctx context.Context, arg FindUserByCriteria
 		&i.FirstName,
 		&i.LastName,
 		&i.Role,
+		&i.CurrentRefreshToken,
 		&i.UserID,
 		&i.LoyalPoint,
 		&i.UserID_2,
@@ -202,7 +210,7 @@ func (q *Queries) FindUserByCriteria(ctx context.Context, arg FindUserByCriteria
 }
 
 const findUserByPhoneNumber = `-- name: FindUserByPhoneNumber :one
-SELECT id, email, password, phone_number, first_name, last_name, role
+SELECT id, email, password, phone_number, first_name, last_name, role, current_refresh_token
 FROM users u
 WHERE u.phone_number = $1
 LIMIT 1
@@ -219,6 +227,7 @@ func (q *Queries) FindUserByPhoneNumber(ctx context.Context, phonenumber sql.Nul
 		&i.FirstName,
 		&i.LastName,
 		&i.Role,
+		&i.CurrentRefreshToken,
 	)
 	return i, err
 }
@@ -296,18 +305,20 @@ SET
     phone_number = COALESCE($3,phone_number),
     first_name = COALESCE($4,first_name),
     last_name = COALESCE($5,last_name),
-    role = COALESCE($6,role)
-WHERE id = $7
+    role = COALESCE($6,role),
+    current_refresh_token = COALESCE($7,current_refresh_token)
+WHERE id = $8
 `
 
 type UpdateUserParams struct {
-	Email       sql.NullString
-	Password    sql.NullString
-	PhoneNumber sql.NullString
-	FirstName   sql.NullString
-	LastName    sql.NullString
-	Role        NullRoleEnum
-	ID          uuid.NullUUID
+	Email               sql.NullString
+	Password            sql.NullString
+	PhoneNumber         sql.NullString
+	FirstName           sql.NullString
+	LastName            sql.NullString
+	Role                NullRoleEnum
+	CurrentRefreshToken sql.NullString
+	ID                  uuid.NullUUID
 }
 
 func (q *Queries) UpdateUser(ctx context.Context, arg UpdateUserParams) error {
@@ -318,6 +329,7 @@ func (q *Queries) UpdateUser(ctx context.Context, arg UpdateUserParams) error {
 		arg.FirstName,
 		arg.LastName,
 		arg.Role,
+		arg.CurrentRefreshToken,
 		arg.ID,
 	)
 	return err

@@ -3,9 +3,9 @@ package endpoints
 import (
 	"context"
 
-	"github.com/baothaihcmut/Ecommerce-Go/users/internal/core/commands"
-	inboundCommand "github.com/baothaihcmut/Ecommerce-Go/users/internal/core/port/inbound/command"
-	inboundQuery "github.com/baothaihcmut/Ecommerce-Go/users/internal/core/port/inbound/query"
+	"github.com/baothaihcmut/Ecommerce-Go/users/internal/core/port/inbound/command/commands"
+	commandHandler "github.com/baothaihcmut/Ecommerce-Go/users/internal/core/port/inbound/command/handlers"
+	queryHandler "github.com/baothaihcmut/Ecommerce-Go/users/internal/core/port/inbound/query/handlers"
 	"github.com/go-kit/kit/endpoint"
 )
 
@@ -14,13 +14,13 @@ type UserEnpoints struct {
 	FindUserById endpoint.Endpoint
 }
 
-func MakeUserEndpoints(c inboundCommand.UserCommandPort, q inboundQuery.UserQueryPort) UserEnpoints {
+func MakeUserEndpoints(c commandHandler.UserCommandHandler, q queryHandler.UserQueryHandler) UserEnpoints {
 	return UserEnpoints{
 		CreateUser: makeCreateUserEndpoint(c),
 	}
 }
 
-func makeCreateUserEndpoint(s inboundCommand.UserCommandPort) endpoint.Endpoint {
+func makeCreateUserEndpoint(s commandHandler.UserCommandHandler) endpoint.Endpoint {
 	return func(ctx context.Context, request interface{}) (response interface{}, err error) {
 		req := request.(*commands.CreateUserCommand)
 		res, err := s.CreateUser(ctx, req)

@@ -1,17 +1,28 @@
 gen-proto-shared:
 	@protoc --proto_path=../libs/proto/ \
-			--go_out=./internal/adapter/grpc/proto/ \
-			--go-grpc_out=./internal/adapter/grpc/proto/ \
-			--go_opt=Mshared/shared.proto=./shared \
-			--go-grpc_opt=Mshared/shared.proto=./shared \
-			"../libs/proto/shared/shared.proto"
+			--go_out=./internal/adapter/grpc \
+			--go-grpc_out=./internal/adapter/grpc \
+			--go_opt=Mshared.proto=./proto \
+			--go-grpc_opt=Mshared.proto=./proto \
+			"../libs/proto/shared.proto"
 gen-proto-users:
-	@protoc --proto_path=../libs/proto/ \
-			--go_out=./internal/adapter/grpc/proto \
-			--go-grpc_out=./internal/adapter/grpc/proto \
-			--go_opt=Musers/user.proto=./users \
-			--go-grpc_opt=Musers=./users \
-			"../libs/proto/users/user.proto"
+	@protoc --proto_path "../libs/proto/" \
+			--go_out "./internal/adapter/grpc" \
+			--go-grpc_out "./internal/adapter/grpc" \
+			--go_opt "Mshared.proto=./proto" \
+			--go-grpc_opt=Mshared.proto=./proto \
+			--go_opt "Muser.proto=./proto" \
+			--go-grpc_opt=Muser.proto=./proto \
+			"../libs/proto/user.proto"
+gen-proto-auth:
+	@protoc --proto_path "../libs/proto/" \
+			--go_out "./internal/adapter/grpc" \
+			--go-grpc_out "./internal/adapter/grpc" \
+			--go_opt "Mshared.proto=./proto" \
+			--go-grpc_opt=Mshared.proto=./proto \
+			--go_opt "Mauth.proto=./proto" \
+			--go-grpc_opt=Mauth.proto=./proto \
+			"../libs/proto/auth.proto"
 gen-sqlc:
 	@cd internal/adapter/persistence/sqlc && sqlc generate
 	@cd ../../../../

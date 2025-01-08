@@ -12,6 +12,14 @@ type Config struct {
 	Server   ServerConfig
 	Database DatabaseConfig
 	Consol   ConsulConfig
+	Jwt      JwtConfig
+}
+
+type JwtConfig struct {
+	AccessTokenSecret  string
+	AccessTokenAge     int
+	RefreshTokenSecret string
+	RefreshTokenAge    int
 }
 
 type ServerConfig struct {
@@ -91,6 +99,12 @@ func LoadConfig(env string) (*Config, error) {
 		Consol: ConsulConfig{
 			Host: getEnvString("CONSUL_HOST", "localhost"),
 			Port: getEnvInt("CONSUL_PORT", 8500),
+		},
+		Jwt: JwtConfig{
+			AccessTokenSecret:  getEnvString("JWT_ACCESS_TOKEN_SECRET", "access_token_access_secret"),
+			AccessTokenAge:     getEnvInt("JWT_ACCESS_TOKEN_AGE", 3),
+			RefreshTokenSecret: getEnvString("JWT_REFRESH_TOKEN_SECRET", "refresh_token_access_secret"),
+			RefreshTokenAge:    getEnvInt("JWT_REFRESH_TOKEN_AGE", 7),
 		},
 	}, nil
 

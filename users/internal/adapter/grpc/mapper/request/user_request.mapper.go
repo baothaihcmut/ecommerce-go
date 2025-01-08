@@ -4,8 +4,8 @@ import (
 	"context"
 
 	"github.com/baothaihcmut/Ecommerce-Go/users/internal/adapter/grpc/proto"
-	"github.com/baothaihcmut/Ecommerce-Go/users/internal/core/commands"
 	"github.com/baothaihcmut/Ecommerce-Go/users/internal/core/domain/enums"
+	"github.com/baothaihcmut/Ecommerce-Go/users/internal/core/port/inbound/command/commands"
 )
 
 type UserRequestMapper interface {
@@ -48,7 +48,4 @@ func (m *UserRequestMapperImpl) ToCreateUserCommand(_ context.Context, request i
 
 	}
 	return dest, nil
-}
-func (m *UserRequestMapperImpl) toValidateUserCommand(_ context.Context, request interface{}) (interface{}, error) {
-	req := request.(*proto.)
 }

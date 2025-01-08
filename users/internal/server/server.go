@@ -15,9 +15,11 @@ import (
 	"github.com/baothaihcmut/Ecommerce-Go/users/internal/adapter/grpc/mapper/response"
 	"github.com/baothaihcmut/Ecommerce-Go/users/internal/adapter/grpc/proto"
 	"github.com/baothaihcmut/Ecommerce-Go/users/internal/adapter/grpc/transports"
+	"github.com/baothaihcmut/Ecommerce-Go/users/internal/adapter/jwt"
 	"github.com/baothaihcmut/Ecommerce-Go/users/internal/adapter/persistence/repositories"
 	"github.com/baothaihcmut/Ecommerce-Go/users/internal/config"
-	"github.com/baothaihcmut/Ecommerce-Go/users/internal/core/services"
+	commandService "github.com/baothaihcmut/Ecommerce-Go/users/internal/core/services/command"
+	queryService "github.com/baothaihcmut/Ecommerce-Go/users/internal/core/services/query"
 	"github.com/go-kit/log"
 	"github.com/go-kit/log/level"
 	"github.com/hashicorp/consul/api"
@@ -46,12 +48,15 @@ func NewServer(db *sql.DB, logger log.Logger, cfg *config.Config, consol *api.Cl
 func (s *Server) Start() {
 	//init repository
 	userRepo := repositories.NewPostgresUserRepo(s.db)
+	jwtPort := jwt.NewJwtAdapter(&s.config.Jwt)
 	//init command
-	userCommand := services.NewUserCommandPort(userRepo, s.db)
+	userCommand := commandService.NewUserCommandService(userRepo, s.db)
+	authCommand := commandService.NewAuthCommandService(userRepo, jwtPort)
 	// init query
-	userQuery := services.NewUserQueryPort(userRepo)
+	userQuery := queryService.NewUserQueryService(userRepo)
 	//init enpoint
 	userEndpoint := endpoints.MakeUserEndpoints(userCommand, userQuery)
+	_ = endpoints.MakeAuthEndpoints(authCommand)
 	//init mapper
 	userReqMapper := request.NewUserRequestMapper()
 	userResponseMapper := response.NewUserResponseMapper()

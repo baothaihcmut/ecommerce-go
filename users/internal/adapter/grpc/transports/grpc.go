@@ -31,7 +31,7 @@ func (g *GrpcServer) CreateUser(ctx context.Context, req *proto.CreateUserReques
 		}, err
 	}
 	return &proto.CreateUserResponse{
-		Data: resp.(*proto.CreateUserData),
+		Data: resp.(*proto.UserData),
 		Status: &proto.Status{
 			Success: true,
 			Message: "Create user successfully",

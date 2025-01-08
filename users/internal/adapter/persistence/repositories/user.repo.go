@@ -30,12 +30,13 @@ func NewPostgresUserRepo(db *sql.DB) outbound.UserRepository {
 
 func (repo *PostgresUserRepo) toCreateUserArg(user *user.User) *sqlc.CreateUserParams {
 	return &sqlc.CreateUserParams{
-		ID:          uuid.NullUUID{UUID: uuid.UUID(user.Id), Valid: true},
-		Email:       sql.NullString{String: string(user.Email), Valid: true},
-		Password:    sql.NullString{String: string(user.Password), Valid: true},
-		FirstName:   sql.NullString{String: user.FirstName, Valid: true},
-		LastName:    sql.NullString{String: user.LastName, Valid: true},
-		PhoneNumber: sql.NullString{String: string(user.PhoneNumber), Valid: true},
+		ID:                  uuid.NullUUID{UUID: uuid.UUID(user.Id), Valid: true},
+		Email:               sql.NullString{String: string(user.Email), Valid: true},
+		Password:            sql.NullString{String: string(user.Password), Valid: true},
+		FirstName:           sql.NullString{String: user.FirstName, Valid: true},
+		LastName:            sql.NullString{String: user.LastName, Valid: true},
+		PhoneNumber:         sql.NullString{String: string(user.PhoneNumber), Valid: true},
+		CurrentRefreshToken: sql.NullString{String: user.CurrentRefreshToken.Value, Valid: (user.CurrentRefreshToken != nil)},
 	}
 }
 

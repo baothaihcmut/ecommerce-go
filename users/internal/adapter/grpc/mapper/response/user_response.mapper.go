@@ -28,7 +28,7 @@ func (m *UserResponseMapperImpl) ToCreateUserResponse(_ context.Context, respons
 			Province: addr.Province,
 		}
 	}
-	dest := &proto.CreateUserData{
+	dest := &proto.UserData{
 		Id:          uuid.UUID(res.Id).String(),
 		FirstName:   res.FirstName,
 		LastName:    res.LastName,
