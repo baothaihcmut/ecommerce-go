@@ -9,4 +9,5 @@ import (
 
 type AuthCommandHandler interface {
 	Login(context.Context, *commands.LoginCommand) (*results.LoginCommandResult, error)
+	SignUp(context.Context, *commands.SignUpCommand) (*results.SignUpCommandResult, error)
 }

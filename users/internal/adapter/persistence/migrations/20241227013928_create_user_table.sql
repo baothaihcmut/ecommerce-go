@@ -1,6 +1,6 @@
 -- +goose Up
 -- +goose StatementBegin
-CREATE TYPE role_enum AS ENUM ('admin', 'customer', 'shop_owner');
+CREATE TYPE role_enum AS ENUM ('ADMIN', 'CUSTOMER', 'SHOP_OWNER');
 CREATE TABLE users(
     id UUID PRIMARY KEY,
     email VARCHAR(100) UNIQUE NOT NULL,
@@ -8,7 +8,7 @@ CREATE TABLE users(
     phone_number VARCHAR(100) UNIQUE NOT NULL,
     first_name VARCHAR(100) NOT NULL,
     last_name VARCHAR(100) NOT NULL,
-    role role_enum DEFAULT 'customer',
+    role role_enum DEFAULT 'CUSTOMER',
     current_refresh_token TEXT
 );
 -- +goose StatementEnd

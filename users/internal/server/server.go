@@ -45,24 +45,28 @@ func NewServer(db *sql.DB, logger log.Logger, cfg *config.Config, consol *api.Cl
 	}
 }
 
-func (s *Server) Start() {
+func (s *Server) Start(env string) {
 	//init repository
 	userRepo := repositories.NewPostgresUserRepo(s.db)
 	jwtPort := jwt.NewJwtAdapter(&s.config.Jwt)
 	//init command
 	userCommand := commandService.NewUserCommandService(userRepo, s.db)
-	authCommand := commandService.NewAuthCommandService(userRepo, jwtPort)
+	authCommand := commandService.NewAuthCommandService(userRepo, jwtPort, s.db)
 	// init query
 	userQuery := queryService.NewUserQueryService(userRepo)
 	//init enpoint
 	userEndpoint := endpoints.MakeUserEndpoints(userCommand, userQuery)
-	_ = endpoints.MakeAuthEndpoints(authCommand)
+	authEndpoints := endpoints.MakeAuthEndpoints(authCommand)
 	//init mapper
 	userReqMapper := request.NewUserRequestMapper()
 	userResponseMapper := response.NewUserResponseMapper()
+	authRequestMapper := request.NewAuthRequestMapper()
+	authResponseMapper := response.NewAuthResponseMapper()
 
 	//init grpc server
-	grpcServer := transports.NewGrpcServer(userEndpoint, userReqMapper, userResponseMapper)
+	authServer := transports.NewAuthServer(authEndpoints, authRequestMapper, authResponseMapper)
+	userServer := transports.NewUserServer(userEndpoint, userReqMapper, userResponseMapper)
+
 	err := make(chan error)
 	go func() {
 		c := make(chan os.Signal, 1)
@@ -92,38 +96,43 @@ func (s *Server) Start() {
 	baseServer := grpc.NewServer(serverOptions...)
 	doneHealth := make(chan interface{})
 	go func() {
-		<-doneHealth
-		//register service
-		registration := &api.AgentServiceRegistration{
-			ID:      "users-service-1",
-			Name:    "users-service",
-			Port:    s.config.Server.Port,
-			Tags:    []string{"grpc", "v1"},
-			Address: s.config.Server.Host,
-			Check: &api.AgentServiceCheck{
-				GRPC:     fmt.Sprintf("%s:%d", s.config.Server.Host, s.config.Server.Port),
-				Interval: "10s",
-			},
-		}
-		err := s.consol.Agent().ServiceRegister(registration)
-		if err != nil {
-			level.Error(s.logger).Log("msg", "failed to register service", "err", err)
-			panic(err)
+		if env != "dev" {
+			<-doneHealth
+			//register service
+			registration := &api.AgentServiceRegistration{
+				ID:      "users-service-1",
+				Name:    "users-service",
+				Port:    s.config.Server.Port,
+				Tags:    []string{"grpc", "v1"},
+				Address: s.config.Server.Host,
+				Check: &api.AgentServiceCheck{
+					GRPC:     fmt.Sprintf("%s:%d", s.config.Server.Host, s.config.Server.Port),
+					Interval: "10s",
+				},
+			}
+			err := s.consol.Agent().ServiceRegister(registration)
+			if err != nil {
+				level.Error(s.logger).Log("msg", "failed to register service", "err", err)
+				panic(err)
+			}
 		}
 		//base server
-		proto.RegisterUserServiceServer(baseServer, grpcServer)
+
+		proto.RegisterUserServiceServer(baseServer, userServer)
+		proto.RegisterAuthServiceServer(baseServer, authServer)
 		level.Info(s.logger).Log("msg", "Server started successfully 🚀")
 		baseServer.Serve(grpcListener)
 	}()
+	if env != "dev" {
+		go func() {
+			//health check server
+			healthCheckServer := health.NewServer()
+			healthCheckServer.SetServingStatus("OK", grpc_health_v1.HealthCheckResponse_SERVING)
+			grpc_health_v1.RegisterHealthServer(baseServer, healthCheckServer)
+			doneHealth <- true
 
-	go func() {
-		//health check server
-		healthCheckServer := health.NewServer()
-		healthCheckServer.SetServingStatus("OK", grpc_health_v1.HealthCheckResponse_SERVING)
-		grpc_health_v1.RegisterHealthServer(baseServer, healthCheckServer)
-		doneHealth <- true
-
-	}()
+		}()
+	}
 
 	level.Error(s.logger).Log("exit", <-err)
 }

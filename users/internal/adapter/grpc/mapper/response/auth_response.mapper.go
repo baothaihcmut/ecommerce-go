@@ -9,14 +9,26 @@ import (
 
 type AuthResponseMapper interface {
 	ToLoginResult(context.Context, interface{}) (interface{}, error)
+	ToSignUpResult(_ context.Context, res interface{}) (interface{}, error)
 }
 
 type AuthResponseMapperImpl struct{}
 
 func (m *AuthResponseMapperImpl) ToLoginResult(_ context.Context, res interface{}) (interface{}, error) {
-	resp := res.(commandResult.LoginCommandResult)
+	resp := res.(*commandResult.LoginCommandResult)
 	return &proto.LoginData{
 		AccessToken:  resp.AccessToken.Value,
 		RefreshToken: resp.RefreshToken.Value,
 	}, nil
+}
+
+func (m *AuthResponseMapperImpl) ToSignUpResult(_ context.Context, res interface{}) (interface{}, error) {
+	resp := res.(*commandResult.SignUpCommandResult)
+	return &proto.LoginData{
+		AccessToken:  resp.AccessToken.Value,
+		RefreshToken: resp.RefreshToken.Value,
+	}, nil
+}
+func NewAuthResponseMapper() AuthResponseMapper {
+	return &AuthResponseMapperImpl{}
 }

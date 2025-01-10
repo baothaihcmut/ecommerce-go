@@ -12,7 +12,10 @@ RUN go build -o migrate ./cmd/migrations/main.go
 FROM alpine:latest
 
 WORKDIR /root/
+# Copy migrations file
 COPY --from=builder /app/internal/adapter/persistence/migrations ./migrations
+# Copy certs
+COPY --from=builder /app/certs ./certs
 COPY --from=builder /app/migrate . 
 COPY --from=builder /app/main .
 

@@ -2,9 +2,12 @@ package services
 
 import (
 	"context"
+	"database/sql"
 	"errors"
 
 	"github.com/baothaihcmut/Ecommerce-Go/users/internal/core/domain/aggregates/user"
+	valueobject "github.com/baothaihcmut/Ecommerce-Go/users/internal/core/domain/aggregates/user/value_object"
+	"github.com/baothaihcmut/Ecommerce-Go/users/internal/core/domain/enums"
 	"github.com/baothaihcmut/Ecommerce-Go/users/internal/core/port/inbound/command/commands"
 	"github.com/baothaihcmut/Ecommerce-Go/users/internal/core/port/inbound/command/handlers"
 	"github.com/baothaihcmut/Ecommerce-Go/users/internal/core/port/inbound/command/results"
@@ -19,6 +22,7 @@ var (
 type AuthCommandService struct {
 	jwtPort  outbound.JwtPort
 	userRepo outbound.UserRepository
+	dbSource *sql.DB
 }
 
 func (s *AuthCommandService) Login(ctx context.Context, command *commands.LoginCommand) (*results.LoginCommandResult, error) {
@@ -53,9 +57,87 @@ func (s *AuthCommandService) Login(ctx context.Context, command *commands.LoginC
 	}, nil
 }
 
-func NewAuthCommandService(userRepo outbound.UserRepository, jwtPort outbound.JwtPort) handlers.AuthCommandHandler {
+func (s *AuthCommandService) toUserDomain(command *commands.SignUpCommand) (*user.User, error) {
+	email, err := valueobject.NewEmail(command.Email)
+	if err != nil {
+		return nil, err
+	}
+	phoneNumber, err := valueobject.NewPhoneNumber(command.PhoneNumber)
+	if err != nil {
+		return nil, err
+	}
+	password, err := valueobject.NewPassword(command.Password)
+	if err != nil {
+		return nil, err
+	}
+	address := make([]valueobject.Address, len(command.Addresses))
+	for idx, addr := range command.Addresses {
+		address[idx] = *valueobject.NewAddress(
+			addr.Priority, addr.Street, addr.Town, addr.City, addr.Province,
+		)
+	}
+
+	if command.Role == enums.CUSTOMER {
+		return user.NewCustomer(
+			*email, password, *phoneNumber, address, command.FirstName, command.LastName,
+		)
+	} else {
+		return user.NewShopOwner(
+			*email, password, *phoneNumber, address, command.FirstName, command.LastName, command.ShopOwnerInfo.BussinessLincese,
+		)
+	}
+}
+
+func (s *AuthCommandService) SignUp(ctx context.Context, command *commands.SignUpCommand) (*results.SignUpCommandResult, error) {
+	user, err := s.toUserDomain(command)
+	if err != nil {
+		return nil, err
+	}
+	//check if email exist
+	emailExist, err := s.userRepo.FindByEmail(ctx, user.Email)
+	if err != nil && err != sql.ErrNoRows {
+		return nil, err
+	}
+	if emailExist != nil {
+		return nil, ErrEmailExist
+	}
+
+	//check if phone number exist
+	phoneExist, err := s.userRepo.FindByPhoneNumber(ctx, user.PhoneNumber)
+	if err != nil && err != sql.ErrNoRows {
+		return nil, err
+	}
+	if phoneExist != nil {
+		return nil, ErrPhoneNumberExist
+	}
+	//generate token
+	accessToken, err := s.jwtPort.GenerateAccessToken(ctx, user)
+	if err != nil {
+		return nil, err
+	}
+	refreshToken, err := s.jwtPort.GenerateRefreshToken(ctx, user)
+	if err != nil {
+		return nil, err
+	}
+	user.SetCurrentRefreshToken(refreshToken)
+	//persist to db
+	tx, err := s.dbSource.Begin()
+	defer tx.Rollback()
+	if err != nil {
+		return nil, err
+	}
+	s.userRepo.Save(ctx, user, tx)
+	return &results.SignUpCommandResult{
+		AccessToken:  accessToken,
+		RefreshToken: refreshToken,
+	}, tx.Commit()
+
+}
+
+func NewAuthCommandService(userRepo outbound.UserRepository, jwtPort outbound.JwtPort, dbSource *sql.DB) handlers.AuthCommandHandler {
 	return &AuthCommandService{
 		userRepo: userRepo,
 		jwtPort:  jwtPort,
+		dbSource: dbSource,
 	}
 }

@@ -24,9 +24,11 @@ func main() {
 	}
 
 	dbSource := fmt.Sprintf(
-		("%s://%s:%s@%s:%d/%s?sslmode=disable"),
+		("%s://%s:%s@%s:%d/%s?ssl=%t&ssl_mode=%s&sslrootcert=%s"),
 		config.Database.Driver,
-		config.Database.User, config.Database.Password, config.Database.Host, config.Database.Port, config.Database.Name)
+		config.Database.User, config.Database.Password,
+		config.Database.Host, config.Database.Port, config.Database.Name,
+		config.Database.Ssl, config.Database.SslMode, config.Database.SslCertPath)
 
 	// Connect to the database
 	db, err := sql.Open(config.Database.Driver, dbSource)

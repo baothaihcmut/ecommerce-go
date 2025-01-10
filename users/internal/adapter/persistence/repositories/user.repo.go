@@ -37,6 +37,7 @@ func (repo *PostgresUserRepo) toCreateUserArg(user *user.User) *sqlc.CreateUserP
 		LastName:            sql.NullString{String: user.LastName, Valid: true},
 		PhoneNumber:         sql.NullString{String: string(user.PhoneNumber), Valid: true},
 		CurrentRefreshToken: sql.NullString{String: user.CurrentRefreshToken.Value, Valid: (user.CurrentRefreshToken != nil)},
+		Role:                sqlc.NullRoleEnum{RoleEnum: sqlc.RoleEnum(user.Role), Valid: true},
 	}
 }
 

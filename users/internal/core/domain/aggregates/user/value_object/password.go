@@ -1,6 +1,8 @@
 package valueobject
 
-import "golang.org/x/crypto/bcrypt"
+import (
+	"golang.org/x/crypto/bcrypt"
+)
 
 type Password string
 
@@ -13,6 +15,6 @@ func NewPassword(password string) (Password, error) {
 }
 
 func (p Password) Compare(password string) bool {
-	err := bcrypt.CompareHashAndPassword([]byte(string(p)), []byte(password))
+	err := bcrypt.CompareHashAndPassword([]byte(p), []byte(password))
 	return err == nil
 }

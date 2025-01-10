@@ -28,12 +28,16 @@ func main() {
 		panic(err)
 	}
 	//db connection
-	connStr := fmt.Sprintf("user=%s password=%s dbname=%s host=%s port=%d sslmode=disable",
+	connStr := fmt.Sprintf("user=%s password=%s dbname=%s host=%s port=%d sslmode=%s ssl=%t sslrootcert=%s",
 		config.Database.User,
 		config.Database.Password,
 		config.Database.Name,
 		config.Database.Host,
-		config.Database.Port)
+		config.Database.Port,
+		config.Database.SslMode,
+		config.Database.Ssl,
+		config.Database.SslCertPath,
+	)
 	db, err := sql.Open("postgres", connStr)
 	if err != nil {
 		level.Error(logger).Log("exit", err)
@@ -49,5 +53,5 @@ func main() {
 	}
 
 	server := server.NewServer(db, logger, config, consolClient)
-	server.Start()
+	server.Start(flag.Arg(0))
 }

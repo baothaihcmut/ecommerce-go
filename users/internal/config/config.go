@@ -32,12 +32,15 @@ type ServerConfig struct {
 }
 
 type DatabaseConfig struct {
-	Driver   string
-	Host     string
-	Port     int
-	User     string
-	Password string
-	Name     string
+	Driver      string
+	Host        string
+	Port        int
+	User        string
+	Password    string
+	Name        string
+	Ssl         bool
+	SslMode     string
+	SslCertPath string
 }
 
 type ConsulConfig struct {
@@ -62,15 +65,15 @@ func getEnvInt(key string, fallback int) int {
 	return fallback
 }
 
-//	func getEnvBool(key string, fallback bool) bool {
-//		if value, exists := os.LookupEnv(key); exists {
-//			if boolValue, err := strconv.ParseBool(value); err == nil {
-//				return boolValue
-//			}
-//			log.Printf("Warning: Could not parse environment variable %s as bool, using fallback %t", key, fallback)
-//		}
-//		return fallback
-//	}
+func getEnvBool(key string, fallback bool) bool {
+	if value, exists := os.LookupEnv(key); exists {
+		if boolValue, err := strconv.ParseBool(value); err == nil {
+			return boolValue
+		}
+		log.Printf("Warning: Could not parse environment variable %s as bool, using fallback %t", key, fallback)
+	}
+	return fallback
+}
 func LoadConfig(env string) (*Config, error) {
 
 	if env == "dev" {
@@ -89,12 +92,15 @@ func LoadConfig(env string) (*Config, error) {
 			Timeout:           getEnvInt("TIMEOUT", 20),
 		},
 		Database: DatabaseConfig{
-			Driver:   getEnvString("DB_DRIVER", "postgres"),
-			Host:     getEnvString("DB_HOST", "localhost"),
-			Port:     getEnvInt("DB_PORT", 5432),
-			User:     getEnvString("DB_USER", "postgres"),
-			Password: getEnvString("DB_PASSWORD", "postgres"),
-			Name:     getEnvString("DB_NAME", "user"),
+			Driver:      getEnvString("DB_DRIVER", "postgres"),
+			Host:        getEnvString("DB_HOST", "localhost"),
+			Port:        getEnvInt("DB_PORT", 5432),
+			User:        getEnvString("DB_USER", "postgres"),
+			Password:    getEnvString("DB_PASSWORD", "postgres"),
+			Name:        getEnvString("DB_NAME", "user"),
+			Ssl:         getEnvBool("DB_SSL", false),
+			SslMode:     getEnvString("DB_SSL_MODE", "disable"),
+			SslCertPath: getEnvString("DB_SSL_CERT_PATH", ""),
 		},
 		Consol: ConsulConfig{
 			Host: getEnvString("CONSUL_HOST", "localhost"),

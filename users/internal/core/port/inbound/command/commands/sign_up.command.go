@@ -15,7 +15,7 @@ type CustomerInfo struct {
 type ShopOwnerInfo struct {
 	BussinessLincese string
 }
-type CreateUserCommand struct {
+type SignUpCommand struct {
 	Email         string
 	Password      string
 	PhoneNumber   string

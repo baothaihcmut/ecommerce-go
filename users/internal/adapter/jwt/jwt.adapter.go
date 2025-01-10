@@ -53,8 +53,8 @@ func (j *JwtAdapter) GenerateAccessToken(_ context.Context, u *user.User) (value
 		UserId: uuid.UUID(u.Id),
 		Role:   string(u.Role),
 	}
-	token := jwt.NewWithClaims(jwt.SigningMethodES256, claims)
-	tokenString, err := token.SignedString(j.jwtConfig.AccessTokenSecret)
+	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
+	tokenString, err := token.SignedString([]byte(j.jwtConfig.AccessTokenSecret))
 	if err != nil {
 		return valueobject.Token{}, err
 	}
@@ -72,8 +72,8 @@ func (j *JwtAdapter) GenerateRefreshToken(_ context.Context, u *user.User) (valu
 		},
 		UserId: uuid.UUID(u.Id),
 	}
-	token := jwt.NewWithClaims(jwt.SigningMethodES256, claims)
-	tokenString, err := token.SignedString(j.jwtConfig.RefreshTokenSecret)
+	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
+	tokenString, err := token.SignedString([]byte(j.jwtConfig.RefreshTokenSecret))
 	if err != nil {
 		return valueobject.Token{}, err
 	}
