@@ -5,7 +5,6 @@ package proto;
 
 message Status {
     bool success = 1;
-    string code = 2;
-    string message = 3;
-    repeated string details = 4;
+    string message = 2;
+    repeated string details = 3;
 }

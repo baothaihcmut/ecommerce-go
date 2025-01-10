@@ -5,6 +5,7 @@ import "shared.proto";
 
 service AuthService {
     rpc Login(LoginRequest) returns (LoginResponse);
+    rpc SignUp(SignUpRequest) returns (SignUpResponse);
 }
 
 
@@ -22,4 +23,38 @@ message LoginResponse {
     LoginData data = 1;
     Status status = 2;
 
+}
+enum Role {
+    CUSTOMER = 0;
+    SHOP_OWNER = 1;
+    ADMIN = 2;
+}
+message Address {
+    int32 priority = 1;
+    string street = 2;
+    string town = 3;
+    string city = 4;
+    string province = 5;
+}
+message CustomerInfo {
+
+}
+message ShopOwnerInfo {
+    string bussinessLincese=1;
+}
+message SignUpRequest {
+    string email = 1;
+    string password = 2;
+    string phoneNumber = 3;
+    repeated Address addresses = 4;
+    string firstName = 5;
+    string lastName = 6;
+    Role role = 7;
+    optional CustomerInfo customerInfo=8;
+    optional ShopOwnerInfo shopOwnerInfo = 9;
+}
+
+message SignUpResponse{
+    LoginData data = 1;
+    Status status = 2;
 }
