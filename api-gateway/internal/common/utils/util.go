@@ -5,38 +5,24 @@ import (
 	"net/http"
 
 	"github.com/baothaihcmut/Ecommerce-Go/api-gateway/internal/common/response"
-	"github.com/baothaihcmut/Ecommerce-Go/api-gateway/internal/modules/users/dtos"
-	proto "github.com/baothaihcmut/Ecommerce-Go/api-gateway/internal/modules/users/proto/users"
+
 	"google.golang.org/grpc/codes"
 )
 
-func MapRole(role dtos.Role) proto.Role {
-	switch role {
-	case dtos.ADMIN:
-		return proto.Role_ADMIN
-	case dtos.USER:
-		return proto.Role_CUSTOMER
-	case dtos.SHOP_OWNER:
-		return proto.Role_SHOP_OWNER
-	default:
-		return proto.Role_CUSTOMER
-	}
-}
-
-func MapGrpcCodeToHttpCode(code string) int {
+func MapGrpcCodeToHttpCode(code codes.Code) int {
 
 	switch code {
-	case codes.OK.String():
+	case codes.OK:
 		return http.StatusOK
-	case codes.AlreadyExists.String():
+	case codes.AlreadyExists:
 		return http.StatusConflict
-	case codes.NotFound.String():
+	case codes.NotFound:
 		return http.StatusNotFound
-	case codes.PermissionDenied.String():
+	case codes.PermissionDenied:
 		return http.StatusForbidden
-	case codes.Unauthenticated.String():
+	case codes.Unauthenticated:
 		return http.StatusUnauthorized
-	case codes.InvalidArgument.String():
+	case codes.InvalidArgument:
 		return http.StatusBadRequest
 	default:
 		return 500

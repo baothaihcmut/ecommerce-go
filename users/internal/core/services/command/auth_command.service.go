@@ -25,6 +25,8 @@ type AuthCommandService struct {
 	dbSource *sql.DB
 }
 
+// VerifyToken implements handlers.AuthCommandHandler.
+
 func (s *AuthCommandService) Login(ctx context.Context, command *commands.LoginCommand) (*results.LoginCommandResult, error) {
 	//get user from db
 	userDb, err := s.userRepo.FindByEmail(ctx, command.Email)
@@ -132,6 +134,26 @@ func (s *AuthCommandService) SignUp(ctx context.Context, command *commands.SignU
 		RefreshToken: refreshToken,
 	}, tx.Commit()
 
+}
+func (s *AuthCommandService) VerifyToken(ctx context.Context, command *commands.VerifyTokenCommand) (*results.VerifyTokenCommandResult, error) {
+	if command.Token.TokenType == enums.ACCESS_TOKEN {
+		accesToken, err := s.jwtPort.DecodeAccessToken(ctx, command.Token)
+		if err != nil {
+			return nil, err
+		}
+		return &results.VerifyTokenCommandResult{
+			Id:   accesToken.Id,
+			Role: accesToken.Role,
+		}, nil
+	} else {
+		refreshToken, err := s.jwtPort.DecodeRefreshToken(ctx, command.Token)
+		if err != nil {
+			return nil, err
+		}
+		return &results.VerifyTokenCommandResult{
+			Id: refreshToken.Id,
+		}, nil
+	}
 }
 
 func NewAuthCommandService(userRepo outbound.UserRepository, jwtPort outbound.JwtPort, dbSource *sql.DB) handlers.AuthCommandHandler {

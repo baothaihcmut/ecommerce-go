@@ -11,8 +11,6 @@ import (
 
 	"github.com/baothaihcmut/Ecommerce-Go/api-gateway/internal/config"
 	"github.com/baothaihcmut/Ecommerce-Go/api-gateway/internal/modules/discovery"
-	userHandler "github.com/baothaihcmut/Ecommerce-Go/api-gateway/internal/modules/users/handlers"
-	userRouter "github.com/baothaihcmut/Ecommerce-Go/api-gateway/internal/modules/users/routers"
 	"github.com/go-kit/kit/log/level"
 	"github.com/go-kit/log"
 	"github.com/gorilla/handlers"
@@ -38,17 +36,9 @@ func (s *Server) Run() {
 	//init Service
 	discoveryService := discovery.NewDiscoveryService(s.ConsulClient)
 
-	//init handler
-	userHandler := userHandler.NewUserHandler(discoveryService)
-
-	//init router
-	userRouter := userRouter.NewUserRouter(userHandler, s.Logger)
-
 	//add middleware
 	r := mux.NewRouter()
 	r.Use(handlers.CORS())
-
-	userRouter.InitRouter(r)
 
 	go func() {
 		if err := http.ListenAndServe(fmt.Sprintf(":%d", s.Cfg.ServerConfig.Port), r); err != nil {

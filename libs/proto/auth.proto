@@ -6,8 +6,9 @@ import "shared.proto";
 service AuthService {
     rpc Login(LoginRequest) returns (LoginResponse);
     rpc SignUp(SignUpRequest) returns (SignUpResponse);
+    rpc VerifyToken(VerifyTokenRequest) returns (VerifyTokenResponse);
 }
-
+//for log in
 
 message LoginRequest {
     string email = 1;
@@ -24,6 +25,9 @@ message LoginResponse {
     Status status = 2;
 
 }
+
+// for sign up
+
 enum Role {
     CUSTOMER = 0;
     SHOP_OWNER = 1;
@@ -56,5 +60,26 @@ message SignUpRequest {
 
 message SignUpResponse{
     LoginData data = 1;
+    Status status = 2;
+}
+
+//for verify access token
+
+enum TokenType {
+    ACCESS_TOKEN = 0;
+    REFRES_TOKEN = 1;
+}
+
+message VerifyTokenRequest {
+    string token = 1;
+    TokenType type = 2; 
+}
+message VerifyTokenData {
+    string id = 1;
+    optional Role role = 2;
+}
+
+message VerifyTokenResponse {
+    VerifyTokenData data = 1;
     Status status = 2;
 }

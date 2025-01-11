@@ -10,4 +10,5 @@ import (
 type AuthCommandHandler interface {
 	Login(context.Context, *commands.LoginCommand) (*results.LoginCommandResult, error)
 	SignUp(context.Context, *commands.SignUpCommand) (*results.SignUpCommandResult, error)
+	VerifyToken(context.Context, *commands.VerifyTokenCommand) (*results.VerifyTokenCommandResult, error)
 }

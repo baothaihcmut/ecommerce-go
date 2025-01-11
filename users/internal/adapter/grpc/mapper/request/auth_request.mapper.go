@@ -12,6 +12,7 @@ import (
 type AuthRequestMapper interface {
 	ToLoginCommand(context.Context, interface{}) (interface{}, error)
 	ToSignUpCommand(context.Context, interface{}) (interface{}, error)
+	ToVerifyTokenCommand(_ context.Context, request interface{}) (interface{}, error)
 }
 
 type AuthRequestMapperImpl struct {
@@ -60,6 +61,20 @@ func (m *AuthRequestMapperImpl) ToSignUpCommand(_ context.Context, request inter
 	}
 	return dest, nil
 }
+
+func (m *AuthRequestMapperImpl) ToVerifyTokenCommand(_ context.Context, request interface{}) (interface{}, error) {
+	req := request.(*proto.VerifyTokenRequest)
+	if req.Type == proto.TokenType_ACCESS_TOKEN {
+		return &commands.VerifyTokenCommand{
+			Token: valueobject.NewToken(req.Token, enums.ACCESS_TOKEN),
+		}, nil
+	} else {
+		return &commands.VerifyTokenCommand{
+			Token: valueobject.NewToken(req.Token, enums.REFRESH_TOKEN),
+		}, nil
+	}
+}
+
 func NewAuthRequestMapper() AuthRequestMapper {
 	return &AuthRequestMapperImpl{}
 }

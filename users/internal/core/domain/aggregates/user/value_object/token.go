@@ -16,6 +16,13 @@ type Token struct {
 	TokenType enums.TokenType
 }
 
+func NewToken(value string, tokenType enums.TokenType) Token {
+	return Token{
+		Value:     value,
+		TokenType: tokenType,
+	}
+}
+
 func (r Token) IsEqual(token Token) bool {
 
 	return r.Value == token.Value && r.TokenType == token.TokenType

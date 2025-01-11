@@ -9,14 +9,16 @@ import (
 )
 
 type AuthEndpoints struct {
-	Login  endpoint.Endpoint
-	SignUp endpoint.Endpoint
+	Login       endpoint.Endpoint
+	SignUp      endpoint.Endpoint
+	VerifyToken endpoint.Endpoint
 }
 
 func MakeAuthEndpoints(c commandHandler.AuthCommandHandler) AuthEndpoints {
 	return AuthEndpoints{
-		Login:  makeLoginEndpoint(c),
-		SignUp: makeSignUpEndpoint(c),
+		Login:       makeLoginEndpoint(c),
+		SignUp:      makeSignUpEndpoint(c),
+		VerifyToken: makeVerifyTokenEndpoint(c),
 	}
 }
 
@@ -35,6 +37,16 @@ func makeSignUpEndpoint(c commandHandler.AuthCommandHandler) endpoint.Endpoint {
 	return func(ctx context.Context, request interface{}) (response interface{}, err error) {
 		req := request.(*commands.SignUpCommand)
 		res, err := c.SignUp(ctx, req)
+		if err != nil {
+			return nil, err
+		}
+		return res, nil
+	}
+}
+func makeVerifyTokenEndpoint(c commandHandler.AuthCommandHandler) endpoint.Endpoint {
+	return func(ctx context.Context, request interface{}) (response interface{}, err error) {
+		req := request.(*commands.VerifyTokenCommand)
+		res, err := c.VerifyToken(ctx, req)
 		if err != nil {
 			return nil, err
 		}

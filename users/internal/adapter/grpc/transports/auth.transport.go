@@ -12,8 +12,9 @@ import (
 )
 
 type AuthServer struct {
-	LoginHandler  gt.Handler
-	SignUpHandler gt.Handler
+	LoginHandler       gt.Handler
+	SignUpHandler      gt.Handler
+	VerifyTokenHandler gt.Handler
 }
 
 func NewAuthServer(
@@ -31,6 +32,11 @@ func NewAuthServer(
 			endpoints.SignUp,
 			requestMapper.ToSignUpCommand,
 			responseMapper.ToSignUpResult,
+		),
+		VerifyTokenHandler: gt.NewServer(
+			endpoints.VerifyToken,
+			requestMapper.ToVerifyTokenCommand,
+			responseMapper.ToVerifyTokenResult,
 		),
 	}
 }
@@ -73,6 +79,28 @@ func (s *AuthServer) SignUp(ctx context.Context, req *proto.SignUpRequest) (*pro
 		Status: &proto.Status{
 			Success: true,
 			Message: "Create user successfully",
+			Details: []string{},
+		},
+	}, nil
+}
+
+func (s *AuthServer) VerifyToken(ctx context.Context, req *proto.VerifyTokenRequest) (*proto.VerifyTokenResponse, error) {
+	_, resp, err := s.VerifyTokenHandler.ServeGRPC(ctx, req)
+	if err != nil {
+		return &proto.VerifyTokenResponse{
+			Data: nil,
+			Status: &proto.Status{
+				Message: err.Error(),
+				Details: []string{err.Error()},
+				Success: false,
+			},
+		}, status.Error(MapErrorToGrpcStatus(err), err.Error())
+	}
+	return &proto.VerifyTokenResponse{
+		Data: resp.(*proto.VerifyTokenData),
+		Status: &proto.Status{
+			Success: true,
+			Message: "Verify token success",
 			Details: []string{},
 		},
 	}, nil

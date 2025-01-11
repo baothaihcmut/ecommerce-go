@@ -7,6 +7,7 @@
 package proto
 
 import (
+	proto "github.com/baothaihcmut/Ecommerce-Go/api-gateway/internal/common/grpc/proto"
 	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
 	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
 	reflect "reflect"
@@ -222,7 +223,7 @@ func (x *LoginData) GetRefreshToken() string {
 type LoginResponse struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	Data          *LoginData             `protobuf:"bytes,1,opt,name=data,proto3" json:"data,omitempty"`
-	Status        *Status                `protobuf:"bytes,2,opt,name=status,proto3" json:"status,omitempty"`
+	Status        *proto.Status          `protobuf:"bytes,2,opt,name=status,proto3" json:"status,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -264,7 +265,7 @@ func (x *LoginResponse) GetData() *LoginData {
 	return nil
 }
 
-func (x *LoginResponse) GetStatus() *Status {
+func (x *LoginResponse) GetStatus() *proto.Status {
 	if x != nil {
 		return x.Status
 	}
@@ -538,7 +539,7 @@ func (x *SignUpRequest) GetShopOwnerInfo() *ShopOwnerInfo {
 type SignUpResponse struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	Data          *LoginData             `protobuf:"bytes,1,opt,name=data,proto3" json:"data,omitempty"`
-	Status        *Status                `protobuf:"bytes,2,opt,name=status,proto3" json:"status,omitempty"`
+	Status        *proto.Status          `protobuf:"bytes,2,opt,name=status,proto3" json:"status,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -580,7 +581,7 @@ func (x *SignUpResponse) GetData() *LoginData {
 	return nil
 }
 
-func (x *SignUpResponse) GetStatus() *Status {
+func (x *SignUpResponse) GetStatus() *proto.Status {
 	if x != nil {
 		return x.Status
 	}
@@ -694,7 +695,7 @@ func (x *VerifyTokenData) GetRole() Role {
 type VerifyTokenResponse struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	Data          *VerifyTokenData       `protobuf:"bytes,1,opt,name=data,proto3" json:"data,omitempty"`
-	Status        *Status                `protobuf:"bytes,2,opt,name=status,proto3" json:"status,omitempty"`
+	Status        *proto.Status          `protobuf:"bytes,2,opt,name=status,proto3" json:"status,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -736,7 +737,7 @@ func (x *VerifyTokenResponse) GetData() *VerifyTokenData {
 	return nil
 }
 
-func (x *VerifyTokenResponse) GetStatus() *Status {
+func (x *VerifyTokenResponse) GetStatus() *proto.Status {
 	if x != nil {
 		return x.Status
 	}
@@ -873,7 +874,7 @@ var file_auth_proto_goTypes = []any{
 	(*VerifyTokenRequest)(nil),  // 10: proto.VerifyTokenRequest
 	(*VerifyTokenData)(nil),     // 11: proto.VerifyTokenData
 	(*VerifyTokenResponse)(nil), // 12: proto.VerifyTokenResponse
-	(*Status)(nil),              // 13: proto.Status
+	(*proto.Status)(nil),        // 13: proto.Status
 }
 var file_auth_proto_depIdxs = []int32{
 	3,  // 0: proto.LoginResponse.data:type_name -> proto.LoginData
@@ -906,7 +907,6 @@ func file_auth_proto_init() {
 	if File_auth_proto != nil {
 		return
 	}
-	file_shared_proto_init()
 	file_auth_proto_msgTypes[6].OneofWrappers = []any{}
 	file_auth_proto_msgTypes[9].OneofWrappers = []any{}
 	type x struct{}

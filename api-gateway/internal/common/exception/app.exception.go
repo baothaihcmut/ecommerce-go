@@ -1,6 +1,6 @@
 package error
 
-type AppError struct {
+type AppException struct {
 	Code     int
 	Messages []string
 }
