@@ -1,5 +1,9 @@
 package config
 
+import (
+	"github.com/baothaihcmut/Ecommerce-Go/libs/pkg/config"
+)
+
 type Config struct {
 	ServerConfig ServerConfig `mapstructure:"server"`
 	ConsulConfig ConsulConfig `mapstructure:"consul"`
@@ -25,5 +29,5 @@ type LoggerConfig struct {
 }
 
 func LoadConfig() *Config {
-
+	cfg, err := config.LoadConfig()
 }
