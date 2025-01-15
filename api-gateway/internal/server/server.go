@@ -11,8 +11,8 @@ import (
 
 	"github.com/baothaihcmut/Ecommerce-Go/api-gateway/internal/config"
 	"github.com/baothaihcmut/Ecommerce-Go/api-gateway/internal/modules/discovery"
-	"github.com/go-kit/kit/log/level"
 	"github.com/go-kit/log"
+	"github.com/go-kit/log/level"
 	"github.com/gorilla/handlers"
 	"github.com/gorilla/mux"
 	"github.com/hashicorp/consul/api"

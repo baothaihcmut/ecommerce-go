@@ -9,6 +9,10 @@ github.com/armon/go-metrics v0.4.1 h1:hR91U9KYmb6bLBYLQjyM+3j+rcd/UhE+G78SFnF8gJ
 github.com/armon/go-metrics v0.4.1/go.mod h1:E6amYzXo6aW1tqzoZGT755KkbgrJsSdpwZ+3JqfkOG4=
 github.com/armon/go-radix v0.0.0-20180808171621-7fddfc383310/go.mod h1:ufUuZ+zHj4x4TnLV4JWEpy2hxWSpsRywHrMgIH9cCH8=
 github.com/armon/go-radix v1.0.0/go.mod h1:ufUuZ+zHj4x4TnLV4JWEpy2hxWSpsRywHrMgIH9cCH8=
+github.com/baothaihcmut/Ecommerce-Go v1.2.0 h1:vqMNma2jmYdMx1qkiKYCl3UC1gn/WVAiKKWXGMAWrMY=
+github.com/baothaihcmut/Ecommerce-Go v1.2.0/go.mod h1:8xk6b7ISLcCNhxYd+yM3xppFuGkKsDmbA/TXJMzGQI0=
+github.com/baothaihcmut/Ecommerce-Go/libs v0.0.0-20250115015905-3e6a85ce2945 h1:QmmHpqAmYQK4l8MTWtSfEPUAt3RE4p6+KZQU2vJPOzc=
+github.com/baothaihcmut/Ecommerce-Go/libs v0.0.0-20250115015905-3e6a85ce2945/go.mod h1:Kaz/Qnt+GF1tRpHau8UBRnuMj7mCM+Y7K2T02VeQyAA=
 github.com/beorn7/perks v0.0.0-20180321164747-3a771d992973/go.mod h1:Dwedo/Wpr24TaqPxmxbtue+5NUziq4I4S80YR8gNf3Q=
 github.com/beorn7/perks v1.0.0/go.mod h1:KWe93zE9D1o94FZ5RNwFwVgaQK1VOXiVxmqh+CedLV8=
 github.com/beorn7/perks v1.0.1/go.mod h1:G2ZrVWU2WbWT9wwq4/hrbKbnv/1ERSJQ0ibhJ6rlkpw=
