@@ -4,29 +4,19 @@ import (
 	"database/sql"
 	"flag"
 	"fmt"
-	"os"
 
+	"github.com/baothaihcmut/Ecommerce-Go/libs/pkg/logger"
 	"github.com/baothaihcmut/Ecommerce-Go/users/internal/config"
 	"github.com/baothaihcmut/Ecommerce-Go/users/internal/server"
-	"github.com/go-kit/log"
-	"github.com/go-kit/log/level"
 	"github.com/hashicorp/consul/api"
 	_ "github.com/lib/pq"
 )
 
 func main() {
-	flag.Parse()
-	if flag.NArg() == 0 {
-		panic("missing environment argument")
-	}
-	var logger log.Logger
-	logger = log.NewJSONLogger(os.Stdout)
-	logger = log.With(logger, "ts", log.DefaultTimestampUTC)
-	logger = log.With(logger, "caller", log.DefaultCaller)
-	config, err := config.LoadConfig(flag.Arg(0))
-	if err != nil {
-		panic(err)
-	}
+
+	config := config.LoadConfig()
+	logger := logger.Newlogger(config.Logger)
+
 	//db connection
 	connStr := fmt.Sprintf("user=%s password=%s dbname=%s host=%s port=%d sslmode=%s ssl=%t sslrootcert=%s",
 		config.Database.User,
@@ -40,7 +30,7 @@ func main() {
 	)
 	db, err := sql.Open("postgres", connStr)
 	if err != nil {
-		level.Error(logger).Log("exit", err)
+		logger.DPanic("err", err)
 	}
 	defer db.Close()
 
@@ -49,7 +39,7 @@ func main() {
 		Address: fmt.Sprintf("%s:%d", config.Consol.Host, config.Consol.Port),
 	})
 	if err != nil {
-		level.Error(logger).Log("exit", err)
+		logger.DPanic(err)
 	}
 
 	server := server.NewServer(db, logger, config, consolClient)

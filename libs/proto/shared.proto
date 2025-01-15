@@ -4,7 +4,7 @@ package proto;
 
 
 message Status {
-    bool success = 1;
     string message = 2;
-    repeated string details = 3;
+    string code = 3 ;
+    repeated string details = 4;
 }

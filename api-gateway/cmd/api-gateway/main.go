@@ -5,23 +5,25 @@ import (
 
 	"github.com/baothaihcmut/Ecommerce-Go/api-gateway/internal/config"
 	"github.com/baothaihcmut/Ecommerce-Go/api-gateway/internal/server"
+	"github.com/baothaihcmut/Ecommerce-Go/libs/pkg/logger"
+	"github.com/labstack/echo/v4"
 
-	"github.com/go-kit/log/level"
 	"github.com/hashicorp/consul/api"
 )
 
 func main() {
-	var config config.Config
+	config := config.LoadConfig()
 
-	cfg, err := config
-
+	logger := logger.Newlogger(config.LoggerConfig)
 	consulClient, err := api.NewClient(&api.Config{
 		Address: fmt.Sprintf("%s:%d", config.ConsulConfig.Host, config.ConsulConfig.Port),
 	})
 	if err != nil {
-		level.Error(logger).Log("err", "Error connect to Consul")
+		logger.DPanic(err)
 		panic(err)
 	}
-	s := server.NewServer(consulClient, config, &logger)
+	echo := echo.New()
+
+	s := server.NewServer(echo, consulClient, config, logger)
 	s.Run()
 }

@@ -9,50 +9,62 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/baothaihcmut/Ecommerce-Go/api-gateway/internal/common/exception"
 	"github.com/baothaihcmut/Ecommerce-Go/api-gateway/internal/config"
+	authHandler "github.com/baothaihcmut/Ecommerce-Go/api-gateway/internal/modules/auth/handlers"
+	authRouter "github.com/baothaihcmut/Ecommerce-Go/api-gateway/internal/modules/auth/routers"
 	"github.com/baothaihcmut/Ecommerce-Go/api-gateway/internal/modules/discovery"
-	"github.com/go-kit/log"
-	"github.com/go-kit/log/level"
-	"github.com/gorilla/handlers"
-	"github.com/gorilla/mux"
+	"github.com/baothaihcmut/Ecommerce-Go/libs/pkg/logger"
 	"github.com/hashicorp/consul/api"
+	"github.com/labstack/echo/v4"
 )
 
 type Server struct {
+	Echo         *echo.Echo
 	ConsulClient *api.Client
 	Cfg          *config.Config
-	Logger       *log.Logger
+	Logger       logger.ILogger
 }
 
-func NewServer(consul *api.Client, cfg *config.Config, logger *log.Logger) *Server {
+func NewServer(e *echo.Echo, consul *api.Client, cfg *config.Config, logger logger.ILogger) *Server {
 	return &Server{
+		Echo:         e,
 		ConsulClient: consul,
 		Cfg:          cfg,
 		Logger:       logger,
 	}
 }
 
+func (s *Server) initApp() {
+	discoveryService := discovery.NewDiscoveryService(s.ConsulClient)
+	//init handler
+	authHandler := authHandler.NewAuthHandler(discoveryService)
+	//init router
+	authRouter := authRouter.NewAuthRouter(authHandler)
+	authRouter.InitRouter(s.Echo)
+	//init error response
+
+	s.Echo.HTTPErrorHandler = exception.AppExceptionHandler(s.Logger)
+}
+
 func (s *Server) Run() {
 	//init Service
-	discoveryService := discovery.NewDiscoveryService(s.ConsulClient)
 
 	//add middleware
-	r := mux.NewRouter()
-	r.Use(handlers.CORS())
-
+	server := &http.Server{
+		Addr: fmt.Sprintf("%s:%d", s.Cfg.ServerConfig.Host, s.Cfg.ServerConfig.Port),
+	}
+	s.initApp()
 	go func() {
-		if err := http.ListenAndServe(fmt.Sprintf(":%d", s.Cfg.ServerConfig.Port), r); err != nil {
-			level.Error(*s.Logger).Log("err", "Error start http server")
-			panic(err)
+		if err := s.Echo.StartServer(server); err != nil {
+			s.Logger.DPanic(err)
 		}
-		level.Info(*s.Logger).Log("msg", "Server started successfully 🚀")
 	}()
 	quit := make(chan os.Signal, 1)
 	signal.Notify(quit, os.Interrupt, syscall.SIGTERM)
 	<-quit
+
 	ctx, shutdown := context.WithTimeout(context.Background(), 1*time.Second)
 	defer shutdown()
 	<-ctx.Done()
-	level.Info(*s.Logger).Log("msg", "Server gracefully stopped.")
-
 }

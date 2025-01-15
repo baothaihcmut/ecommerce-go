@@ -14,14 +14,10 @@ import (
 
 func main() {
 
-	env := flag.String("env", "development", "Environment to run the migrations")
 	migrationsFolder := flag.String("migrationsFolder", "./internal/adapter/persistence/migrations/", "Folder containing the migrations")
 	action := flag.String("action", "up", "Action to perform on the migrations")
 	flag.Parse()
-	config, err := config.LoadConfig(*env)
-	if err != nil {
-		panic(err)
-	}
+	config := config.LoadConfig()
 
 	dbSource := fmt.Sprintf(
 		("%s://%s:%s@%s:%d/%s?ssl=%t&ssl_mode=%s&sslrootcert=%s"),

@@ -3,12 +3,11 @@ package interceptors
 import (
 	"context"
 
-	"github.com/go-kit/log"
-	"github.com/go-kit/log/level"
+	"github.com/baothaihcmut/Ecommerce-Go/libs/pkg/logger"
 	"google.golang.org/grpc"
 )
 
-func LoggingInterceptor(logger log.Logger) func(ctx context.Context,
+func LoggingInterceptor(logger logger.ILogger) func(ctx context.Context,
 	req interface{},
 	info *grpc.UnaryServerInfo,
 	handler grpc.UnaryHandler) (interface{}, error) {
@@ -18,7 +17,7 @@ func LoggingInterceptor(logger log.Logger) func(ctx context.Context,
 		handler grpc.UnaryHandler) (interface{}, error) {
 		resp, err := handler(ctx, req)
 		if err != nil {
-			level.Error(logger).Log("error", err)
+			logger.Error("err", err)
 			return resp, nil
 		}
 

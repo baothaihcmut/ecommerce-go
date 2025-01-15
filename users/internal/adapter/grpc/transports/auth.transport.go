@@ -8,6 +8,7 @@ import (
 	"github.com/baothaihcmut/Ecommerce-Go/users/internal/adapter/grpc/mapper/response"
 	"github.com/baothaihcmut/Ecommerce-Go/users/internal/adapter/grpc/proto"
 	gt "github.com/go-kit/kit/transport/grpc"
+	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 )
 
@@ -47,17 +48,19 @@ func (s *AuthServer) Login(ctx context.Context, req *proto.LoginRequest) (*proto
 		return &proto.LoginResponse{
 			Data: nil,
 			Status: &proto.Status{
-				Message: err.Error(),
-				Details: []string{err.Error()},
 				Success: false,
+				Message: err.Error(),
+				Code:    MapErrorToGrpcStatus(err).String(),
+				Details: []string{err.Error()},
 			},
-		}, status.Error(MapErrorToGrpcStatus(err), err.Error())
+		}, nil
 	}
 	return &proto.LoginResponse{
 		Data: resp.(*proto.LoginData),
 		Status: &proto.Status{
 			Success: true,
-			Message: "Create user successfully",
+			Message: "Login success",
+			Code:    codes.OK.String(),
 			Details: []string{},
 		},
 	}, nil
@@ -70,6 +73,7 @@ func (s *AuthServer) SignUp(ctx context.Context, req *proto.SignUpRequest) (*pro
 			Status: &proto.Status{
 				Message: err.Error(),
 				Details: []string{err.Error()},
+				Code:    MapErrorToGrpcStatus(err).String(),
 				Success: false,
 			},
 		}, status.Error(MapErrorToGrpcStatus(err), err.Error())

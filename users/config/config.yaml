@@ -1,0 +1,36 @@
+server:
+  host: "localhost"
+  port: 8080
+  max_connection_idle: 60
+  max_connection_age: 120
+  time: 60
+  time_out: 30
+
+db:
+  driver: "postgres"
+  host: "ep-noisy-poetry-a1d0s029.ap-southeast-1.aws.neon.tech"
+  port: 5432
+  user: "ecommercedb_owner"
+  password: "1tPyUrfn2jlv"
+  name: "ecommercedb"
+  ssl: true
+  ssl_mode: "require"
+  ssl_cert_path: ""
+
+consul:
+  host: "localhost"
+  port: 8500
+
+jwt:
+  access_token_secret: "my_access_token_secret"
+  access_token_age: 3600
+  refresh_token_secret: "my_refresh_token_secret"
+  refresh_token_age: 7200
+
+logger:
+  mode: "production"
+  disable_caller: false
+  disable_stacktrace: false
+  encoding: "json"
+  level: "info"
+  zap_type: "console"

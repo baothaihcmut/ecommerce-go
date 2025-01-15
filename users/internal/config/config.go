@@ -1,117 +1,57 @@
 package config
 
 import (
-	"log"
-	"os"
-	"strconv"
-
-	"github.com/joho/godotenv"
+	"github.com/baothaihcmut/Ecommerce-Go/libs/pkg/config"
+	"github.com/baothaihcmut/Ecommerce-Go/libs/pkg/logger"
 )
 
 type Config struct {
-	Server   ServerConfig
-	Database DatabaseConfig
-	Consol   ConsulConfig
-	Jwt      JwtConfig
+	Server   ServerConfig        `mapstructure:"server"`
+	Database DatabaseConfig      `mapstructure:"db"`
+	Consol   ConsulConfig        `mapstructure:"consul"`
+	Jwt      JwtConfig           `mapstructure:"jwt"`
+	Logger   logger.ConfigLogger `mapstructure:"logger"`
 }
 
 type JwtConfig struct {
-	AccessTokenSecret  string
-	AccessTokenAge     int
-	RefreshTokenSecret string
-	RefreshTokenAge    int
+	AccessTokenSecret  string `mapstructure:"access_token_secret"`
+	AccessTokenAge     int    `mapstructure:"access_token_age"`
+	RefreshTokenSecret string `mapstructure:"refresh_token_secret"`
+	RefreshTokenAge    int    `mapstructure:"refresh_token_age"`
 }
 
 type ServerConfig struct {
-	Host              string
-	Port              int
-	MaxConnectionIdle int
-	MaxConnectionAge  int
-	Time              int
-	Timeout           int
+	Host              string `mapstructure:"host"`
+	Port              int    `mapstructure:"port"`
+	MaxConnectionIdle int    `mapstructure:"max_connection_idle"`
+	MaxConnectionAge  int    `mapstructure:"max_connection_age"`
+	Time              int    `mapstructure:"time"`
+	Timeout           int    `mapstructure:"time_out"`
 }
 
 type DatabaseConfig struct {
-	Driver      string
-	Host        string
-	Port        int
-	User        string
-	Password    string
-	Name        string
-	Ssl         bool
-	SslMode     string
-	SslCertPath string
+	Driver      string `mapstructure:"driver"`
+	Host        string `mapstructure:"host"`
+	Port        int    `mapstructure:"port"`
+	User        string `mapstructure:"user"`
+	Password    string `mapstructure:"password"`
+	Name        string `mapstructure:"name"`
+	Ssl         bool   `mapstructure:"ssl"`
+	SslMode     string `mapstructure:"ssl_mode"`
+	SslCertPath string `mapstructure:"ssl_cert_path"`
 }
 
 type ConsulConfig struct {
-	Host string
-	Port int
+	Host string `mapstructure:"host"`
+	Port int    `mapstructure:"port"`
 }
 
-func getEnvString(key, fallback string) string {
-	if value, exists := os.LookupEnv(key); exists {
-		return value
+func LoadConfig() *Config {
+	cfg := &Config{}
+	cfgInterface, err := config.LoadConfig(cfg, "./config")
+	if err != nil {
+		panic(err)
 	}
-	return fallback
-}
-
-func getEnvInt(key string, fallback int) int {
-	if value, exists := os.LookupEnv(key); exists {
-		if intValue, err := strconv.Atoi(value); err == nil {
-			return intValue
-		}
-		log.Printf("Warning: Could not parse environment variable %s as int, using fallback %d", key, fallback)
-	}
-	return fallback
-}
-
-func getEnvBool(key string, fallback bool) bool {
-	if value, exists := os.LookupEnv(key); exists {
-		if boolValue, err := strconv.ParseBool(value); err == nil {
-			return boolValue
-		}
-		log.Printf("Warning: Could not parse environment variable %s as bool, using fallback %t", key, fallback)
-	}
-	return fallback
-}
-func LoadConfig(env string) (*Config, error) {
-
-	if env == "dev" {
-		err := godotenv.Load()
-		if err != nil {
-			return nil, err
-		}
-	}
-	return &Config{
-		Server: ServerConfig{
-			Host:              getEnvString("SERVER_HOST", "localhost"),
-			Port:              getEnvInt("SERVER_PORT", 8080),
-			MaxConnectionIdle: getEnvInt("MAX_CONNECTION_IDLE", 5),
-			MaxConnectionAge:  getEnvInt("MAX_CONNECTION_AGE", 10),
-			Time:              getEnvInt("TIME", 2),
-			Timeout:           getEnvInt("TIMEOUT", 20),
-		},
-		Database: DatabaseConfig{
-			Driver:      getEnvString("DB_DRIVER", "postgres"),
-			Host:        getEnvString("DB_HOST", "localhost"),
-			Port:        getEnvInt("DB_PORT", 5432),
-			User:        getEnvString("DB_USER", "postgres"),
-			Password:    getEnvString("DB_PASSWORD", "postgres"),
-			Name:        getEnvString("DB_NAME", "user"),
-			Ssl:         getEnvBool("DB_SSL", false),
-			SslMode:     getEnvString("DB_SSL_MODE", "disable"),
-			SslCertPath: getEnvString("DB_SSL_CERT_PATH", ""),
-		},
-		Consol: ConsulConfig{
-			Host: getEnvString("CONSUL_HOST", "localhost"),
-			Port: getEnvInt("CONSUL_PORT", 8500),
-		},
-		Jwt: JwtConfig{
-			AccessTokenSecret:  getEnvString("JWT_ACCESS_TOKEN_SECRET", "access_token_access_secret"),
-			AccessTokenAge:     getEnvInt("JWT_ACCESS_TOKEN_AGE", 3),
-			RefreshTokenSecret: getEnvString("JWT_REFRESH_TOKEN_SECRET", "refresh_token_access_secret"),
-			RefreshTokenAge:    getEnvInt("JWT_REFRESH_TOKEN_AGE", 7),
-		},
-	}, nil
-
+	cfg = cfgInterface.(*Config)
+	return cfg
 }

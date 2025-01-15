@@ -1,43 +1,27 @@
 package utils
 
 import (
-	"encoding/json"
 	"net/http"
-
-	"github.com/baothaihcmut/Ecommerce-Go/api-gateway/internal/common/response"
 
 	"google.golang.org/grpc/codes"
 )
 
-func MapGrpcCodeToHttpCode(code codes.Code) int {
+func MapGrpcCodeToHttpCode(code string) int {
 
 	switch code {
-	case codes.OK:
+	case codes.OK.String():
 		return http.StatusOK
-	case codes.AlreadyExists:
+	case codes.AlreadyExists.String():
 		return http.StatusConflict
-	case codes.NotFound:
+	case codes.NotFound.String():
 		return http.StatusNotFound
-	case codes.PermissionDenied:
+	case codes.PermissionDenied.String():
 		return http.StatusForbidden
-	case codes.Unauthenticated:
+	case codes.Unauthenticated.String():
 		return http.StatusUnauthorized
-	case codes.InvalidArgument:
+	case codes.InvalidArgument.String():
 		return http.StatusBadRequest
 	default:
 		return 500
 	}
-}
-
-func WriteResponseErr(w http.ResponseWriter, code int, message []string) {
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(code)
-	json.NewEncoder(w).Encode(response.InitResponse[any](false, message, nil))
-
-}
-
-func WriteResponseSucess[T any](w http.ResponseWriter, code int, message []string, data T) {
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(code)
-	json.NewEncoder(w).Encode(response.InitResponse[T](false, message, data))
 }

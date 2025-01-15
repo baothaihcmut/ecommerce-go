@@ -9,6 +9,7 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/baothaihcmut/Ecommerce-Go/libs/pkg/logger"
 	"github.com/baothaihcmut/Ecommerce-Go/users/internal/adapter/grpc/endpoints"
 	"github.com/baothaihcmut/Ecommerce-Go/users/internal/adapter/grpc/interceptors"
 	"github.com/baothaihcmut/Ecommerce-Go/users/internal/adapter/grpc/mapper/request"
@@ -20,8 +21,6 @@ import (
 	"github.com/baothaihcmut/Ecommerce-Go/users/internal/config"
 	commandService "github.com/baothaihcmut/Ecommerce-Go/users/internal/core/services/command"
 	queryService "github.com/baothaihcmut/Ecommerce-Go/users/internal/core/services/query"
-	"github.com/go-kit/log"
-	"github.com/go-kit/log/level"
 	"github.com/hashicorp/consul/api"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/health"
@@ -31,12 +30,12 @@ import (
 
 type Server struct {
 	db     *sql.DB
-	logger log.Logger
 	config *config.Config
 	consol *api.Client
+	logger logger.ILogger
 }
 
-func NewServer(db *sql.DB, logger log.Logger, cfg *config.Config, consol *api.Client) *Server {
+func NewServer(db *sql.DB, logger logger.ILogger, cfg *config.Config, consol *api.Client) *Server {
 	return &Server{
 		db:     db,
 		logger: logger,
@@ -75,7 +74,7 @@ func (s *Server) Start(env string) {
 	}()
 	grpcListener, listErr := net.Listen("tcp", fmt.Sprintf(":%d", s.config.Server.Port))
 	if listErr != nil {
-		s.logger.Log("during", "Listen", "err", err)
+		s.logger.Error("during", "Listen", "err", err)
 		os.Exit(1)
 	}
 	// grpc options
@@ -112,7 +111,7 @@ func (s *Server) Start(env string) {
 			}
 			err := s.consol.Agent().ServiceRegister(registration)
 			if err != nil {
-				level.Error(s.logger).Log("msg", "failed to register service", "err", err)
+				s.logger.Error("msg", "failed to register service", "err", err)
 				panic(err)
 			}
 		}
@@ -120,7 +119,7 @@ func (s *Server) Start(env string) {
 
 		proto.RegisterUserServiceServer(baseServer, userServer)
 		proto.RegisterAuthServiceServer(baseServer, authServer)
-		level.Info(s.logger).Log("msg", "Server started successfully 🚀")
+		s.logger.Info("Server started successfully 🚀")
 		baseServer.Serve(grpcListener)
 	}()
 	if env != "dev" {
@@ -134,5 +133,5 @@ func (s *Server) Start(env string) {
 		}()
 	}
 
-	level.Error(s.logger).Log("exit", <-err)
+	s.logger.Error("exit", <-err)
 }

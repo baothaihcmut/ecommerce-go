@@ -4,3 +4,10 @@ server:
 consul:
   host: localhost
   port: 8500
+logger:
+  mode: "production"
+  disable_caller: false
+  disable_stacktrace: false
+  encoding: "json"
+  level: "debug"
+  zap_type: "console"
