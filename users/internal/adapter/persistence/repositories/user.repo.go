@@ -3,9 +3,9 @@ package repositories
 import (
 	"context"
 	"database/sql"
-	"fmt"
 	"sync"
 
+	"github.com/baothaihcmut/Ecommerce-Go/libs/pkg/errors"
 	"github.com/baothaihcmut/Ecommerce-Go/users/internal/adapter/persistence/sqlc/sqlc"
 	"github.com/baothaihcmut/Ecommerce-Go/users/internal/core/domain/aggregates/user"
 	"github.com/baothaihcmut/Ecommerce-Go/users/internal/core/domain/aggregates/user/entities"
@@ -69,15 +69,15 @@ func (repo *PostgresUserRepo) toCreateShopOwnerArg(userId uuid.UUID, shopOwner *
 func (repo *PostgresUserRepo) toUserDomain(result *sqlc.FindUserByCriteriaRow, addresses []sqlc.Address) (*user.User, error) {
 	userId, err := valueobject.NewUserId(result.ID)
 	if err != nil {
-		return nil, fmt.Errorf("User repository err: %w", err)
+		return nil, errors.NewError(err, errors.CaptureStackTrace())
 	}
 	email, err := valueobject.NewEmail(result.Email)
 	if err != nil {
-		return nil, fmt.Errorf("User repository err: %w", err)
+		return nil, errors.NewError(err, errors.CaptureStackTrace())
 	}
 	phoneNumber, err := valueobject.NewPhoneNumber(result.PhoneNumber)
 	if err != nil {
-		return nil, fmt.Errorf("User repository err: %w", err)
+		return nil, errors.NewError(err, errors.CaptureStackTrace())
 	}
 	userAddresses := make([]valueobject.Address, len(addresses))
 	for _, address := range addresses {
@@ -248,15 +248,15 @@ func (repo *PostgresUserRepo) FindById(ctx context.Context, id valueobject.UserI
 		Value:    sql.NullString{String: uuid.UUID(id).String(), Valid: true},
 	})
 	if err != nil {
-		return nil, fmt.Errorf("User repository err: %w", err)
+		return nil, errors.NewError(err, errors.CaptureStackTrace())
 	}
 	addressRes, err := repo.queries.FindAllAddressOfUser(ctx, uuid.NullUUID{UUID: uuid.UUID(id)})
 	if err != nil {
-		return nil, fmt.Errorf("User repository err: %w", err)
+		return nil, errors.NewError(err, errors.CaptureStackTrace())
 	}
 	user, err := repo.toUserDomain(&userRes, addressRes)
 	if err != nil {
-		return nil, fmt.Errorf("User repository err: %w", err)
+		return nil, errors.NewError(err, errors.CaptureStackTrace())
 	}
 	return user, nil
 
@@ -268,15 +268,15 @@ func (repo *PostgresUserRepo) FindByEmail(ctx context.Context, email valueobject
 		Value:    sql.NullString{String: string(email), Valid: true},
 	})
 	if err != nil {
-		return nil, fmt.Errorf("User repository err: %w", err)
+		return nil, errors.NewError(err, errors.CaptureStackTrace())
 	}
 	addressRes, err := repo.queries.FindAllAddressOfUser(ctx, uuid.NullUUID{UUID: uuid.UUID(userRes.ID)})
 	if err != nil {
-		return nil, fmt.Errorf("User repository err: %w", err)
+		return nil, errors.NewError(err, errors.CaptureStackTrace())
 	}
 	user, err := repo.toUserDomain(&userRes, addressRes)
 	if err != nil {
-		return nil, fmt.Errorf("User repository err: %w", err)
+		return nil, errors.NewError(err, errors.CaptureStackTrace())
 	}
 	return user, nil
 }
@@ -287,15 +287,15 @@ func (repo *PostgresUserRepo) FindByPhoneNumber(ctx context.Context, phoneNumber
 		Value:    sql.NullString{String: string(phoneNumber), Valid: true},
 	})
 	if err != nil {
-		return nil, fmt.Errorf("User repository err: %w", err)
+		return nil, errors.NewError(err, errors.CaptureStackTrace())
 	}
 	addressRes, err := repo.queries.FindAllAddressOfUser(ctx, uuid.NullUUID{UUID: uuid.UUID(userRes.ID)})
 	if err != nil {
-		return nil, fmt.Errorf("User repository err: %w", err)
+		return nil, errors.NewError(err, errors.CaptureStackTrace())
 	}
 	user, err := repo.toUserDomain(&userRes, addressRes)
 	if err != nil {
-		return nil, fmt.Errorf("User repository err: %w", err)
+		return nil, errors.NewError(err, errors.CaptureStackTrace())
 	}
 	return user, nil
 }
