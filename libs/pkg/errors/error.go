@@ -14,9 +14,9 @@ func (e *Error) StackTrace() string {
 	return e.stackTrace
 }
 
-func NewError(message string, stackTrace string) error {
+func NewError(err error, stackTrace string) error {
 	return &Error{
-		message:    message,
+		message:    err.Error(),
 		stackTrace: stackTrace,
 	}
 }
