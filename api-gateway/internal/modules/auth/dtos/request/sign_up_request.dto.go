@@ -26,7 +26,7 @@ type ShopOwnerInfo struct {
 type SignUpRequestDTO struct {
 	Email         string         `json:"email" validate:"required,email"`
 	Password      string         `json:"password" validate:"required,min=8"`
-	PhoneNumber   string         `json:"phone_number" validate:"required,e164"`
+	PhoneNumber   string         `json:"phone_number" validate:"required"`
 	Addresses     []Address      `json:"addresses" validate:"required,dive"`
 	FirstName     string         `json:"first_name" validate:"required,alpha"`
 	LastName      string         `json:"last_name" validate:"required,alpha"`

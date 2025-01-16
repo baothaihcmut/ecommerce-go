@@ -104,6 +104,11 @@ func (h *AuthHandlerImpl) SignUp(ctx context.Context, dto *request.SignUpRequest
 		Role:        mapRole(dto.Role),
 		Addresses:   mapAddress(dto.Addresses),
 	}
+	if dto.Role == request.RoleShopOwner {
+		req.ShopOwnerInfo = &proto.ShopOwnerInfo{
+			BussinessLincese: dto.ShopOwnerInfo.BusinessLicense,
+		}
+	}
 	resp, err := s.SignUp(ctx, req)
 	if err != nil {
 		return nil, err

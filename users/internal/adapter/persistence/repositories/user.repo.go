@@ -3,6 +3,7 @@ package repositories
 import (
 	"context"
 	"database/sql"
+	"fmt"
 	"sync"
 
 	"github.com/baothaihcmut/Ecommerce-Go/users/internal/adapter/persistence/sqlc/sqlc"
@@ -68,15 +69,15 @@ func (repo *PostgresUserRepo) toCreateShopOwnerArg(userId uuid.UUID, shopOwner *
 func (repo *PostgresUserRepo) toUserDomain(result *sqlc.FindUserByCriteriaRow, addresses []sqlc.Address) (*user.User, error) {
 	userId, err := valueobject.NewUserId(result.ID)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("User repository err: %w", err)
 	}
 	email, err := valueobject.NewEmail(result.Email)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("User repository err: %w", err)
 	}
 	phoneNumber, err := valueobject.NewPhoneNumber(result.PhoneNumber)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("User repository err: %w", err)
 	}
 	userAddresses := make([]valueobject.Address, len(addresses))
 	for _, address := range addresses {
@@ -247,15 +248,15 @@ func (repo *PostgresUserRepo) FindById(ctx context.Context, id valueobject.UserI
 		Value:    sql.NullString{String: uuid.UUID(id).String(), Valid: true},
 	})
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("User repository err: %w", err)
 	}
 	addressRes, err := repo.queries.FindAllAddressOfUser(ctx, uuid.NullUUID{UUID: uuid.UUID(id)})
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("User repository err: %w", err)
 	}
 	user, err := repo.toUserDomain(&userRes, addressRes)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("User repository err: %w", err)
 	}
 	return user, nil
 
@@ -267,15 +268,15 @@ func (repo *PostgresUserRepo) FindByEmail(ctx context.Context, email valueobject
 		Value:    sql.NullString{String: string(email), Valid: true},
 	})
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("User repository err: %w", err)
 	}
 	addressRes, err := repo.queries.FindAllAddressOfUser(ctx, uuid.NullUUID{UUID: uuid.UUID(userRes.ID)})
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("User repository err: %w", err)
 	}
 	user, err := repo.toUserDomain(&userRes, addressRes)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("User repository err: %w", err)
 	}
 	return user, nil
 }
@@ -286,15 +287,15 @@ func (repo *PostgresUserRepo) FindByPhoneNumber(ctx context.Context, phoneNumber
 		Value:    sql.NullString{String: string(phoneNumber), Valid: true},
 	})
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("User repository err: %w", err)
 	}
 	addressRes, err := repo.queries.FindAllAddressOfUser(ctx, uuid.NullUUID{UUID: uuid.UUID(userRes.ID)})
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("User repository err: %w", err)
 	}
 	user, err := repo.toUserDomain(&userRes, addressRes)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("User repository err: %w", err)
 	}
 	return user, nil
 }

@@ -21,7 +21,7 @@ type AuthRouterImpl struct {
 // InitRouter implements AuthRouter.
 func (a *AuthRouterImpl) InitRouter(e *echo.Echo) {
 	//public
-	external := e.Group("/auth/external")
+	external := e.Group("/auth")
 	external.POST("/log-in", a.handleLogin, middleware.ValidateMiddleware[request.LoginRequestDTO]())
 	external.POST("/sign-up", a.handleSignUp, middleware.ValidateMiddleware[request.SignUpRequestDTO]())
 	//private
@@ -55,14 +55,14 @@ func (r *AuthRouterImpl) handleLogin(c echo.Context) error {
 	if err != nil {
 		return err
 	}
-	//set cookie for accesstoken
+	//set cookie for token
 	c.SetCookie(cookieToken(true, res.AccessToken))
 	c.SetCookie(cookieToken(false, res.RefreshToken))
 	return c.JSON(http.StatusCreated, response.InitResponse(true, []string{"Log in success"}, nil))
 }
 func (r *AuthRouterImpl) handleSignUp(c echo.Context) error {
-	payload := c.Get(string(constance.PayloadContext)).(*request.LoginRequestDTO)
-	res, err := r.handler.LogIn(c.Request().Context(), payload)
+	payload := c.Get(string(constance.PayloadContext)).(*request.SignUpRequestDTO)
+	res, err := r.handler.SignUp(c.Request().Context(), payload)
 	if err != nil {
 		return err
 	}
