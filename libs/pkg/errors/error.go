@@ -21,7 +21,7 @@ func NewError(err error, stackTrace string) error {
 	}
 }
 
-func captureStackTrace() string {
+func CaptureStackTrace() string {
 	buf := make([]byte, 1024)
 	n := runtime.Stack(buf, false)
 	return string(buf[:n])
