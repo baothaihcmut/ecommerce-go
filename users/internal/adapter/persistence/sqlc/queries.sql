@@ -68,6 +68,27 @@ SET
     bussiness_license = COALESCE(sqlc.narg('bussinessLicense'),bussiness_license)
 WHERE user_id = sqlc.narg('userId');
 
+-- name: CheckUserExistByCriteria :one
+SELECT 1
+FROM users u
+WHERE
+    CASE sqlc.narg('criteria')
+        WHEN 'email' THEN u.email = sqlc.narg('value')::text
+        WHEN 'phone_number' THEN u.phone_number = sqlc.narg('value')::text
+        WHEN 'id' THEN u.id = sqlc.narg('value')::uuid
+        WHEN 'firstName' THEN u.first_name = sqlc.narg('value')::text
+        WHEN 'lastName' THEN u.last_name = sqlc.narg('value')::text
+    END;
+
+
+-- name: FindAllAddressOfUser :many
+SELECT * FROM addresses WHERE user_id = sqlc.narg('userId');
+SELECT *
+FROM users u
+WHERE u.email = sqlc.narg('email')
+LIMIT 1;
+
+
 -- name: FindUserByCriteria :one
 SELECT *
 FROM users u
@@ -81,20 +102,4 @@ WHERE
         WHEN 'firstName' THEN u.first_name = sqlc.narg('value')::text
         WHEN 'lastName' THEN u.last_name = sqlc.narg('value')::text
     END
-LIMIT 1;
-
-
-
--- name: FindAllAddressOfUser :many
-SELECT * FROM addresses WHERE user_id = sqlc.narg('userId');
-SELECT *
-FROM users u
-WHERE u.email = sqlc.narg('email')
-LIMIT 1;
-
-
--- name: FindUserByPhoneNumber :one
-SELECT *
-FROM users u
-WHERE u.phone_number = sqlc.narg('phoneNumber')
 LIMIT 1;

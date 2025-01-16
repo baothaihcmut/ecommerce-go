@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/baothaihcmut/Ecommerce-Go/libs/pkg/errors"
 	"github.com/baothaihcmut/Ecommerce-Go/users/internal/config"
 	"github.com/baothaihcmut/Ecommerce-Go/users/internal/core/domain/aggregates/user"
 	valueobject "github.com/baothaihcmut/Ecommerce-Go/users/internal/core/domain/aggregates/user/value_object"
@@ -29,7 +30,7 @@ func (j *JwtAdapter) DecodeRefreshToken(_ context.Context, token valueobject.Tok
 		return []byte(j.jwtConfig.RefreshTokenSecret), nil
 	})
 	if err != nil {
-		return models.RefreshTokenSub{}, err
+		return models.RefreshTokenSub{}, errors.NewError(err, errors.CaptureStackTrace())
 	}
 	if claims, ok := tokenDecode.Claims.(*JwtAccessClaims); ok && tokenDecode.Valid {
 		if claims.ExpiresAt != nil {
@@ -56,7 +57,7 @@ func (j *JwtAdapter) GenerateAccessToken(_ context.Context, u *user.User) (value
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
 	tokenString, err := token.SignedString([]byte(j.jwtConfig.AccessTokenSecret))
 	if err != nil {
-		return valueobject.Token{}, err
+		return valueobject.Token{}, errors.NewError(err, errors.CaptureStackTrace())
 	}
 	return valueobject.Token{
 		Value:     tokenString,
@@ -75,7 +76,7 @@ func (j *JwtAdapter) GenerateRefreshToken(_ context.Context, u *user.User) (valu
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
 	tokenString, err := token.SignedString([]byte(j.jwtConfig.RefreshTokenSecret))
 	if err != nil {
-		return valueobject.Token{}, err
+		return valueobject.Token{}, errors.NewError(err, errors.CaptureStackTrace())
 	}
 	return valueobject.Token{
 		Value:     tokenString,

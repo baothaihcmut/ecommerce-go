@@ -15,9 +15,9 @@ import (
 type RoleEnum string
 
 const (
-	RoleEnumAdmin     RoleEnum = "admin"
-	RoleEnumCustomer  RoleEnum = "customer"
-	RoleEnumShopOwner RoleEnum = "shop_owner"
+	RoleEnumADMIN     RoleEnum = "ADMIN"
+	RoleEnumCUSTOMER  RoleEnum = "CUSTOMER"
+	RoleEnumSHOPOWNER RoleEnum = "SHOP_OWNER"
 )
 
 func (e *RoleEnum) Scan(src interface{}) error {

@@ -3,7 +3,7 @@ module github.com/baothaihcmut/Ecommerce-Go/users
 go 1.23.2
 
 require (
-	github.com/baothaihcmut/Ecommerce-Go/libs v1.0.3
+	github.com/baothaihcmut/Ecommerce-Go/libs v1.0.4
 	github.com/golang-jwt/jwt/v4 v4.5.1
 	github.com/google/uuid v1.6.0
 	github.com/hashicorp/consul/api v1.31.0

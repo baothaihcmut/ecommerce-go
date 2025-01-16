@@ -20,18 +20,24 @@ func main() {
 	config := config.LoadConfig()
 
 	dbSource := fmt.Sprintf(
-		("%s://%s:%s@%s:%d/%s?ssl=%t&ssl_mode=%s&sslrootcert=%s"),
-		config.Database.Driver,
+		"host=%s port=%d user=%s password=%s dbname=%s sslmode=%s",
+		config.Database.Host, config.Database.Port,
 		config.Database.User, config.Database.Password,
-		config.Database.Host, config.Database.Port, config.Database.Name,
-		config.Database.Ssl, config.Database.SslMode, config.Database.SslCertPath)
+		config.Database.Name,
+		config.Database.SslMode)
 
 	// Connect to the database
 	db, err := sql.Open(config.Database.Driver, dbSource)
+
 	if err != nil {
 		log.Fatalf("Failed to open database: %v", err)
 	}
 	defer db.Close()
+	fmt.Println(dbSource)
+	err = db.Ping()
+	if err != nil {
+		log.Fatalf("Failed to ping database: %v", err)
+	}
 
 	// Apply Goose command
 	if err := goose.RunContext(context.Background(), *action, db, *migrationsFolder); err != nil {

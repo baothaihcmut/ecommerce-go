@@ -12,5 +12,6 @@ type UserRepository interface {
 	Save(context.Context, *user.User, *sql.Tx) error
 	FindById(context.Context, valueobject.UserId) (*user.User, error)
 	FindByEmail(context.Context, valueobject.Email) (*user.User, error)
-	FindByPhoneNumber(context.Context, valueobject.PhoneNumber) (*user.User, error)
+	CheckEmailExist(context.Context, valueobject.Email) (bool, error)
+	CheckPhoneNumberExist(context.Context, valueobject.PhoneNumber) (bool, error)
 }

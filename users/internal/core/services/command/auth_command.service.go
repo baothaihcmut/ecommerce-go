@@ -96,20 +96,20 @@ func (s *AuthCommandService) SignUp(ctx context.Context, command *commands.SignU
 		return nil, err
 	}
 	//check if email exist
-	emailExist, err := s.userRepo.FindByEmail(ctx, user.Email)
-	if err != nil && err != sql.ErrNoRows {
+	emailExist, err := s.userRepo.CheckEmailExist(ctx, user.Email)
+	if err != nil {
 		return nil, err
 	}
-	if emailExist != nil {
+	if emailExist {
 		return nil, ErrEmailExist
 	}
 
 	//check if phone number exist
-	phoneExist, err := s.userRepo.FindByPhoneNumber(ctx, user.PhoneNumber)
-	if err != nil && err != sql.ErrNoRows {
+	phoneExist, err := s.userRepo.CheckPhoneNumberExist(ctx, user.PhoneNumber)
+	if err != nil {
 		return nil, err
 	}
-	if phoneExist != nil {
+	if phoneExist {
 		return nil, ErrPhoneNumberExist
 	}
 	//generate token

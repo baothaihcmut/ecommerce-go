@@ -9,9 +9,9 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/baothaihcmut/Ecommerce-Go/libs/pkg/grpc/interceptors"
 	"github.com/baothaihcmut/Ecommerce-Go/libs/pkg/logger"
 	"github.com/baothaihcmut/Ecommerce-Go/users/internal/adapter/grpc/endpoints"
-	"github.com/baothaihcmut/Ecommerce-Go/users/internal/adapter/grpc/interceptors"
 	"github.com/baothaihcmut/Ecommerce-Go/users/internal/adapter/grpc/mapper/request"
 	"github.com/baothaihcmut/Ecommerce-Go/users/internal/adapter/grpc/mapper/response"
 	"github.com/baothaihcmut/Ecommerce-Go/users/internal/adapter/grpc/proto"

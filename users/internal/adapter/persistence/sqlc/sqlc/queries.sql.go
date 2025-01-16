@@ -12,6 +12,31 @@ import (
 	"github.com/google/uuid"
 )
 
+const checkUserExistByCriteria = `-- name: CheckUserExistByCriteria :one
+SELECT 1
+FROM users u
+WHERE
+    CASE $1
+        WHEN 'email' THEN u.email = $2::text
+        WHEN 'phone_number' THEN u.phone_number = $2::text
+        WHEN 'id' THEN u.id = $2::uuid
+        WHEN 'firstName' THEN u.first_name = $2::text
+        WHEN 'lastName' THEN u.last_name = $2::text
+    END
+`
+
+type CheckUserExistByCriteriaParams struct {
+	Criteria interface{}
+	Value    sql.NullString
+}
+
+func (q *Queries) CheckUserExistByCriteria(ctx context.Context, arg CheckUserExistByCriteriaParams) (int32, error) {
+	row := q.db.QueryRowContext(ctx, checkUserExistByCriteria, arg.Criteria, arg.Value)
+	var column_1 int32
+	err := row.Scan(&column_1)
+	return column_1, err
+}
+
 const createAddress = `-- name: CreateAddress :exec
 INSERT INTO addresses(priority,street, town, city, province,user_id)
 VALUES (
@@ -205,29 +230,6 @@ func (q *Queries) FindUserByCriteria(ctx context.Context, arg FindUserByCriteria
 		&i.LoyalPoint,
 		&i.UserID_2,
 		&i.BussinessLicense,
-	)
-	return i, err
-}
-
-const findUserByPhoneNumber = `-- name: FindUserByPhoneNumber :one
-SELECT id, email, password, phone_number, first_name, last_name, role, current_refresh_token
-FROM users u
-WHERE u.phone_number = $1
-LIMIT 1
-`
-
-func (q *Queries) FindUserByPhoneNumber(ctx context.Context, phonenumber sql.NullString) (User, error) {
-	row := q.db.QueryRowContext(ctx, findUserByPhoneNumber, phonenumber)
-	var i User
-	err := row.Scan(
-		&i.ID,
-		&i.Email,
-		&i.Password,
-		&i.PhoneNumber,
-		&i.FirstName,
-		&i.LastName,
-		&i.Role,
-		&i.CurrentRefreshToken,
 	)
 	return i, err
 }

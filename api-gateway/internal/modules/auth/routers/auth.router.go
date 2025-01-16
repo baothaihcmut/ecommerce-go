@@ -4,7 +4,9 @@ import (
 	"net/http"
 
 	"github.com/baothaihcmut/Ecommerce-Go/api-gateway/internal/common/constance"
+	"github.com/baothaihcmut/Ecommerce-Go/api-gateway/internal/common/enums"
 	middleware "github.com/baothaihcmut/Ecommerce-Go/api-gateway/internal/common/middlewares"
+	"github.com/baothaihcmut/Ecommerce-Go/api-gateway/internal/common/models"
 	"github.com/baothaihcmut/Ecommerce-Go/api-gateway/internal/common/response"
 	"github.com/baothaihcmut/Ecommerce-Go/api-gateway/internal/modules/auth/dtos/request"
 	"github.com/baothaihcmut/Ecommerce-Go/api-gateway/internal/modules/auth/handlers"
@@ -25,6 +27,9 @@ func (a *AuthRouterImpl) InitRouter(e *echo.Echo) {
 	external.POST("/log-in", a.handleLogin, middleware.ValidateMiddleware[request.LoginRequestDTO]())
 	external.POST("/sign-up", a.handleSignUp, middleware.ValidateMiddleware[request.SignUpRequestDTO]())
 	//private
+	internal := e.Group("/auth")
+	internal.Use(middleware.AuthMiddleware(a.handler))
+	internal.POST("/test", a.testAuth, middleware.RoleMiddleware(enums.RoleCustomer))
 
 }
 
@@ -36,10 +41,10 @@ func NewAuthRouter(handler handlers.AuthHandler) AuthRouter {
 func cookieToken(isAccessToken bool, token string) *http.Cookie {
 	cookie := new(http.Cookie)
 	if isAccessToken {
-		cookie.Name = "access_token"
+		cookie.Name = string(constance.AccessToken)
 		cookie.MaxAge = 3600
 	} else {
-		cookie.Name = "refresh_token"
+		cookie.Name = string(constance.RefreshToken)
 		cookie.MaxAge = 10800
 	}
 
@@ -68,5 +73,9 @@ func (r *AuthRouterImpl) handleSignUp(c echo.Context) error {
 	}
 	c.SetCookie(cookieToken(true, res.AccessToken))
 	c.SetCookie(cookieToken(false, res.RefreshToken))
-	return c.JSON(http.StatusCreated, response.InitResponse(true, []string{"Log in success"}, nil))
+	return c.JSON(http.StatusCreated, response.InitResponse(true, []string{"Sign up success"}, nil))
+}
+func (r *AuthRouterImpl) testAuth(c echo.Context) error {
+	user := c.Get(string(constance.UserContext)).(*models.UserContext)
+	return c.JSON(http.StatusOK, user)
 }

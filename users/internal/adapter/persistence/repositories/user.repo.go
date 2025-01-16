@@ -3,6 +3,7 @@ package repositories
 import (
 	"context"
 	"database/sql"
+	"fmt"
 	"sync"
 
 	"github.com/baothaihcmut/Ecommerce-Go/libs/pkg/errors"
@@ -109,7 +110,7 @@ func (repo *PostgresUserRepo) toUserDomain(result *sqlc.FindUserByCriteriaRow, a
 
 func (repo *PostgresUserRepo) Save(ctx context.Context, user *user.User, tx *sql.Tx) error {
 	//check if user exist
-	_, err := repo.queries.FindUserByCriteria(ctx, sqlc.FindUserByCriteriaParams{
+	_, err := repo.queries.CheckUserExistByCriteria(ctx, sqlc.CheckUserExistByCriteriaParams{
 		Criteria: "id",
 		Value:    sql.NullString{String: uuid.UUID(user.Id).String(), Valid: true},
 	})
@@ -117,41 +118,34 @@ func (repo *PostgresUserRepo) Save(ctx context.Context, user *user.User, tx *sql
 		return err
 	}
 	ctx, cancel := context.WithCancel(ctx)
+	defer cancel()
 	var isUpdate bool
 	if err == sql.ErrNoRows {
 		isUpdate = false
 	} else {
 		isUpdate = true
 	}
+
+	//create user
+	if isUpdate {
+		err = repo.queries.WithTx(tx).UpdateUser(ctx, sqlc.UpdateUserParams{
+			ID:          uuid.NullUUID{UUID: uuid.UUID(user.Id), Valid: true},
+			Email:       sql.NullString{String: string(user.Email), Valid: true},
+			Password:    sql.NullString{String: string(user.Password), Valid: true},
+			FirstName:   sql.NullString{String: user.FirstName, Valid: true},
+			LastName:    sql.NullString{String: user.LastName, Valid: true},
+			PhoneNumber: sql.NullString{String: string(user.PhoneNumber), Valid: true},
+			Role:        sqlc.NullRoleEnum{RoleEnum: sqlc.RoleEnum(user.Role), Valid: true},
+		})
+	} else {
+		err = repo.queries.WithTx(tx).CreateUser(ctx, *repo.toCreateUserArg(user))
+	}
+	if err != nil {
+		return err
+	}
+	//insert on sub table
 	wg := sync.WaitGroup{}
 	errCh := make(chan error, 1)
-	//create user
-	wg.Add(1)
-	go func() {
-		defer wg.Done()
-		if isUpdate {
-			err = repo.queries.WithTx(tx).UpdateUser(ctx, sqlc.UpdateUserParams{
-				ID:          uuid.NullUUID{UUID: uuid.UUID(user.Id), Valid: true},
-				Email:       sql.NullString{String: string(user.Email), Valid: true},
-				Password:    sql.NullString{String: string(user.Password), Valid: true},
-				FirstName:   sql.NullString{String: user.FirstName, Valid: true},
-				LastName:    sql.NullString{String: user.LastName, Valid: true},
-				PhoneNumber: sql.NullString{String: string(user.PhoneNumber), Valid: true},
-				Role:        sqlc.NullRoleEnum{RoleEnum: sqlc.RoleEnum(user.Role), Valid: true},
-			})
-		} else {
-			err = repo.queries.WithTx(tx).CreateUser(ctx, *repo.toCreateUserArg(user))
-		}
-		select {
-		case <-ctx.Done():
-			return
-		default:
-			if err != nil {
-				cancel()
-				errCh <- err
-			}
-		}
-	}()
 	//create in address table
 	for _, address := range user.Address {
 		wg.Add(1)
@@ -181,7 +175,6 @@ func (repo *PostgresUserRepo) Save(ctx context.Context, user *user.User, tx *sql
 		}()
 	}
 
-	//create in sub entity
 	if user.Role == enums.CUSTOMER {
 		wg.Add(1)
 		go func() {
@@ -228,24 +221,48 @@ func (repo *PostgresUserRepo) Save(ctx context.Context, user *user.User, tx *sql
 			}
 		}()
 	}
-	done := make(chan error)
-	go func() {
-		wg.Wait()
-		done <- nil
-	}()
-	go func() {
-		err = <-errCh
-		close(errCh)
-		done <- err
-	}()
-	return <-done
+	//wait for all worker
+	wg.Wait()
+	//if have error return error
+	select {
+	case err = <-errCh:
+		fmt.Printf("Error:%v", err)
+		return err
+	default:
+		return nil
+	}
 
 }
 
+// FindByEmail implements outbound.UserRepository.
+func (repo *PostgresUserRepo) FindByEmail(ctx context.Context, email valueobject.Email) (*user.User, error) {
+	userRes, err := repo.queries.FindUserByCriteria(ctx, sqlc.FindUserByCriteriaParams{
+		Criteria: "email",
+		Value: sql.NullString{
+			String: string(email),
+			Valid:  true,
+		},
+	})
+	if err != nil {
+		return nil, errors.NewError(err, errors.CaptureStackTrace())
+	}
+	addressRes, err := repo.queries.FindAllAddressOfUser(ctx, uuid.NullUUID{UUID: userRes.ID})
+	if err != nil {
+		return nil, errors.NewError(err, errors.CaptureStackTrace())
+	}
+	user, err := repo.toUserDomain(&userRes, addressRes)
+	if err != nil {
+		return nil, errors.NewError(err, errors.CaptureStackTrace())
+	}
+	return user, nil
+}
 func (repo *PostgresUserRepo) FindById(ctx context.Context, id valueobject.UserId) (*user.User, error) {
 	userRes, err := repo.queries.FindUserByCriteria(ctx, sqlc.FindUserByCriteriaParams{
 		Criteria: "id",
-		Value:    sql.NullString{String: uuid.UUID(id).String(), Valid: true},
+		Value: sql.NullString{
+			String: uuid.UUID(id).String(),
+			Valid:  true,
+		},
 	})
 	if err != nil {
 		return nil, errors.NewError(err, errors.CaptureStackTrace())
@@ -262,40 +279,33 @@ func (repo *PostgresUserRepo) FindById(ctx context.Context, id valueobject.UserI
 
 }
 
-func (repo *PostgresUserRepo) FindByEmail(ctx context.Context, email valueobject.Email) (*user.User, error) {
-	userRes, err := repo.queries.FindUserByCriteria(ctx, sqlc.FindUserByCriteriaParams{
+func (repo *PostgresUserRepo) CheckEmailExist(ctx context.Context, email valueobject.Email) (bool, error) {
+	_, err := repo.queries.CheckUserExistByCriteria(ctx, sqlc.CheckUserExistByCriteriaParams{
 		Criteria: "email",
 		Value:    sql.NullString{String: string(email), Valid: true},
 	})
+
 	if err != nil {
-		return nil, errors.NewError(err, errors.CaptureStackTrace())
+		//if no row return return false
+		if err == sql.ErrNoRows {
+			return false, nil
+		}
+		return false, err
 	}
-	addressRes, err := repo.queries.FindAllAddressOfUser(ctx, uuid.NullUUID{UUID: uuid.UUID(userRes.ID)})
-	if err != nil {
-		return nil, errors.NewError(err, errors.CaptureStackTrace())
-	}
-	user, err := repo.toUserDomain(&userRes, addressRes)
-	if err != nil {
-		return nil, errors.NewError(err, errors.CaptureStackTrace())
-	}
-	return user, nil
+	return true, nil
 }
 
-func (repo *PostgresUserRepo) FindByPhoneNumber(ctx context.Context, phoneNumber valueobject.PhoneNumber) (*user.User, error) {
-	userRes, err := repo.queries.FindUserByCriteria(ctx, sqlc.FindUserByCriteriaParams{
-		Criteria: "phoneNumber",
+func (repo *PostgresUserRepo) CheckPhoneNumberExist(ctx context.Context, phoneNumber valueobject.PhoneNumber) (bool, error) {
+	_, err := repo.queries.CheckUserExistByCriteria(ctx, sqlc.CheckUserExistByCriteriaParams{
+		Criteria: "phone_number",
 		Value:    sql.NullString{String: string(phoneNumber), Valid: true},
 	})
 	if err != nil {
-		return nil, errors.NewError(err, errors.CaptureStackTrace())
+		//if no row return return false
+		if err == sql.ErrNoRows {
+			return false, nil
+		}
+		return false, err
 	}
-	addressRes, err := repo.queries.FindAllAddressOfUser(ctx, uuid.NullUUID{UUID: uuid.UUID(userRes.ID)})
-	if err != nil {
-		return nil, errors.NewError(err, errors.CaptureStackTrace())
-	}
-	user, err := repo.toUserDomain(&userRes, addressRes)
-	if err != nil {
-		return nil, errors.NewError(err, errors.CaptureStackTrace())
-	}
-	return user, nil
+	return true, nil
 }

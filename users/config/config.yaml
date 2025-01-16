@@ -8,13 +8,13 @@ server:
 
 db:
   driver: "postgres"
-  host: "ep-noisy-poetry-a1d0s029.ap-southeast-1.aws.neon.tech"
+  host: "localhost"
   port: 5432
-  user: "ecommercedb_owner"
-  password: "1tPyUrfn2jlv"
-  name: "ecommercedb"
-  ssl: true
-  ssl_mode: "require"
+  user: "thaibao"
+  password: "thaibao"
+  name: "userdb"
+  ssl: false
+  ssl_mode: "disable"
   ssl_cert_path: ""
 
 consul:

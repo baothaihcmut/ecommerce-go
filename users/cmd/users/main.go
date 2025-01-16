@@ -18,22 +18,24 @@ func main() {
 	logger := logger.Newlogger(config.Logger)
 
 	//db connection
-	connStr := fmt.Sprintf("user=%s password=%s dbname=%s host=%s port=%d sslmode=%s ssl=%t sslrootcert=%s",
+	connStr := fmt.Sprintf("user=%s password=%s dbname=%s host=%s port=%d sslmode=%s",
 		config.Database.User,
 		config.Database.Password,
 		config.Database.Name,
 		config.Database.Host,
 		config.Database.Port,
 		config.Database.SslMode,
-		config.Database.Ssl,
-		config.Database.SslCertPath,
 	)
-	db, err := sql.Open("postgres", connStr)
+	db, err := sql.Open(config.Database.Driver, connStr)
 	if err != nil {
 		logger.DPanic("err", err)
 	}
 	defer db.Close()
-
+	//ping db
+	err = db.Ping()
+	if err != nil {
+		logger.DPanicf("Failed to ping db: %v", err)
+	}
 	//consol connection
 	consolClient, err := api.NewClient(&api.Config{
 		Address: fmt.Sprintf("%s:%d", config.Consol.Host, config.Consol.Port),
