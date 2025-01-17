@@ -11,3 +11,5 @@ logger:
   encoding: "json"
   level: "debug"
   zap_type: "console"
+grpc_service:
+  user_service: localhost:8080

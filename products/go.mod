@@ -3,6 +3,7 @@ module github.com/baothaihcmut/Ecommerce-Go/products
 go 1.23.2
 
 require (
+	github.com/baothaihcmut/Ecommerce-Go/libs v1.0.5 // indirect
 	github.com/deckarep/golang-set/v2 v2.7.0 // indirect
 	github.com/golang/snappy v0.0.4 // indirect
 	github.com/klauspost/compress v1.17.11 // indirect

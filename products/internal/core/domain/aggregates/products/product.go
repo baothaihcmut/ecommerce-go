@@ -6,6 +6,7 @@ import (
 	categoryValueobjects "github.com/baothaihcmut/Ecommerce-Go/products/internal/core/domain/aggregates/categories/value_objects"
 	"github.com/baothaihcmut/Ecommerce-Go/products/internal/core/domain/aggregates/products/entities"
 	valueobjects "github.com/baothaihcmut/Ecommerce-Go/products/internal/core/domain/aggregates/products/value_objects"
+	shopValueobjects "github.com/baothaihcmut/Ecommerce-Go/products/internal/core/domain/aggregates/shops/value_objects"
 )
 
 var (
@@ -19,7 +20,7 @@ type Product struct {
 	Name        string
 	Description string
 	Unit        string
-	ShopId      valueobjects.ShopId
+	ShopId      shopValueobjects.ShopId
 	CategoryIds []categoryValueobjects.CategoryId
 	Variations  []*entities.Variation
 }
@@ -29,7 +30,7 @@ func NewProduct(
 	name string,
 	description string,
 	unit string,
-	shopId valueobjects.ShopId,
+	shopId shopValueobjects.ShopId,
 	categoryIds []categoryValueobjects.CategoryId,
 	variations []*entities.Variation,
 ) *Product {

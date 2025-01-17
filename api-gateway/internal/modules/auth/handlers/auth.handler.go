@@ -2,14 +2,14 @@ package handlers
 
 import (
 	"context"
-	"fmt"
 
 	"github.com/baothaihcmut/Ecommerce-Go/api-gateway/internal/common/enums"
 	"github.com/baothaihcmut/Ecommerce-Go/api-gateway/internal/common/grpc/interceptor"
 	"github.com/baothaihcmut/Ecommerce-Go/api-gateway/internal/modules/auth/dtos/request"
 	"github.com/baothaihcmut/Ecommerce-Go/api-gateway/internal/modules/auth/dtos/response"
 	"github.com/baothaihcmut/Ecommerce-Go/api-gateway/internal/modules/auth/proto"
-	"github.com/baothaihcmut/Ecommerce-Go/api-gateway/internal/modules/discovery"
+	"github.com/baothaihcmut/Ecommerce-Go/api-gateway/internal/modules/grpc/services"
+	"github.com/baothaihcmut/Ecommerce-Go/api-gateway/internal/modules/grpc/tokens"
 	"github.com/google/uuid"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
@@ -22,12 +22,12 @@ type AuthHandler interface {
 }
 
 type AuthHandlerImpl struct {
-	discoveryService discovery.DiscoveryService
+	grpcConnectionService services.GrpcConnectionService
 }
 
-func NewAuthHandler(discoveryService discovery.DiscoveryService) AuthHandler {
+func NewAuthHandler(connectionService services.GrpcConnectionService) AuthHandler {
 	return &AuthHandlerImpl{
-		discoveryService: discoveryService,
+		grpcConnectionService: connectionService,
 	}
 }
 func mapRole(src enums.Role) proto.Role {
@@ -68,12 +68,8 @@ func mapAddress(addresses []request.Address) []*proto.Address {
 	return res
 }
 func (h *AuthHandlerImpl) LogIn(ctx context.Context, dto *request.LoginRequestDTO) (*response.LoginResponeDTO, error) {
-	host, port, err := h.discoveryService.DiscoverService("users-service", "")
-	if err != nil {
-		return nil, err
-	}
-	conn, err := grpc.NewClient(
-		fmt.Sprintf("%s:%d", host, port),
+	conn, err := h.grpcConnectionService.GetConnection(
+		tokens.UserServiceToken,
 		grpc.WithTransportCredentials(insecure.NewCredentials()),
 		grpc.WithUnaryInterceptor(interceptor.ErrorHandlerClientInterceptor[proto.LoginData]()),
 	)
@@ -96,12 +92,8 @@ func (h *AuthHandlerImpl) LogIn(ctx context.Context, dto *request.LoginRequestDT
 	}, nil
 }
 func (h *AuthHandlerImpl) SignUp(ctx context.Context, dto *request.SignUpRequestDTO) (*response.LoginResponeDTO, error) {
-	host, port, err := h.discoveryService.DiscoverService("users-service", "")
-	if err != nil {
-		return nil, err
-	}
-	conn, err := grpc.NewClient(
-		fmt.Sprintf("%s:%d", host, port),
+	conn, err := h.grpcConnectionService.GetConnection(
+		tokens.UserServiceToken,
 		grpc.WithTransportCredentials(insecure.NewCredentials()),
 		grpc.WithUnaryInterceptor(interceptor.ErrorHandlerClientInterceptor[proto.LoginData]()),
 	)
@@ -135,12 +127,8 @@ func (h *AuthHandlerImpl) SignUp(ctx context.Context, dto *request.SignUpRequest
 }
 
 func (h *AuthHandlerImpl) VerifyToken(ctx context.Context, token string, isAccessToken bool) (*response.VerifyTokenResponse, error) {
-	host, port, err := h.discoveryService.DiscoverService("users-service", "")
-	if err != nil {
-		return nil, err
-	}
-	conn, err := grpc.NewClient(
-		fmt.Sprintf("%s:%d", host, port),
+	conn, err := h.grpcConnectionService.GetConnection(
+		tokens.UserServiceToken,
 		grpc.WithTransportCredentials(insecure.NewCredentials()),
 		grpc.WithUnaryInterceptor(interceptor.ErrorHandlerClientInterceptor[proto.LoginData]()),
 	)

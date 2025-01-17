@@ -9,6 +9,7 @@ type Config struct {
 	ServerConfig ServerConfig        `mapstructure:"server"`
 	ConsulConfig ConsulConfig        `mapstructure:"consul"`
 	LoggerConfig logger.ConfigLogger `mapstructure:"logger"`
+	GrpcService  GrpcServiceConfig   `mapstructure:"grpc_service"`
 }
 
 type ServerConfig struct {
@@ -19,6 +20,10 @@ type ServerConfig struct {
 type ConsulConfig struct {
 	Host string `mapstructure:"host"`
 	Port int    `mapstructure:"port"`
+}
+
+type GrpcServiceConfig struct {
+	UserService string `mapstructure:"user_service"`
 }
 
 func LoadConfig() *Config {

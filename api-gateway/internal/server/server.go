@@ -13,7 +13,7 @@ import (
 	"github.com/baothaihcmut/Ecommerce-Go/api-gateway/internal/config"
 	authHandler "github.com/baothaihcmut/Ecommerce-Go/api-gateway/internal/modules/auth/handlers"
 	authRouter "github.com/baothaihcmut/Ecommerce-Go/api-gateway/internal/modules/auth/routers"
-	"github.com/baothaihcmut/Ecommerce-Go/api-gateway/internal/modules/discovery"
+	"github.com/baothaihcmut/Ecommerce-Go/api-gateway/internal/modules/grpc/services"
 	"github.com/baothaihcmut/Ecommerce-Go/libs/pkg/logger"
 	"github.com/hashicorp/consul/api"
 	"github.com/labstack/echo/v4"
@@ -36,14 +36,14 @@ func NewServer(e *echo.Echo, consul *api.Client, cfg *config.Config, logger logg
 }
 
 func (s *Server) initApp() {
-	discoveryService := discovery.NewDiscoveryService(s.ConsulClient)
+	//grpc connection service
+	grpcConnectionService := services.NewGrpcConnectionService(s.Cfg.GrpcService)
 	//init handler
-	authHandler := authHandler.NewAuthHandler(discoveryService)
+	authHandler := authHandler.NewAuthHandler(grpcConnectionService)
 	//init router
 	authRouter := authRouter.NewAuthRouter(authHandler)
 	authRouter.InitRouter(s.Echo)
 	//init error response
-
 	s.Echo.HTTPErrorHandler = exception.AppExceptionHandler(s.Logger)
 }
 
