@@ -3,6 +3,6 @@ package sort
 type SortDirection string
 
 const (
-	ASC  SortDirection = "asc"
-	DESC SortDirection = "desc"
+	SortDirection_ASC  SortDirection = "asc"
+	SortDirection_DESC SortDirection = "desc"
 )
