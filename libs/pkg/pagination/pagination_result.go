@@ -8,6 +8,6 @@ type Pagination struct {
 }
 
 type PaginationResult[T any] struct {
-	Data       T          `json:"data"`
+	Data       []T        `json:"data"`
 	Pagination Pagination `json:"pagnination"`
 }
