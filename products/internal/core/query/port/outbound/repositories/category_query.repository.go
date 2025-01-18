@@ -15,5 +15,5 @@ type CategoryQueryRepository interface {
 		filters []filter.FilterParam,
 		sorts []sort.SortParam,
 		paginate pagination.PaginationParam,
-	) ([]*categories.CategoryProjection, error)
+	) (*pagination.PaginationResult[*categories.CategoryProjection], error)
 }

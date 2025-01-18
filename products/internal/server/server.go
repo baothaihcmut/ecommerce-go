@@ -1,0 +1,95 @@
+package server
+
+import (
+	"fmt"
+	"net"
+	"os"
+	"os/signal"
+	"syscall"
+	"time"
+
+	"github.com/baothaihcmut/Ecommerce-Go/libs/pkg/grpc/interceptors"
+	"github.com/baothaihcmut/Ecommerce-Go/libs/pkg/logger"
+	"github.com/baothaihcmut/Ecommerce-Go/products/internal/adapter/grpc/endpoints"
+	"github.com/baothaihcmut/Ecommerce-Go/products/internal/adapter/grpc/mappers/request"
+	"github.com/baothaihcmut/Ecommerce-Go/products/internal/adapter/grpc/mappers/response"
+	"github.com/baothaihcmut/Ecommerce-Go/products/internal/adapter/grpc/proto"
+	"github.com/baothaihcmut/Ecommerce-Go/products/internal/adapter/grpc/transports"
+	"github.com/baothaihcmut/Ecommerce-Go/products/internal/adapter/persistence/repositories"
+	"github.com/baothaihcmut/Ecommerce-Go/products/internal/config"
+	commandService "github.com/baothaihcmut/Ecommerce-Go/products/internal/core/command/services"
+	queryService "github.com/baothaihcmut/Ecommerce-Go/products/internal/core/query/services"
+	"go.mongodb.org/mongo-driver/mongo"
+	"google.golang.org/grpc"
+	"google.golang.org/grpc/keepalive"
+)
+
+type Server struct {
+	mongo  *mongo.Client
+	logger logger.ILogger
+	cfg    *config.Config
+}
+
+func NewServer(mongo *mongo.Client, logger logger.ILogger, cfg *config.Config) *Server {
+	return &Server{
+		mongo:  mongo,
+		logger: logger,
+		cfg:    cfg,
+	}
+}
+
+func (s *Server) Start() {
+	mongoDB := s.mongo.Database(s.cfg.Mongo.Database)
+	//for command side
+	//repository
+	mongoCategoryCommandRepo := repositories.NewMongoCategoryCommandRepository(mongoDB.Collection("categories"))
+	//service
+	categoryCommandService := commandService.NewCategoryCommandService(mongoCategoryCommandRepo, s.mongo)
+	//for query side
+	//repo
+	mongoCategoryQueryRepo := repositories.NewMongoCategoryQueryRepository(mongoDB.Collection("categories"))
+	//service
+	categoryQueryService := queryService.NewCategoryQueryService(mongoCategoryQueryRepo)
+
+	// endpoints
+	categoryEndPoints := endpoints.MakeCategoryEndpoints(categoryCommandService, categoryQueryService)
+
+	//mappers
+	categoryRequestMapper := request.NewCategoryRequestMapper()
+	categoryResponseMapper := response.NewCategoryResponseMapper()
+
+	//grpc server
+	categoryServer := transports.NewCategoryServer(categoryEndPoints, categoryRequestMapper, categoryResponseMapper)
+	err := make(chan error)
+	go func() {
+		c := make(chan os.Signal, 1)
+		signal.Notify(c, syscall.SIGINT, syscall.SIGTERM, syscall.SIGALRM)
+		err <- fmt.Errorf("%s", <-c)
+	}()
+	grpcListener, listErr := net.Listen("tcp", fmt.Sprintf(":%d", s.cfg.Server.Port))
+	if listErr != nil {
+		s.logger.Error("during", "Listen", "err", err)
+		os.Exit(1)
+	}
+	// grpc options
+	serverOptions := []grpc.ServerOption{
+		// Unary option
+		grpc.ChainUnaryInterceptor(
+			grpc.UnaryServerInterceptor(interceptors.LoggingInterceptor(s.logger)),
+		),
+		//keep alive option
+		grpc.KeepaliveParams(keepalive.ServerParameters{
+			MaxConnectionIdle: 5 * time.Duration(s.cfg.Server.MaxConnectionIdle),
+			MaxConnectionAge:  10 * time.Minute,
+			Time:              2 * time.Minute,
+			Timeout:           20 * time.Second,
+		}),
+	}
+	baseServer := grpc.NewServer(serverOptions...)
+	go func() {
+		proto.RegisterCategoryServiceServer(baseServer, categoryServer)
+		s.logger.Info("Server started successfully 🚀")
+		baseServer.Serve(grpcListener)
+	}()
+	s.logger.Error("exit", <-err)
+}

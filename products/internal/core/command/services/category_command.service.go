@@ -1,11 +1,11 @@
-package command
+package services
 
 import (
 	"context"
-	"errors"
 
 	"github.com/baothaihcmut/Ecommerce-Go/products/internal/core/command/domain/aggregates/categories"
 	valueobjects "github.com/baothaihcmut/Ecommerce-Go/products/internal/core/command/domain/aggregates/categories/value_objects"
+	"github.com/baothaihcmut/Ecommerce-Go/products/internal/core/command/exceptions"
 	"github.com/baothaihcmut/Ecommerce-Go/products/internal/core/command/port/inbound/commands"
 	"github.com/baothaihcmut/Ecommerce-Go/products/internal/core/command/port/inbound/handlers"
 	"github.com/baothaihcmut/Ecommerce-Go/products/internal/core/command/port/inbound/results"
@@ -14,17 +14,16 @@ import (
 	"go.mongodb.org/mongo-driver/mongo"
 )
 
-var (
-	ErrParentCategoryNotExist = errors.New("parent category not exist")
-)
-
 type CategoryCommandService struct {
 	categoryRepo repositories.CategoryCommandRepository
 	mongoClient  *mongo.Client
 }
 
-func NewCategoryCommandService(repo repositories.CategoryCommandRepository) handlers.CategoryCommandHandler {
-	return &CategoryCommandService{}
+func NewCategoryCommandService(repo repositories.CategoryCommandRepository, mongoClient *mongo.Client) handlers.CategoryCommandHandler {
+	return &CategoryCommandService{
+		categoryRepo: repo,
+		mongoClient:  mongoClient,
+	}
 }
 
 // CreateCategory implements handlers.CategoryCommandHandler.
@@ -38,7 +37,7 @@ func (c *CategoryCommandService) CreateCategory(ctx context.Context, command *co
 			return nil, err
 		}
 		if parentCategory == nil {
-			return nil, ErrParentCategoryNotExist
+			return nil, exceptions.ErrParentCategoryNotExist
 		}
 		parentCategoryIds[idx] = parentCategoryId
 	}
@@ -60,12 +59,16 @@ func (c *CategoryCommandService) CreateCategory(ctx context.Context, command *co
 	if err != nil {
 		return nil, err
 	}
-	defer func(cause error) {
-		if cause != nil {
+	defer func() {
+		if err != nil {
 			session.AbortTransaction(ctx)
 		}
-	}(err)
-	c.categoryRepo.Save(ctx, category, session)
+	}()
+	err = c.categoryRepo.Save(ctx, category, session)
+	if err != nil {
+		return nil, err
+	}
+	session.CommitTransaction(ctx)
 	res := &results.CreateCategoryResult{
 		Id:               category.Id,
 		Name:             category.Name,

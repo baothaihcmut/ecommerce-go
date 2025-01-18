@@ -1,16 +1,10 @@
 package productitems
 
 import (
-	"errors"
-
 	"github.com/baothaihcmut/Ecommerce-Go/products/internal/core/command/domain/aggregates/product_items/entities"
 	valueobjects "github.com/baothaihcmut/Ecommerce-Go/products/internal/core/command/domain/aggregates/product_items/value_objects"
 	productValueobjects "github.com/baothaihcmut/Ecommerce-Go/products/internal/core/command/domain/aggregates/products/value_objects"
-)
-
-var (
-	ErrDuplicateVariation     = errors.New("duplicate variation in one product")
-	ErrMismatchVariationValue = errors.New("you cannot add this varition value to this item")
+	"github.com/baothaihcmut/Ecommerce-Go/products/internal/core/command/domain/exceptions"
 )
 
 type ProductItem struct {
@@ -35,11 +29,11 @@ func NewProductItem(
 	for _, variation := range variationValues {
 		//check match product id
 		if !variation.VariationId.ProductId.IsEqual(productId) {
-			return nil, ErrMismatchVariationValue
+			return nil, exceptions.ErrMismatchVariationValue
 		}
 		key := string(variation.VariationId.ProductId) + string(variation.VariationId.Name)
 		if _, exist := mapVariation[key]; exist {
-			return nil, ErrDuplicateVariation
+			return nil, exceptions.ErrDuplicateVariation
 		} else {
 			mapVariation[key] = true
 		}
@@ -59,10 +53,10 @@ func (p *ProductItem) AddVariationValues(variationValues []*entities.VariationVa
 		for _, newVariation := range variationValues {
 			//check match product id
 			if !variationValue.VariationId.ProductId.IsEqual(p.ProductId) {
-				return ErrMismatchVariationValue
+				return exceptions.ErrMismatchVariationValue
 			}
 			if variationValue.VariationId.IsEqual(newVariation.VariationId) {
-				return ErrDuplicateVariation
+				return exceptions.ErrDuplicateVariation
 			}
 		}
 	}

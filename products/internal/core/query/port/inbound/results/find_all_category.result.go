@@ -6,5 +6,5 @@ import (
 )
 
 type FindAllCategoryResult struct {
-	pagination.PaginationResult[[]*categories.CategoryProjection]
+	*pagination.PaginationResult[*categories.CategoryProjection]
 }
