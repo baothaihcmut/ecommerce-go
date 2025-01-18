@@ -3,9 +3,9 @@ package inmemory
 import (
 	"context"
 
-	"github.com/baothaihcmut/Ecommerce-Go/products/internal/core/domain/aggregates/shops"
-	valueobjects "github.com/baothaihcmut/Ecommerce-Go/products/internal/core/domain/aggregates/shops/value_objects"
-	"github.com/baothaihcmut/Ecommerce-Go/products/internal/core/port/outbound/repositories"
+	"github.com/baothaihcmut/Ecommerce-Go/products/internal/core/command/domain/aggregates/shops"
+	valueobjects "github.com/baothaihcmut/Ecommerce-Go/products/internal/core/command/domain/aggregates/shops/value_objects"
+	"github.com/baothaihcmut/Ecommerce-Go/products/internal/core/command/port/outbound/repositories"
 )
 
 type InMemoryShopRepository struct {
@@ -17,7 +17,7 @@ func (i *InMemoryShopRepository) FindShopById(ctx context.Context, shopId valueo
 	return *i.storage[string(shopId)], nil
 }
 
-func NewInMemoryShopRepository() repositories.ShopRepository {
+func NewInMemoryShopRepository() repositories.ShopCommandRepository {
 	return &InMemoryShopRepository{
 		storage: map[string]*shops.Shop{
 			"64e5f2b6c529fb27c83647e2": {

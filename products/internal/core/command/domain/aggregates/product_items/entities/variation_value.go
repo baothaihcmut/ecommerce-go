@@ -1,0 +1,15 @@
+package entities
+
+import productValueobjects "github.com/baothaihcmut/Ecommerce-Go/products/internal/core/command/domain/aggregates/products/value_objects"
+
+type VariationValue struct {
+	VariationId productValueobjects.VariationId
+	Value       string
+}
+
+func NewVariationValue(variationId productValueobjects.VariationId, value string) VariationValue {
+	return VariationValue{
+		VariationId: variationId,
+		Value:       value,
+	}
+}

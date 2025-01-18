@@ -3,10 +3,13 @@ package repositories
 import (
 	"context"
 
+	"github.com/baothaihcmut/Ecommerce-Go/libs/pkg/filter"
+	"github.com/baothaihcmut/Ecommerce-Go/libs/pkg/pagination"
+	"github.com/baothaihcmut/Ecommerce-Go/libs/pkg/sort"
 	"github.com/baothaihcmut/Ecommerce-Go/products/internal/adapter/persistence/models"
-	"github.com/baothaihcmut/Ecommerce-Go/products/internal/core/domain/aggregates/categories"
-	valueobjects "github.com/baothaihcmut/Ecommerce-Go/products/internal/core/domain/aggregates/categories/value_objects"
-	"github.com/baothaihcmut/Ecommerce-Go/products/internal/core/port/outbound/repositories"
+	"github.com/baothaihcmut/Ecommerce-Go/products/internal/core/command/domain/aggregates/categories"
+	valueobjects "github.com/baothaihcmut/Ecommerce-Go/products/internal/core/command/domain/aggregates/categories/value_objects"
+	"github.com/baothaihcmut/Ecommerce-Go/products/internal/core/command/port/outbound/repositories"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
@@ -28,7 +31,7 @@ func toCategoryDomain(model *models.Category) *categories.Category {
 		ParentCategoryId: parentCategoryIds,
 	}
 }
-func NewMongoCategoryRepository(collection *mongo.Collection) repositories.CategoryRepository {
+func NewMongoCategoryRepository(collection *mongo.Collection) repositories.CategoryCommandRepository {
 	return &MongoCategoryRepository{
 		collection: collection,
 	}
@@ -76,6 +79,47 @@ func (m *MongoCategoryRepository) FindCategoryById(ctx context.Context, category
 	//map to domain
 	return toCategoryDomain(&categoryModel), nil
 }
-func (m *MongoCategoryRepository) FindAllCategory(ctx context.Context) ([]*categories.Category, error) {
-	return nil, nil
+func (m *MongoCategoryRepository) FindAllCategory(
+	ctx context.Context,
+	filters []filter.FilterParam,
+	sorts []sort.SortParam,
+	paginate pagination.PaginationParam,
+
+) ([]*categories.Category, error) {
+	//for filter
+	filterArr := bson.D{}
+	for idx, filter := range filters {
+		filterArr[idx] = bson.E{Key: filter.Field, Value: filter.Value}
+	}
+	filterMongo := bson.M{
+		"$and": filterArr,
+	}
+	//for sort
+	sortMongo := bson.M{}
+	for _, sortParam := range sorts {
+		if sortParam.Direction == sort.ASC {
+			sortMongo[sortParam.Field] = 1
+		} else {
+			sortMongo[sortParam.Field] = -1
+		}
+	}
+	limit := paginate.Size
+	skip := (paginate.Page - 1) * limit
+	findOptions := options.Find().SetSkip(int64(skip)).SetLimit(int64(limit)).SetSort(sortMongo)
+
+	cursor, err := m.collection.Find(ctx, filterMongo, findOptions)
+	if err != nil {
+		return nil, err
+	}
+	defer cursor.Close(ctx)
+	var categorieMongo []models.Category
+	if err = cursor.All(ctx, &categorieMongo); err != nil {
+		return nil, err
+	}
+	res := make([]*categories.Category, len(categorieMongo))
+	for idx, model := range categorieMongo {
+		res[idx] = toCategoryDomain(&model)
+	}
+	return res, nil
+
 }

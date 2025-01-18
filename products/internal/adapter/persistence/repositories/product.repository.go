@@ -4,8 +4,8 @@ import (
 	"context"
 
 	"github.com/baothaihcmut/Ecommerce-Go/products/internal/adapter/persistence/models"
-	"github.com/baothaihcmut/Ecommerce-Go/products/internal/core/domain/aggregates/products"
-	"github.com/baothaihcmut/Ecommerce-Go/products/internal/core/port/outbound/repositories"
+	"github.com/baothaihcmut/Ecommerce-Go/products/internal/core/command/domain/aggregates/products"
+	"github.com/baothaihcmut/Ecommerce-Go/products/internal/core/command/port/outbound/repositories"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
@@ -16,7 +16,7 @@ type MongoProductRepository struct {
 	collection *mongo.Collection
 }
 
-func NewMongoProductRepository(collection *mongo.Collection) repositories.ProductRepository {
+func NewMongoProductRepository(collection *mongo.Collection) repositories.ProductCommandRepository {
 	return &MongoProductRepository{
 		collection: collection,
 	}
