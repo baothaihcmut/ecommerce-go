@@ -8,13 +8,13 @@ import (
 	"google.golang.org/protobuf/types/known/wrapperspb"
 )
 
-func marshalValue[T protoreflect.ProtoMessage](src *anypb.Any) (*T, error) {
+func marshalValue[T protoreflect.ProtoMessage](src *anypb.Any) (T, error) {
 	var res T
 	err := src.UnmarshalTo(res)
 	if err != nil {
-		return nil, err
+		return res, err
 	}
-	return &res, nil
+	return res, nil
 }
 
 func ExtractGrpcAnyValue(src *anypb.Any) (interface{}, error) {
