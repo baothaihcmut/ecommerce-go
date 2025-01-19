@@ -2,7 +2,6 @@ package repositories
 
 import (
 	"context"
-	"fmt"
 	"sync"
 
 	"github.com/baothaihcmut/Ecommerce-Go/libs/pkg/filter"
@@ -18,19 +17,12 @@ import (
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
-	"google.golang.org/protobuf/reflect/protoreflect"
-	"google.golang.org/protobuf/types/known/anypb"
 )
 
 type MongoCategoryRepository struct {
 	collection *mongo.Collection
 }
 
-func decodeAnyValue[T protoreflect.ProtoMessage](value *anypb.Any) (protoreflect.Value, error) {
-	var res T
-	value.UnmarshalTo(res)
-	return res.ProtoReflect().Get(), nil
-}
 func toCategoryDomain(model *models.Category) *categories.Category {
 	parentCategoryIds := make([]valueobjects.CategoryId, len(model.ParentCategoryId))
 	for idx, val := range model.ParentCategoryId {
@@ -121,8 +113,6 @@ func (m *MongoCategoryRepository) FindAllCategory(
 ) (*pagination.PaginationResult[*categoryProjections.CategoryProjection], error) {
 	filterMongo := bson.M{}
 	for _, filter := range filters {
-		fmt.Println(filter.Field)
-		fmt.Println(filter.Value)
 		filterMongo[filter.Field] = filter.Value
 	}
 	//for sort

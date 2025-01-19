@@ -37,7 +37,7 @@ require (
 )
 
 require (
-	github.com/baothaihcmut/Ecommerce-Go/libs v1.0.10
+	github.com/baothaihcmut/Ecommerce-Go/libs v1.0.13
 	github.com/go-kit/kit v0.13.0
 	github.com/golang/snappy v0.0.4 // indirect
 	github.com/klauspost/compress v1.17.11 // indirect
