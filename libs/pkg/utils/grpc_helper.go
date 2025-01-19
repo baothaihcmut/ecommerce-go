@@ -3,6 +3,7 @@ package utils
 import (
 	"fmt"
 
+	"google.golang.org/protobuf/proto"
 	"google.golang.org/protobuf/reflect/protoreflect"
 	"google.golang.org/protobuf/types/known/anypb"
 	"google.golang.org/protobuf/types/known/wrapperspb"
@@ -10,10 +11,11 @@ import (
 
 func marshalValue[T protoreflect.ProtoMessage](src *anypb.Any) (T, error) {
 	var res T
-	err := src.UnmarshalTo(res)
+	tmp, err := anypb.UnmarshalNew(src, proto.UnmarshalOptions{})
 	if err != nil {
 		return res, err
 	}
+	res = tmp.(T)
 	return res, nil
 }
 
