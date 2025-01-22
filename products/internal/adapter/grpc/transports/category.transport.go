@@ -13,8 +13,9 @@ import (
 )
 
 type CategoryServer struct {
-	CreateCategoryHandler  gt.Handler
-	FinaAllCategoryHandler gt.Handler
+	CreateCategoryHandler       gt.Handler
+	FindAllCategoryHandler      gt.Handler
+	BulkCreateCategoriesHandler gt.Handler
 }
 
 // CreateCategory implements proto.CategoryServiceServer.
@@ -41,7 +42,7 @@ func (c *CategoryServer) CreateCategory(ctx context.Context, req *proto.CreateCa
 
 // FindAllCategory implements proto.CategoryServiceServer.
 func (c *CategoryServer) FindAllCategory(ctx context.Context, req *proto.FindAllCategoryRequest) (*proto.FindAllCategoryResponse, error) {
-	_, res, err := c.FinaAllCategoryHandler.ServeGRPC(ctx, req)
+	_, res, err := c.FindAllCategoryHandler.ServeGRPC(ctx, req)
 	if err != nil {
 		return &proto.FindAllCategoryResponse{
 			Data: nil,
@@ -61,6 +62,26 @@ func (c *CategoryServer) FindAllCategory(ctx context.Context, req *proto.FindAll
 	}, nil
 }
 
+func (c *CategoryServer) BulkCreateCategory(ctx context.Context, req *proto.BulkCreateCategoryRequest) (*proto.BulkCreateCategoryResponse, error) {
+	_, resp, err := c.BulkCreateCategoriesHandler.ServeGRPC(ctx, req)
+	if err != nil {
+		return &proto.BulkCreateCategoryResponse{
+			Data: nil,
+			Status: &proto.Status{
+				Code:    errors.MapGrpcErrorCode(err).String(),
+				Message: err.Error(),
+				Details: []string{err.Error()},
+			},
+		}, nil
+	}
+	return &proto.BulkCreateCategoryResponse{
+		Data: resp.([]*proto.CategoryData),
+		Status: &proto.Status{
+			Code:    codes.OK.String(),
+			Message: "Create categories success",
+		},
+	}, nil
+}
 func NewCategoryServer(
 	endpoints endpoints.CategoryEndpoints,
 	requestMapper request.CategoryRequestMapper,
@@ -72,7 +93,12 @@ func NewCategoryServer(
 			requestMapper.ToCreateCategoryCommand,
 			responseMapper.ToCreateCategoryResponse,
 		),
-		FinaAllCategoryHandler: gt.NewServer(
+		BulkCreateCategoriesHandler: gt.NewServer(
+			endpoints.BulkCreateCategories,
+			requestMapper.ToBulkCreateCategoriesCommand,
+			responseMapper.ToBulkCreateCategoriesResponse,
+		),
+		FindAllCategoryHandler: gt.NewServer(
 			endpoints.FindAllCategory,
 			requestMapper.ToFindAllCategoryQuery,
 			responseMapper.ToFindAllCategoryResponse,

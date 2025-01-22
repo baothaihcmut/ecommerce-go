@@ -11,14 +11,16 @@ import (
 )
 
 type CategoryEndpoints struct {
-	CreateCategory  endpoint.Endpoint
-	FindAllCategory endpoint.Endpoint
+	CreateCategory       endpoint.Endpoint
+	FindAllCategory      endpoint.Endpoint
+	BulkCreateCategories endpoint.Endpoint
 }
 
 func MakeCategoryEndpoints(c commandHandler.CategoryCommandHandler, q queryHandler.CategoryQueryHandler) CategoryEndpoints {
 	return CategoryEndpoints{
-		CreateCategory:  makeCreateCategoryEndpoint(c),
-		FindAllCategory: makeFindAllCategoryEndpoint(q),
+		CreateCategory:       makeCreateCategoryEndpoint(c),
+		FindAllCategory:      makeFindAllCategoryEndpoint(q),
+		BulkCreateCategories: makeBulkCreateCategoriesEndpoint(c),
 	}
 }
 
@@ -26,6 +28,16 @@ func makeCreateCategoryEndpoint(c commandHandler.CategoryCommandHandler) endpoin
 	return func(ctx context.Context, request interface{}) (response interface{}, err error) {
 		req := request.(*commands.CreateCategoryCommand)
 		res, err := c.CreateCategory(ctx, req)
+		if err != nil {
+			return nil, err
+		}
+		return res, nil
+	}
+}
+func makeBulkCreateCategoriesEndpoint(c commandHandler.CategoryCommandHandler) endpoint.Endpoint {
+	return func(ctx context.Context, request interface{}) (response interface{}, err error) {
+		req := request.(*commands.BulkCreateCategories)
+		res, err := c.BulkCreateCategories(ctx, req)
 		if err != nil {
 			return nil, err
 		}

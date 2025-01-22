@@ -14,6 +14,7 @@ import (
 type CategoryRequestMapper interface {
 	ToCreateCategoryCommand(_ context.Context, request interface{}) (interface{}, error)
 	ToFindAllCategoryQuery(_ context.Context, request interface{}) (interface{}, error)
+	ToBulkCreateCategoriesCommand(_ context.Context, request interface{}) (interface{}, error)
 }
 
 type CategoryRequestMapperImpl struct{}
@@ -54,6 +55,20 @@ func (m *CategoryRequestMapperImpl) ToFindAllCategoryQuery(_ context.Context, re
 			Page: int(req.PaginationParam.Page),
 			Size: int(req.PaginationParam.Size),
 		},
+	}, nil
+}
+
+func (m *CategoryRequestMapperImpl) ToBulkCreateCategoriesCommand(_ context.Context, request interface{}) (interface{}, error) {
+	req := request.(*proto.BulkCreateCategoryRequest)
+	bulkCreateCommands := make([]*commands.CreateCategoryCommand, len(req.Categories))
+	for idx, category := range req.Categories {
+		bulkCreateCommands[idx] = &commands.CreateCategoryCommand{
+			Name:              category.Name,
+			ParentCategoryIds: category.ParentCategoryIds,
+		}
+	}
+	return &commands.BulkCreateCategories{
+		Categories: bulkCreateCommands,
 	}, nil
 }
 func NewCategoryRequestMapper() CategoryRequestMapper {

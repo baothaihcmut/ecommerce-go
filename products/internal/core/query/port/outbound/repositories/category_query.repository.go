@@ -16,4 +16,5 @@ type CategoryQueryRepository interface {
 		sorts []sort.SortParam,
 		paginate pagination.PaginationParam,
 	) (*pagination.PaginationResult[*categories.CategoryProjection], error)
+	FindAllSubCategory(ctx context.Context, categoryId string) ([]*categories.CategoryProjection, error)
 }

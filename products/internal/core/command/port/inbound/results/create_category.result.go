@@ -1,9 +1,9 @@
 package results
 
-import valueobjects "github.com/baothaihcmut/Ecommerce-Go/products/internal/core/command/domain/aggregates/categories/value_objects"
+import (
+	"github.com/baothaihcmut/Ecommerce-Go/products/internal/core/command/domain/aggregates/categories"
+)
 
 type CreateCategoryResult struct {
-	Id               valueobjects.CategoryId
-	Name             string
-	ParentCategoryId []valueobjects.CategoryId
+	*categories.Category
 }

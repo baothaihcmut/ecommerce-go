@@ -37,3 +37,11 @@ func (c *CategoryQueryService) FindAllCategory(ctx context.Context, query *queri
 		PaginationResult: res,
 	}, nil
 }
+
+func (c *CategoryQueryService) FindAllSubCategories(ctx context.Context, q *queries.FindSubCategoriesQuery) (*results.FindSubCategoriesResult, error) {
+	res, err := c.repo.FindAllSubCategory(ctx, q.CategoryId)
+	if err != nil {
+		return nil, err
+	}
+	return &results.FindSubCategoriesResult{Categories: res}, nil
+}

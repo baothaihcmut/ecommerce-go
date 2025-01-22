@@ -9,4 +9,5 @@ import (
 
 type CategoryCommandHandler interface {
 	CreateCategory(context.Context, *commands.CreateCategoryCommand) (*results.CreateCategoryResult, error)
+	BulkCreateCategories(ctx context.Context, command *commands.BulkCreateCategories) (*results.BulkCreateCategoriesResult, error)
 }

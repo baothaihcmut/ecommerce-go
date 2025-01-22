@@ -4,8 +4,8 @@ import (
 	categoryValueobjects "github.com/baothaihcmut/Ecommerce-Go/products/internal/core/command/domain/aggregates/categories/value_objects"
 	"github.com/baothaihcmut/Ecommerce-Go/products/internal/core/command/domain/aggregates/products/entities"
 	valueobjects "github.com/baothaihcmut/Ecommerce-Go/products/internal/core/command/domain/aggregates/products/value_objects"
-	shopValueobjects "github.com/baothaihcmut/Ecommerce-Go/products/internal/core/command/domain/aggregates/shops/value_objects"
 	"github.com/baothaihcmut/Ecommerce-Go/products/internal/core/command/domain/exceptions"
+	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
 type Product struct {
@@ -13,44 +13,75 @@ type Product struct {
 	Name        string
 	Description string
 	Unit        string
-	ShopId      shopValueobjects.ShopId
+	ShopId      valueobjects.ShopId
 	CategoryIds []categoryValueobjects.CategoryId
 	Variations  []*entities.Variation
 }
 
+func checkVariationDuplicate(variations []string) error {
+	variationSet := make(map[string]struct{})
+	for _, variation := range variations {
+		if _, exist := variationSet[variation]; !exist {
+			variationSet[variation] = struct{}{}
+		} else {
+			return exceptions.ErrDuplicateVariation
+		}
+	}
+	return nil
+}
+func checkCatgoryDuplicate(categoryIds []categoryValueobjects.CategoryId) error {
+	categorySet := make(map[string]struct{})
+	for _, categoryId := range categoryIds {
+		if _, exist := categorySet[string(categoryId)]; !exist {
+			categorySet[string(categoryId)] = struct{}{}
+		} else {
+			return exceptions.ErrCategoryExist
+		}
+	}
+	return nil
+}
+
 func NewProduct(
-	id valueobjects.ProductId,
 	name string,
 	description string,
 	unit string,
-	shopId shopValueobjects.ShopId,
+	shopId valueobjects.ShopId,
 	categoryIds []categoryValueobjects.CategoryId,
-	variations []*entities.Variation,
-) *Product {
-
+	variations []string,
+) (*Product, error) {
+	err := checkCatgoryDuplicate(categoryIds)
+	if err != nil {
+		return nil, err
+	}
+	err = checkVariationDuplicate(variations)
+	if err != nil {
+		return nil, err
+	}
+	id := primitive.NewObjectID()
+	productId := valueobjects.NewProductId(id.Hex())
+	variationEntities := make([]*entities.Variation, len(variations))
+	for idx, variation := range variations {
+		variationEntities[idx] = entities.NewVariation(valueobjects.NewVariationId(productId, variation))
+	}
 	return &Product{
-		Id:          id,
+		Id:          productId,
 		Name:        name,
 		Description: description,
 		Unit:        unit,
 		ShopId:      shopId,
 		CategoryIds: categoryIds,
-		Variations:  variations,
-	}
+		Variations:  variationEntities,
+	}, nil
 }
-func (p *Product) AddVariation(variations []*entities.Variation) error {
+func (p *Product) AddVariation(variations []string) error {
 	for _, variation := range variations {
-		//check if variation belong to product
-		if !variation.Id.ProductId.IsEqual(p.Id) {
-			return exceptions.ErrVariationNotBelongToProduct
-		}
 		//check if variation exist in product
 		for _, productVariation := range p.Variations {
-			if !productVariation.Id.IsEqual(variation.Id) {
+			if variation == productVariation.Id.Name {
 				return exceptions.ErrVariationExist
 			}
 		}
-		p.Variations = append(p.Variations, variation)
+		p.Variations = append(p.Variations, entities.NewVariation(valueobjects.NewVariationId(p.Id, variation)))
 	}
 	return nil
 }

@@ -15,6 +15,7 @@ import (
 	"github.com/baothaihcmut/Ecommerce-Go/products/internal/adapter/grpc/mappers/response"
 	"github.com/baothaihcmut/Ecommerce-Go/products/internal/adapter/grpc/proto"
 	"github.com/baothaihcmut/Ecommerce-Go/products/internal/adapter/grpc/transports"
+	inmemory "github.com/baothaihcmut/Ecommerce-Go/products/internal/adapter/in_memory"
 	"github.com/baothaihcmut/Ecommerce-Go/products/internal/adapter/persistence/repositories"
 	"github.com/baothaihcmut/Ecommerce-Go/products/internal/config"
 	commandService "github.com/baothaihcmut/Ecommerce-Go/products/internal/core/command/services"
@@ -43,8 +44,11 @@ func (s *Server) Start() {
 	//for command side
 	//repository
 	mongoCategoryCommandRepo := repositories.NewMongoCategoryCommandRepository(mongoDB.Collection("categories"))
+	mongoProductCommandRepo := repositories.NewMongoProductRepository(mongoDB.Collection("products"))
 	//service
+	shopService := inmemory.NewInMemoryShopService()
 	categoryCommandService := commandService.NewCategoryCommandService(mongoCategoryCommandRepo, s.mongo)
+	productCommandService := commandService.NewProductCommandService(mongoCategoryCommandRepo, mongoProductCommandRepo, shopService, s.mongo)
 	//for query side
 	//repo
 	mongoCategoryQueryRepo := repositories.NewMongoCategoryQueryRepository(mongoDB.Collection("categories"))
@@ -53,13 +57,16 @@ func (s *Server) Start() {
 
 	// endpoints
 	categoryEndPoints := endpoints.MakeCategoryEndpoints(categoryCommandService, categoryQueryService)
-
+	productEndpoints := endpoints.MakeProductEndpoints(productCommandService)
 	//mappers
 	categoryRequestMapper := request.NewCategoryRequestMapper()
 	categoryResponseMapper := response.NewCategoryResponseMapper()
+	productRequestMapper := request.NewProductRequestMapper()
+	productResponseMapper := response.NewProductResponseMapper()
 
 	//grpc server
 	categoryServer := transports.NewCategoryServer(categoryEndPoints, categoryRequestMapper, categoryResponseMapper)
+	productServer := transports.NewProductServer(productEndpoints, productRequestMapper, productResponseMapper)
 	err := make(chan error)
 	go func() {
 		c := make(chan os.Signal, 1)
@@ -88,6 +95,7 @@ func (s *Server) Start() {
 	baseServer := grpc.NewServer(serverOptions...)
 	go func() {
 		proto.RegisterCategoryServiceServer(baseServer, categoryServer)
+		proto.RegisterProductServiceServer(baseServer, productServer)
 		s.logger.Info("Server started successfully 🚀")
 		baseServer.Serve(grpcListener)
 	}()

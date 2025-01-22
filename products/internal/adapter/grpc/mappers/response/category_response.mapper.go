@@ -4,16 +4,36 @@ import (
 	"context"
 
 	"github.com/baothaihcmut/Ecommerce-Go/products/internal/adapter/grpc/proto"
+	"github.com/baothaihcmut/Ecommerce-Go/products/internal/core/command/port/inbound/results"
 	commandResult "github.com/baothaihcmut/Ecommerce-Go/products/internal/core/command/port/inbound/results"
 	queryResult "github.com/baothaihcmut/Ecommerce-Go/products/internal/core/query/port/inbound/results"
 )
 
 type CategoryResponseMapper interface {
 	ToCreateCategoryResponse(context.Context, interface{}) (interface{}, error)
+	ToBulkCreateCategoriesResponse(context.Context, interface{}) (interface{}, error)
 	ToFindAllCategoryResponse(context.Context, interface{}) (interface{}, error)
 }
 
 type CategoryResponseMapperImpl struct{}
+
+// ToBulkCreateCategoriesResponse implements CategoryResponseMapper.
+func (c *CategoryResponseMapperImpl) ToBulkCreateCategoriesResponse(_ context.Context, resp interface{}) (interface{}, error) {
+	res := resp.(*results.BulkCreateCategoriesResult)
+	categoriesResponse := make([]*proto.CategoryData, len(res.Categories))
+	for idx, category := range res.Categories {
+		parentCategoryIds := make([]string, len(category.ParentCategoryId))
+		for idx, val := range category.ParentCategoryId {
+			parentCategoryIds[idx] = string(val)
+		}
+		categoriesResponse[idx] = &proto.CategoryData{
+			Id:                string(category.Id),
+			Name:              category.Name,
+			ParentCategoryIds: parentCategoryIds,
+		}
+	}
+	return categoriesResponse, nil
+}
 
 func (c *CategoryResponseMapperImpl) ToCreateCategoryResponse(_ context.Context, resp interface{}) (interface{}, error) {
 	res := resp.(*commandResult.CreateCategoryResult)

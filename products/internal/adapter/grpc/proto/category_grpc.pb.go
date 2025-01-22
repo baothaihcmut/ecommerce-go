@@ -19,8 +19,9 @@ import (
 const _ = grpc.SupportPackageIsVersion9
 
 const (
-	CategoryService_CreateCategory_FullMethodName  = "/proto.CategoryService/CreateCategory"
-	CategoryService_FindAllCategory_FullMethodName = "/proto.CategoryService/FindAllCategory"
+	CategoryService_CreateCategory_FullMethodName     = "/proto.CategoryService/CreateCategory"
+	CategoryService_BulkCreateCategory_FullMethodName = "/proto.CategoryService/BulkCreateCategory"
+	CategoryService_FindAllCategory_FullMethodName    = "/proto.CategoryService/FindAllCategory"
 )
 
 // CategoryServiceClient is the client API for CategoryService service.
@@ -28,6 +29,7 @@ const (
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type CategoryServiceClient interface {
 	CreateCategory(ctx context.Context, in *CreateCategoryRequest, opts ...grpc.CallOption) (*CreateCategoryResponse, error)
+	BulkCreateCategory(ctx context.Context, in *BulkCreateCategoryRequest, opts ...grpc.CallOption) (*BulkCreateCategoryResponse, error)
 	FindAllCategory(ctx context.Context, in *FindAllCategoryRequest, opts ...grpc.CallOption) (*FindAllCategoryResponse, error)
 }
 
@@ -49,6 +51,16 @@ func (c *categoryServiceClient) CreateCategory(ctx context.Context, in *CreateCa
 	return out, nil
 }
 
+func (c *categoryServiceClient) BulkCreateCategory(ctx context.Context, in *BulkCreateCategoryRequest, opts ...grpc.CallOption) (*BulkCreateCategoryResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(BulkCreateCategoryResponse)
+	err := c.cc.Invoke(ctx, CategoryService_BulkCreateCategory_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 func (c *categoryServiceClient) FindAllCategory(ctx context.Context, in *FindAllCategoryRequest, opts ...grpc.CallOption) (*FindAllCategoryResponse, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(FindAllCategoryResponse)
@@ -64,6 +76,7 @@ func (c *categoryServiceClient) FindAllCategory(ctx context.Context, in *FindAll
 // for forward compatibility.
 type CategoryServiceServer interface {
 	CreateCategory(context.Context, *CreateCategoryRequest) (*CreateCategoryResponse, error)
+	BulkCreateCategory(context.Context, *BulkCreateCategoryRequest) (*BulkCreateCategoryResponse, error)
 	FindAllCategory(context.Context, *FindAllCategoryRequest) (*FindAllCategoryResponse, error)
 }
 
@@ -76,6 +89,9 @@ type UnimplementedCategoryServiceServer struct{}
 
 func (UnimplementedCategoryServiceServer) CreateCategory(context.Context, *CreateCategoryRequest) (*CreateCategoryResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method CreateCategory not implemented")
+}
+func (UnimplementedCategoryServiceServer) BulkCreateCategory(context.Context, *BulkCreateCategoryRequest) (*BulkCreateCategoryResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method BulkCreateCategory not implemented")
 }
 func (UnimplementedCategoryServiceServer) FindAllCategory(context.Context, *FindAllCategoryRequest) (*FindAllCategoryResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method FindAllCategory not implemented")
@@ -118,6 +134,24 @@ func _CategoryService_CreateCategory_Handler(srv interface{}, ctx context.Contex
 	return interceptor(ctx, in, info, handler)
 }
 
+func _CategoryService_BulkCreateCategory_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(BulkCreateCategoryRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(CategoryServiceServer).BulkCreateCategory(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: CategoryService_BulkCreateCategory_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(CategoryServiceServer).BulkCreateCategory(ctx, req.(*BulkCreateCategoryRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 func _CategoryService_FindAllCategory_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(FindAllCategoryRequest)
 	if err := dec(in); err != nil {
@@ -146,6 +180,10 @@ var CategoryService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "CreateCategory",
 			Handler:    _CategoryService_CreateCategory_Handler,
+		},
+		{
+			MethodName: "BulkCreateCategory",
+			Handler:    _CategoryService_BulkCreateCategory_Handler,
 		},
 		{
 			MethodName: "FindAllCategory",

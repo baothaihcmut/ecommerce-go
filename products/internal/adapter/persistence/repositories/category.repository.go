@@ -35,7 +35,6 @@ func toCategoryDomain(model *models.Category) *categories.Category {
 	}
 }
 func toCategoryProjection(model *models.Category) *categoryProjections.CategoryProjection {
-
 	return &categoryProjections.CategoryProjection{
 		Id:                model.Id.Hex(),
 		Name:              model.Name,
@@ -86,6 +85,41 @@ func (m *MongoCategoryRepository) Save(ctx context.Context, category *categories
 		return err
 	}
 	return nil
+}
+
+func (m *MongoCategoryRepository) BulkSave(ctx context.Context, categories []*categories.Category, session mongo.Session) error {
+	bulkOptions := make([]mongo.WriteModel, len(categories))
+	for idx, val := range categories {
+		id, err := primitive.ObjectIDFromHex(string(val.Id))
+		if err != nil {
+			return err
+		}
+		parentCategoryIds := make([]string, len(val.ParentCategoryId))
+		for idx, cate := range val.ParentCategoryId {
+			parentCategoryIds[idx] = string(cate)
+		}
+		categoryModel := &models.Category{
+			Id:               id,
+			Name:             val.Name,
+			ParentCategoryId: parentCategoryIds,
+		}
+		upsertOpt := mongo.NewUpdateManyModel().
+			SetFilter(bson.M{
+				"_id": id,
+			}).
+			SetUpdate(bson.M{
+				"$set": categoryModel,
+			}).
+			SetUpsert(true)
+		bulkOptions[idx] = upsertOpt
+	}
+	sessionCtx := mongo.NewSessionContext(ctx, session)
+	_, err := m.collection.BulkWrite(sessionCtx, bulkOptions)
+	if err != nil {
+		return err
+	}
+	return nil
+
 }
 
 func (m *MongoCategoryRepository) FindCategoryById(ctx context.Context, categoryId valueobjects.CategoryId) (*categories.Category, error) {
@@ -190,4 +224,31 @@ func (m *MongoCategoryRepository) FindAllCategory(
 			TotalItem:   count,
 		},
 	}, nil
+}
+
+func (m *MongoCategoryRepository) FindAllSubCategory(ctx context.Context, categoryId string) ([]*categoryProjections.CategoryProjection, error) {
+	filter := bson.M{
+		"parent_category_ids": bson.M{
+			"$in": bson.A{categoryId},
+		},
+	}
+	cursor, err := m.collection.Find(ctx, filter)
+	if err != nil {
+		return nil, err
+	}
+	var categoryModels []*models.Category
+	if err := cursor.All(ctx, &categoryModels); err != nil {
+		return nil, err
+	}
+	mapResWg := &sync.WaitGroup{}
+	res := make([]*categoryProjections.CategoryProjection, len(categoryModels))
+	for idx, category := range categoryModels {
+		mapResWg.Add(1)
+		go func() {
+			defer mapResWg.Done()
+			res[idx] = toCategoryProjection(category)
+		}()
+	}
+	mapResWg.Wait()
+	return res, nil
 }

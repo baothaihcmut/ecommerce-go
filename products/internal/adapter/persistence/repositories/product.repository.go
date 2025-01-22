@@ -47,7 +47,7 @@ func (m *MongoProductRepository) Save(ctx context.Context, product *products.Pro
 	}
 	sessionCtx := mongo.NewSessionContext(ctx, session)
 	opts := options.Update().SetUpsert(true)
-	_, err = m.collection.UpdateOne(sessionCtx, bson.M{"_id": id}, productModel, opts)
+	_, err = m.collection.UpdateOne(sessionCtx, bson.M{"_id": id}, bson.M{"$set": productModel}, opts)
 	if err != nil {
 		return err
 	}

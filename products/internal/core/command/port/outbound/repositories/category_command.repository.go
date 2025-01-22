@@ -9,6 +9,7 @@ import (
 )
 
 type CategoryCommandRepository interface {
-	Save(context.Context, *categories.Category, mongo.Session) error
+	Save(ctx context.Context, category *categories.Category, session mongo.Session) error
+	BulkSave(ctx context.Context, categories []*categories.Category, session mongo.Session) error
 	FindCategoryById(ctx context.Context, categoryId valueobjects.CategoryId) (*categories.Category, error)
 }

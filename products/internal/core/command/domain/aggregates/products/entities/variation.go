@@ -11,3 +11,6 @@ func NewVariation(id valueobjects.VariationId) *Variation {
 		Id: id,
 	}
 }
+func (v *Variation) IsEqual(o *Variation) bool {
+	return v.Id.IsEqual(o.Id)
+}
