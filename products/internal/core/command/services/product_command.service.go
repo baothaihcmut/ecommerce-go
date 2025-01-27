@@ -118,6 +118,113 @@ func (p *ProductCommandService) CreateProduct(ctx context.Context, product *comm
 		Product: productDomain,
 	}, nil
 }
+
+func (p *ProductCommandService) UpdateProduct(ctx context.Context, command *commands.UpdateProductCommand) (*results.UpdateProductResult, error) {
+	//find by id
+	product, err := p.productRepo.FindById(ctx, command.Id)
+	if err != nil {
+		return nil, err
+	}
+	if product == nil {
+		return nil, exceptions.ErrProductNotExist
+	}
+	//update
+	if command.Name != nil {
+		product.Name = *command.Name
+	}
+	if command.Description != nil {
+		product.Description = *command.Description
+	}
+	if command.Unit != nil {
+		product.Unit = *command.Unit
+	}
+	//save to db
+	session, err := p.mongo.StartSession()
+	if err != nil {
+		return nil, err
+	}
+	err = session.StartTransaction()
+	if err != nil {
+		return nil, err
+	}
+	defer func() {
+		if err != nil {
+			session.AbortTransaction(ctx)
+		}
+	}()
+	err = p.productRepo.Save(ctx, product, session)
+	if err != nil {
+		return nil, err
+	}
+	session.CommitTransaction(ctx)
+	return &results.UpdateProductResult{Product: product}, nil
+}
+
+func (p *ProductCommandService) AddProductCategories(ctx context.Context, command *commands.AddProductCategoiesCommand) (*results.AddProductCategoriesResult, error) {
+	//find by id
+	product, err := p.productRepo.FindById(ctx, command.ProductId)
+	if err != nil {
+		return nil, err
+	}
+	//add categories
+	err = product.AddCategory(command.NewCategories)
+	if err != nil {
+		return nil, err
+	}
+	//save to db
+	session, err := p.mongo.StartSession()
+	if err != nil {
+		return nil, err
+	}
+	err = session.StartTransaction()
+	if err != nil {
+		return nil, err
+	}
+	defer func() {
+		if err != nil {
+			session.AbortTransaction(ctx)
+		}
+	}()
+	err = p.productRepo.Save(ctx, product, session)
+	if err != nil {
+		return nil, err
+	}
+	session.CommitTransaction(ctx)
+	return &results.AddProductCategoriesResult{Product: product}, nil
+}
+
+func (p *ProductCommandService) AddProductVariations(ctx context.Context, command *commands.AddProductVariationsCommand) (*results.AddProductVariationsResult, error) {
+	//find by id
+	product, err := p.productRepo.FindById(ctx, command.ProductId)
+	if err != nil {
+		return nil, err
+	}
+	err = product.AddVariation(command.NewVariations)
+	if err != nil {
+		return nil, err
+	}
+	//save to db
+	session, err := p.mongo.StartSession()
+	if err != nil {
+		return nil, err
+	}
+	err = session.StartTransaction()
+	if err != nil {
+		return nil, err
+	}
+	defer func() {
+		if err != nil {
+			session.AbortTransaction(ctx)
+		}
+	}()
+	err = p.productRepo.Save(ctx, product, session)
+	if err != nil {
+		return nil, err
+	}
+	session.CommitTransaction(ctx)
+	return &results.AddProductVariationsResult{Product: product}, nil
+}
+
 func NewProductCommandService(
 	categoryRepo repositories.CategoryCommandRepository,
 	productRepo repositories.ProductCommandRepository,

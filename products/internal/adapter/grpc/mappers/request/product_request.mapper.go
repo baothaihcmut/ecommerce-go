@@ -11,12 +11,15 @@ import (
 
 type ProductRequestMapper interface {
 	ToCreateProductCommand(_ context.Context, request interface{}) (interface{}, error)
+	ToUpdateProductCommand(_ context.Context, request interface{}) (interface{}, error)
+	ToAddProductCategoriesCommand(_ context.Context, request interface{}) (interface{}, error)
+	ToAddProductVariationsCommand(_ context.Context, request interface{}) (interface{}, error)
 }
 
 type ProductRequestMapperImpl struct {
 }
 
-func (p ProductRequestMapperImpl) ToCreateProductCommand(_ context.Context, request interface{}) (interface{}, error) {
+func (p *ProductRequestMapperImpl) ToCreateProductCommand(_ context.Context, request interface{}) (interface{}, error) {
 	req := request.(*proto.CreateProductRequest)
 	categoryIds := make([]categoryValueobjects.CategoryId, len(req.CategoryIds))
 	for idx, categoryId := range req.CategoryIds {
@@ -32,6 +35,44 @@ func (p ProductRequestMapperImpl) ToCreateProductCommand(_ context.Context, requ
 	}, nil
 
 }
+func (p *ProductRequestMapperImpl) ToUpdateProductCommand(_ context.Context, request interface{}) (interface{}, error) {
+	req := request.(*proto.UpdateProductRequest)
+	cmd := commands.UpdateProductCommand{}
+	if req.Name != nil {
+		cmd.Name = &req.Name.Value
+	}
+	if req.Description != nil {
+		cmd.Description = &req.Description.Value
+	}
+	if req.Unit != nil {
+		cmd.Unit = &req.Unit.Value
+	}
+	cmd.Id = valueobjects.NewProductId(req.Id)
+
+	return &cmd, nil
+}
+
+func (p *ProductRequestMapperImpl) ToAddProductCategoriesCommand(_ context.Context, request interface{}) (interface{}, error) {
+	req := request.(*proto.AddProductCategoriesRequest)
+	newCategories := make([]categoryValueobjects.CategoryId, len(req.NewCategoryIds))
+	for idx, categoryId := range req.NewCategoryIds {
+		newCategories[idx] = categoryValueobjects.CategoryId(categoryId)
+	}
+	return &commands.AddProductCategoiesCommand{
+		ProductId:     valueobjects.ProductId(req.ProductId),
+		NewCategories: newCategories,
+	}, nil
+}
+func (p *ProductRequestMapperImpl) ToAddProductVariationsCommand(_ context.Context, request interface{}) (interface{}, error) {
+	req := request.(*proto.AddProductVariationsRequest)
+	productId := valueobjects.NewProductId(req.ProductId)
+
+	return &commands.AddProductVariationsCommand{
+		ProductId:     productId,
+		NewVariations: req.NewVariations,
+	}, nil
+}
+
 func NewProductRequestMapper() ProductRequestMapper {
 	return &ProductRequestMapperImpl{}
 }

@@ -7,4 +7,5 @@ var (
 	ErrCategoryNotExist       = errors.New("category not exist")
 	ErrShopNotExist           = errors.New("shop not exist")
 	ErrShopNotActive          = errors.New("shop is inactive")
+	ErrProductNotExist        = errors.New("product not exist")
 )

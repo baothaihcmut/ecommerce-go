@@ -13,7 +13,76 @@ import (
 )
 
 type ProductServer struct {
-	createProductHandler grpc.Handler
+	createProductHandler        grpc.Handler
+	updateProductHandler        grpc.Handler
+	addProductCategoriesHandler grpc.Handler
+	addProductVariationsHandler grpc.Handler
+}
+
+// AddProductCategories implements proto.ProductServiceServer.
+func (p *ProductServer) AddProductCategories(ctx context.Context, req *proto.AddProductCategoriesRequest) (*proto.UpdateProductResponse, error) {
+	_, res, err := p.addProductCategoriesHandler.ServeGRPC(ctx, req)
+	if err != nil {
+		return &proto.UpdateProductResponse{
+			Data: nil,
+			Status: &proto.Status{
+				Message: err.Error(),
+				Code:    errors.MapGrpcErrorCode(err).String(),
+				Details: []string{err.Error()},
+			},
+		}, nil
+	}
+	return &proto.UpdateProductResponse{
+		Data: res.(*proto.ProductData),
+		Status: &proto.Status{
+			Message: "create product success",
+			Code:    codes.OK.String(),
+		},
+	}, nil
+}
+
+// AddProductVariations implements proto.ProductServiceServer.
+func (p *ProductServer) AddProductVariations(ctx context.Context, req *proto.AddProductVariationsRequest) (*proto.AddProductVariationsResponse, error) {
+	_, resp, err := p.addProductVariationsHandler.ServeGRPC(ctx, req)
+	if err != nil {
+		return &proto.AddProductVariationsResponse{
+			Data: nil,
+			Status: &proto.Status{
+				Message: err.Error(),
+				Code:    errors.MapGrpcErrorCode(err).String(),
+				Details: []string{err.Error()},
+			},
+		}, nil
+	}
+	return &proto.AddProductVariationsResponse{
+		Data: resp.(*proto.ProductData),
+		Status: &proto.Status{
+			Message: "create product success",
+			Code:    codes.OK.String(),
+		},
+	}, nil
+}
+
+// UpdateProduct implements proto.ProductServiceServer.
+func (p *ProductServer) UpdateProduct(ctx context.Context, req *proto.UpdateProductRequest) (*proto.UpdateProductResponse, error) {
+	_, resp, err := p.updateProductHandler.ServeGRPC(ctx, req)
+	if err != nil {
+		return &proto.UpdateProductResponse{
+			Data: nil,
+			Status: &proto.Status{
+				Message: err.Error(),
+				Code:    errors.MapGrpcErrorCode(err).String(),
+				Details: []string{err.Error()},
+			},
+		}, nil
+	}
+	return &proto.UpdateProductResponse{
+		Data: resp.(*proto.ProductData),
+		Status: &proto.Status{
+			Message: "create product success",
+			Code:    codes.OK.String(),
+		},
+	}, nil
 }
 
 // CreateProduct implements proto.ProductServiceServer.
@@ -30,7 +99,7 @@ func (p *ProductServer) CreateProduct(ctx context.Context, req *proto.CreateProd
 		}, nil
 	}
 	return &proto.CreateProductResponse{
-		Data: resp.(*proto.CreateProductData),
+		Data: resp.(*proto.ProductData),
 		Status: &proto.Status{
 			Message: "create product success",
 			Code:    codes.OK.String(),
@@ -47,6 +116,21 @@ func NewProductServer(
 			endpoints.CreateProduct,
 			requestMapper.ToCreateProductCommand,
 			responseMapper.ToCreateProductReponse,
+		),
+		updateProductHandler: grpc.NewServer(
+			endpoints.UpdateProduct,
+			requestMapper.ToUpdateProductCommand,
+			responseMapper.ToUpdateProductResponse,
+		),
+		addProductCategoriesHandler: grpc.NewServer(
+			endpoints.AddProductCategories,
+			requestMapper.ToAddProductCategoriesCommand,
+			responseMapper.ToAddProductCategoriesResponse,
+		),
+		addProductVariationsHandler: grpc.NewServer(
+			endpoints.AddProductVariations,
+			requestMapper.ToAddProductVariationsCommand,
+			responseMapper.ToAddProductVariationsResponse,
 		),
 	}
 }
