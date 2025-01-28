@@ -7,6 +7,11 @@ import (
 	"github.com/baothaihcmut/Ecommerce-Go/products/internal/core/command/domain/exceptions"
 )
 
+type VariationValueArg struct {
+	VariationId productValueobjects.VariationId
+	Value       string
+}
+
 type ProductItem struct {
 	Id              valueobjects.ProductItemId
 	Sku             valueobjects.SKU
@@ -22,23 +27,20 @@ func NewProductItem(
 	price valueobjects.ProductPrice,
 	quantity valueobjects.ProductQuantity,
 	productId productValueobjects.ProductId,
-	variationValues []*entities.VariationValue,
+	variationArgs []VariationValueArg,
 ) (*ProductItem, error) {
 	//check if product item have two same variationvalues of 1 variation
-	mapVariation := make(map[string]bool, len(variationValues))
-	for _, variation := range variationValues {
-		//check match product id
-		if !variation.VariationId.ProductId.IsEqual(productId) {
-			return nil, exceptions.ErrMismatchVariationValue
-		}
-		key := string(variation.VariationId.ProductId) + string(variation.VariationId.Name)
+	mapVariation := make(map[string]struct{}, len(variationArgs))
+	variationValues := make([]*entities.VariationValue, len(variationArgs))
+	for idx, variation := range variationArgs {
+		key := variation.Value + variation.VariationId.Name
 		if _, exist := mapVariation[key]; exist {
 			return nil, exceptions.ErrDuplicateVariation
 		} else {
-			mapVariation[key] = true
+			mapVariation[key] = struct{}{}
 		}
+		variationValues[idx] = entities.NewVariationValue(variation.VariationId, variation.Value)
 	}
-
 	return &ProductItem{
 		Id:              id,
 		Sku:             sku,
@@ -48,19 +50,17 @@ func NewProductItem(
 		VariationValues: variationValues,
 	}, nil
 }
-func (p *ProductItem) AddVariationValues(variationValues []*entities.VariationValue) error {
-	for _, variationValue := range p.VariationValues {
-		for _, newVariation := range variationValues {
-			//check match product id
-			if !variationValue.VariationId.ProductId.IsEqual(p.ProductId) {
-				return exceptions.ErrMismatchVariationValue
-			}
-			if variationValue.VariationId.IsEqual(newVariation.VariationId) {
+func (p *ProductItem) AddVariationValues(variationArgs []VariationValueArg) error {
+	//check for duplicate variation value
+	for _, variationArg := range variationArgs {
+		variationValue := entities.NewVariationValue(variationArg.VariationId, variationArg.Value)
+		for _, productVariation := range p.VariationValues {
+			if productVariation.VariationId.IsEqual(variationValue.VariationId) && productVariation.Value == variationValue.Value {
 				return exceptions.ErrDuplicateVariation
 			}
 		}
+		p.VariationValues = append(p.VariationValues, variationValue)
 	}
-	p.VariationValues = append(p.VariationValues, variationValues...)
 	return nil
 }
 

@@ -5,7 +5,6 @@ import (
 	"github.com/baothaihcmut/Ecommerce-Go/products/internal/core/command/domain/aggregates/products/entities"
 	valueobjects "github.com/baothaihcmut/Ecommerce-Go/products/internal/core/command/domain/aggregates/products/value_objects"
 	"github.com/baothaihcmut/Ecommerce-Go/products/internal/core/command/domain/exceptions"
-	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
 type Product struct {
@@ -42,6 +41,7 @@ func checkCatgoryDuplicate(categoryIds []categoryValueobjects.CategoryId) error 
 }
 
 func NewProduct(
+	productId valueobjects.ProductId,
 	name string,
 	description string,
 	unit string,
@@ -57,8 +57,7 @@ func NewProduct(
 	if err != nil {
 		return nil, err
 	}
-	id := primitive.NewObjectID()
-	productId := valueobjects.NewProductId(id.Hex())
+
 	variationEntities := make([]*entities.Variation, len(variations))
 	for idx, variation := range variations {
 		variationEntities[idx] = entities.NewVariation(valueobjects.NewVariationId(productId, variation))
@@ -96,4 +95,13 @@ func (p *Product) AddCategory(categoryId []categoryValueobjects.CategoryId) erro
 	}
 	p.CategoryIds = append(p.CategoryIds, categoryId...)
 	return nil
+}
+
+func (p *Product) CheckVariationBelongToProduct(variationId valueobjects.VariationId) bool {
+	for _, productVariation := range p.Variations {
+		if productVariation.Id.IsEqual(variationId) {
+			return true
+		}
+	}
+	return false
 }

@@ -48,7 +48,6 @@ func (s *AuthServer) Login(ctx context.Context, req *proto.LoginRequest) (*proto
 		return &proto.LoginResponse{
 			Data: nil,
 			Status: &proto.Status{
-				Success: false,
 				Message: err.Error(),
 				Code:    MapErrorToGrpcStatus(err).String(),
 				Details: []string{err.Error()},
@@ -58,7 +57,6 @@ func (s *AuthServer) Login(ctx context.Context, req *proto.LoginRequest) (*proto
 	return &proto.LoginResponse{
 		Data: resp.(*proto.LoginData),
 		Status: &proto.Status{
-			Success: true,
 			Message: "Login success",
 			Code:    codes.OK.String(),
 			Details: []string{},
@@ -74,16 +72,15 @@ func (s *AuthServer) SignUp(ctx context.Context, req *proto.SignUpRequest) (*pro
 				Message: err.Error(),
 				Details: []string{err.Error()},
 				Code:    MapErrorToGrpcStatus(err).String(),
-				Success: false,
 			},
 		}, status.Error(MapErrorToGrpcStatus(err), err.Error())
 	}
 	return &proto.SignUpResponse{
 		Data: resp.(*proto.LoginData),
 		Status: &proto.Status{
-			Success: true,
 			Message: "Create user successfully",
 			Details: []string{},
+			Code:    codes.OK.String(),
 		},
 	}, nil
 }
@@ -94,18 +91,18 @@ func (s *AuthServer) VerifyToken(ctx context.Context, req *proto.VerifyTokenRequ
 		return &proto.VerifyTokenResponse{
 			Data: nil,
 			Status: &proto.Status{
+				Code:    MapErrorToGrpcStatus(err).String(),
 				Message: err.Error(),
 				Details: []string{err.Error()},
-				Success: false,
 			},
 		}, status.Error(MapErrorToGrpcStatus(err), err.Error())
 	}
 	return &proto.VerifyTokenResponse{
 		Data: resp.(*proto.VerifyTokenData),
 		Status: &proto.Status{
-			Success: true,
 			Message: "Verify token success",
 			Details: []string{},
+			Code:    codes.OK.String(),
 		},
 	}, nil
 }

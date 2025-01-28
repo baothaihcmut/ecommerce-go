@@ -4,6 +4,7 @@ import "shared.proto";
 
 service CategoryService {
     rpc CreateCategory(CreateCategoryRequest) returns (CreateCategoryResponse);
+    rpc BulkCreateCategory(BulkCreateCategoryRequest) returns (BulkCreateCategoryResponse);
     rpc FindAllCategory(FindAllCategoryRequest) returns (FindAllCategoryResponse);
     
 }
@@ -12,6 +13,10 @@ message CreateCategoryRequest {
     string name = 1;
     repeated string parentCategoryIds = 2;
 }
+message BulkCreateCategoryRequest {
+    repeated CreateCategoryRequest categories = 1;
+}
+
 message CategoryData {
     string id = 1;
     string name = 2;
@@ -21,7 +26,10 @@ message CreateCategoryResponse {
     CategoryData data = 1;
     Status status = 2;
 }
-
+message BulkCreateCategoryResponse {
+    repeated CategoryData data = 1;
+    Status status = 2;
+}
 message FindAllCategoryRequest {
     repeated FilterParam filterParams = 1;
     repeated SortParam sortParams = 2;

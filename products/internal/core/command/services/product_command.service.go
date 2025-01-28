@@ -5,11 +5,13 @@ import (
 	"sync"
 
 	"github.com/baothaihcmut/Ecommerce-Go/products/internal/core/command/domain/aggregates/products"
+	valueobjects "github.com/baothaihcmut/Ecommerce-Go/products/internal/core/command/domain/aggregates/products/value_objects"
 	"github.com/baothaihcmut/Ecommerce-Go/products/internal/core/command/exceptions"
 	"github.com/baothaihcmut/Ecommerce-Go/products/internal/core/command/port/inbound/commands"
 	"github.com/baothaihcmut/Ecommerce-Go/products/internal/core/command/port/inbound/handlers"
 	"github.com/baothaihcmut/Ecommerce-Go/products/internal/core/command/port/inbound/results"
 	"github.com/baothaihcmut/Ecommerce-Go/products/internal/core/command/port/outbound/repositories"
+	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
 )
 
@@ -84,7 +86,11 @@ func (p *ProductCommandService) CreateProduct(ctx context.Context, product *comm
 	if err != nil {
 		return nil, err
 	}
+	//create new id
+	id := primitive.NewObjectID().Hex()
+	productId := valueobjects.NewProductId(id)
 	productDomain, err := products.NewProduct(
+		productId,
 		product.Name,
 		product.Description,
 		product.Unit,

@@ -15,7 +15,8 @@ func MapGrpcErrorCode(err error) codes.Code {
 		domainException.ErrPriceLessThanZero,
 		domainException.ErrVariationNotBelongToProduct,
 		domainException.ErrMismatchVariationValue,
-		domainException.ErrProductQuantityLessThanZero:
+		domainException.ErrProductQuantityLessThanZero,
+		commandException.ErrVariationOfItemNotBelongToProduct:
 		return codes.InvalidArgument
 	case commandException.ErrParentCategoryNotExist, commandException.ErrProductNotExist:
 		return codes.NotFound

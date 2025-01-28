@@ -7,9 +7,12 @@ type VariationValue struct {
 	Value       string
 }
 
-func NewVariationValue(variationId productValueobjects.VariationId, value string) VariationValue {
-	return VariationValue{
+func NewVariationValue(variationId productValueobjects.VariationId, value string) *VariationValue {
+	return &VariationValue{
 		VariationId: variationId,
 		Value:       value,
 	}
+}
+func (v *VariationValue) IsEqual(o *VariationValue) bool {
+	return v.VariationId.IsEqual(o.VariationId)
 }
