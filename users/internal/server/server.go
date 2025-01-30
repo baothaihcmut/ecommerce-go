@@ -23,8 +23,6 @@ import (
 	queryService "github.com/baothaihcmut/Ecommerce-Go/users/internal/core/services/query"
 	"github.com/hashicorp/consul/api"
 	"google.golang.org/grpc"
-	"google.golang.org/grpc/health"
-	"google.golang.org/grpc/health/grpc_health_v1"
 	"google.golang.org/grpc/keepalive"
 )
 
@@ -93,28 +91,8 @@ func (s *Server) Start(env string) {
 	}
 
 	baseServer := grpc.NewServer(serverOptions...)
-	doneHealth := make(chan interface{})
 	go func() {
-		if env != "dev" {
-			<-doneHealth
-			//register service
-			registration := &api.AgentServiceRegistration{
-				ID:      "users-service-1",
-				Name:    "users-service",
-				Port:    s.config.Server.Port,
-				Tags:    []string{"grpc", "v1"},
-				Address: s.config.Server.Host,
-				Check: &api.AgentServiceCheck{
-					GRPC:     fmt.Sprintf("%s:%d", s.config.Server.Host, s.config.Server.Port),
-					Interval: "10s",
-				},
-			}
-			err := s.consol.Agent().ServiceRegister(registration)
-			if err != nil {
-				s.logger.Error("msg", "failed to register service", "err", err)
-				panic(err)
-			}
-		}
+
 		//base server
 
 		proto.RegisterUserServiceServer(baseServer, userServer)
@@ -123,16 +101,6 @@ func (s *Server) Start(env string) {
 		errSv := baseServer.Serve(grpcListener)
 		err <- errSv
 	}()
-	if env != "dev" {
-		go func() {
-			//health check server
-			healthCheckServer := health.NewServer()
-			healthCheckServer.SetServingStatus("OK", grpc_health_v1.HealthCheckResponse_SERVING)
-			grpc_health_v1.RegisterHealthServer(baseServer, healthCheckServer)
-			doneHealth <- true
-
-		}()
-	}
 
 	s.logger.Error("exit", <-err)
 }
