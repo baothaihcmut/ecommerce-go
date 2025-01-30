@@ -6,16 +6,36 @@ import (
 	"testing"
 
 	"github.com/baothaihcmut/Ecommerce-Go/users/internal/core/domain/aggregates/user"
-	"github.com/baothaihcmut/Ecommerce-Go/users/internal/core/domain/aggregates/user/entities"
 	valueobject "github.com/baothaihcmut/Ecommerce-Go/users/internal/core/domain/aggregates/user/value_object"
 	"github.com/baothaihcmut/Ecommerce-Go/users/internal/core/domain/enums"
 	"github.com/baothaihcmut/Ecommerce-Go/users/internal/core/models"
 	"github.com/baothaihcmut/Ecommerce-Go/users/internal/core/port/inbound/command/commands"
 	services "github.com/baothaihcmut/Ecommerce-Go/users/internal/core/services/command"
-	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 )
+
+type MockDb struct {
+	mock.Mock
+}
+
+// CommitTransaction implements postgres.TransactionService.
+func (m *MockDb) CommitTransaction(ctx context.Context, tx *sql.Tx) error {
+	args := m.Called(ctx, tx)
+	return args.Error(0)
+
+}
+
+// RollbackTransaction implements postgres.TransactionService.
+func (m *MockDb) RollbackTransaction(ctx context.Context, tx *sql.Tx) error {
+	args := m.Called(ctx, tx)
+	return args.Error(0)
+}
+
+func (m *MockDb) BeginTransaction(ctx context.Context) (*sql.Tx, error) {
+	args := m.Called(ctx)
+	return args.Get(0).(*sql.Tx), args.Error(1)
+}
 
 type MockJwtPort struct {
 	mock.Mock
@@ -74,10 +94,9 @@ func (m *MockUserRepository) Save(ctx context.Context, user *user.User, tx *sql.
 func TestSignUp_Success(t *testing.T) {
 	mockJwtPort := new(MockJwtPort)
 	mockUserRepository := new(MockUserRepository)
-	db := new(sql.DB)
-	service := services.NewAuthCommandService(mockUserRepository, mockJwtPort, db)
+	mockDb := new(MockDb)
+	service := services.NewAuthCommandService(mockUserRepository, mockJwtPort, mockDb)
 	userDb := &user.User{
-		Id:          valueobject.UserId(uuid.New()),
 		Email:       valueobject.Email("baothai@gmail.com"),
 		Password:    "baothai",
 		PhoneNumber: "0828537679",
@@ -90,18 +109,16 @@ func TestSignUp_Success(t *testing.T) {
 				Province: "test",
 			},
 		},
-		Role:                enums.CUSTOMER,
-		FirstName:           "thai",
-		LastName:            "bao",
-		CurrentRefreshToken: &valueobject.Token{Value: "refresh_token"},
-		Customer: &entities.Customer{
-			LoyaltyPoint: valueobject.LoyaltyPoint(0),
-			Rank:         valueobject.Rank(enums.BRONZE),
-		},
+		Role:      enums.CUSTOMER,
+		FirstName: "thai",
+		LastName:  "bao",
 	}
+	mockDb.On("BeginTransaction", mock.Anything).Return(&sql.Tx{}, nil)
+	mockDb.On("CommitTransaction", mock.Anything, mock.Anything).Return(nil)
+	mockDb.On("RollbackTransaction", mock.Anything, mock.Anything).Return(nil)
 	mockUserRepository.On("CheckEmailExist", mock.Anything, userDb.Email).Return(false, nil)
 	mockUserRepository.On("CheckPhoneNumberExist", mock.Anything, userDb.PhoneNumber).Return(false, nil)
-	mockUserRepository.On("Save", mock.Anything, userDb, mock.Anything).Return(nil)
+	mockUserRepository.On("Save", mock.Anything, mock.Anything, mock.Anything).Return(nil)
 	mockJwtPort.On("GenerateAccessToken", mock.Anything, mock.Anything).Return(valueobject.Token{Value: "access_token", TokenType: enums.ACCESS_TOKEN}, nil)
 	mockJwtPort.On("GenerateRefreshToken", mock.Anything, mock.Anything).Return(valueobject.Token{Value: "refresh_token", TokenType: enums.REFRESH_TOKEN}, nil)
 

@@ -11,6 +11,7 @@ import (
 
 	"github.com/baothaihcmut/Ecommerce-Go/libs/pkg/grpc/interceptors"
 	"github.com/baothaihcmut/Ecommerce-Go/libs/pkg/logger"
+	"github.com/baothaihcmut/Ecommerce-Go/libs/pkg/postgres"
 	"github.com/baothaihcmut/Ecommerce-Go/users/internal/adapter/grpc/endpoints"
 	"github.com/baothaihcmut/Ecommerce-Go/users/internal/adapter/grpc/mapper/request"
 	"github.com/baothaihcmut/Ecommerce-Go/users/internal/adapter/grpc/mapper/response"
@@ -44,11 +45,12 @@ func NewServer(db *sql.DB, logger logger.ILogger, cfg *config.Config, consol *ap
 
 func (s *Server) Start(env string) {
 	//init repository
+	dbService := postgres.NewPostgresTransactionService(s.db)
 	userRepo := repositories.NewPostgresUserRepo(s.db)
 	jwtPort := jwt.NewJwtAdapter(&s.config.Jwt)
 	//init command
 	userCommand := commandService.NewUserCommandService(userRepo, s.db)
-	authCommand := commandService.NewAuthCommandService(userRepo, jwtPort, s.db)
+	authCommand := commandService.NewAuthCommandService(userRepo, jwtPort, dbService)
 	// init query
 	userQuery := queryService.NewUserQueryService(userRepo)
 	//init enpoint

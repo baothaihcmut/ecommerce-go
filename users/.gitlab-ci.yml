@@ -7,13 +7,16 @@ cache:
   paths:
     - /go/pkg/mod  
   policy: pull-push
+
 before_script:
   - cd users
+  - go version 
+  - go mod tidy
 
 stages:
   - lint
-  - build
   - test 
+  - build
   - package
 
 lint:
@@ -26,6 +29,19 @@ lint:
       codequality: gl-code-quality-report.json
     paths:
       - gl-code-quality-report.json
+
+test:
+  image: golang:$GOLANG_VERSION
+  stage: test
+  script: 
+  - go test -v ./...
+  artifacts:
+    paths:
+      - test-results.xml 
+    reports:
+      junit: test-results.xml
+
+
 build:
   image: golang:$GOLANG_VERSION
   script:

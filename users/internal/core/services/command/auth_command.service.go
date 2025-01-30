@@ -2,9 +2,9 @@ package services
 
 import (
 	"context"
-	"database/sql"
 	"errors"
 
+	"github.com/baothaihcmut/Ecommerce-Go/libs/pkg/postgres"
 	"github.com/baothaihcmut/Ecommerce-Go/users/internal/core/domain/aggregates/user"
 	valueobject "github.com/baothaihcmut/Ecommerce-Go/users/internal/core/domain/aggregates/user/value_object"
 	"github.com/baothaihcmut/Ecommerce-Go/users/internal/core/domain/enums"
@@ -20,9 +20,9 @@ var (
 )
 
 type AuthCommandService struct {
-	jwtPort  outbound.JwtPort
-	userRepo outbound.UserRepository
-	dbSource *sql.DB
+	jwtPort   outbound.JwtPort
+	userRepo  outbound.UserRepository
+	dbService postgres.TransactionService
 }
 
 // VerifyToken implements handlers.AuthCommandHandler.
@@ -126,8 +126,8 @@ func (s *AuthCommandService) SignUp(ctx context.Context, command *commands.SignU
 		return nil, err
 	}
 	//persist to db
-	tx, err := s.dbSource.Begin()
-	defer func() { _ = tx.Rollback() }()
+	tx, err := s.dbService.BeginTransaction(ctx)
+	defer func() { _ = s.dbService.RollbackTransaction(ctx, tx) }()
 	if err != nil {
 		return nil, err
 	}
@@ -138,7 +138,7 @@ func (s *AuthCommandService) SignUp(ctx context.Context, command *commands.SignU
 	return &results.SignUpCommandResult{
 		AccessToken:  accessToken,
 		RefreshToken: refreshToken,
-	}, tx.Commit()
+	}, s.dbService.CommitTransaction(ctx, tx)
 
 }
 func (s *AuthCommandService) VerifyToken(ctx context.Context, command *commands.VerifyTokenCommand) (*results.VerifyTokenCommandResult, error) {
@@ -162,10 +162,10 @@ func (s *AuthCommandService) VerifyToken(ctx context.Context, command *commands.
 	}
 }
 
-func NewAuthCommandService(userRepo outbound.UserRepository, jwtPort outbound.JwtPort, dbSource *sql.DB) handlers.AuthCommandHandler {
+func NewAuthCommandService(userRepo outbound.UserRepository, jwtPort outbound.JwtPort, dbService postgres.TransactionService) handlers.AuthCommandHandler {
 	return &AuthCommandService{
-		userRepo: userRepo,
-		jwtPort:  jwtPort,
-		dbSource: dbSource,
+		userRepo:  userRepo,
+		jwtPort:   jwtPort,
+		dbService: dbService,
 	}
 }
