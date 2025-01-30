@@ -44,6 +44,7 @@ test:
 
 build:
   image: golang:$GOLANG_VERSION
+  stage: build
   script:
     - go build -o ./main cmd/users/main.go
   artifacts:
