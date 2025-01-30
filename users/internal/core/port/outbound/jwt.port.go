@@ -5,7 +5,7 @@ import (
 
 	"github.com/baothaihcmut/Ecommerce-Go/users/internal/core/domain/aggregates/user"
 	valueobject "github.com/baothaihcmut/Ecommerce-Go/users/internal/core/domain/aggregates/user/value_object"
-	"github.com/baothaihcmut/Ecommerce-Go/users/internal/core/domain/models"
+	"github.com/baothaihcmut/Ecommerce-Go/users/internal/core/models"
 )
 
 type JwtPort interface {

@@ -10,7 +10,7 @@ import (
 	"github.com/baothaihcmut/Ecommerce-Go/users/internal/core/domain/aggregates/user"
 	valueobject "github.com/baothaihcmut/Ecommerce-Go/users/internal/core/domain/aggregates/user/value_object"
 	"github.com/baothaihcmut/Ecommerce-Go/users/internal/core/domain/enums"
-	"github.com/baothaihcmut/Ecommerce-Go/users/internal/core/domain/models"
+	"github.com/baothaihcmut/Ecommerce-Go/users/internal/core/models"
 	"github.com/baothaihcmut/Ecommerce-Go/users/internal/core/port/outbound"
 	services "github.com/baothaihcmut/Ecommerce-Go/users/internal/core/services/command"
 	"github.com/golang-jwt/jwt/v4"
