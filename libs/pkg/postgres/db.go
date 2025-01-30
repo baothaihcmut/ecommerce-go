@@ -1,26 +1,29 @@
 package postgres
 
-import "database/sql"
+import (
+	"context"
+	"database/sql"
+)
 
 type TransactionService interface {
-	BeginTransaction() (*sql.Tx, error)
-	CommitTransaction(*sql.Tx) error
-	RollbackTransaction(*sql.Tx) error
+	BeginTransaction(context.Context) (*sql.Tx, error)
+	CommitTransaction(context.Context, *sql.Tx) error
+	RollbackTransaction(context.Context, *sql.Tx) error
 }
 
 type PostgresTransactionService struct {
 	db *sql.DB
 }
 
-func (p *PostgresTransactionService) BeginTransaction() (*sql.Tx, error) {
+func (p *PostgresTransactionService) BeginTransaction(_ context.Context) (*sql.Tx, error) {
 	return p.db.Begin()
 }
 
-func (p *PostgresTransactionService) CommitTransaction(tx *sql.Tx) error {
+func (p *PostgresTransactionService) CommitTransaction(_ context.Context, tx *sql.Tx) error {
 	return tx.Commit()
 }
 
-func (p *PostgresTransactionService) RollbackTransaction(tx *sql.Tx) error {
+func (p *PostgresTransactionService) RollbackTransaction(_ context.Context, tx *sql.Tx) error {
 	return tx.Rollback()
 }
 
