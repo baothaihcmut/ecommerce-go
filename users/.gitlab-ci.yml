@@ -11,6 +11,7 @@ lint:
   image: golangci/golangci-lint:$GOLANGCI_LINT_VERSION
   stage: lint
   script:
+  - cd users
   - golangci-lint run --issues-exit-code 0 --print-issued-lines=false --out-format code-climate:gl-code-quality-report.json,line-number
   artifacts:
     reports:
