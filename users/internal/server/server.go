@@ -120,7 +120,8 @@ func (s *Server) Start(env string) {
 		proto.RegisterUserServiceServer(baseServer, userServer)
 		proto.RegisterAuthServiceServer(baseServer, authServer)
 		s.logger.Info("Server started successfully 🚀")
-		baseServer.Serve(grpcListener)
+		errSv := baseServer.Serve(grpcListener)
+		err <- errSv
 	}()
 	if env != "dev" {
 		go func() {

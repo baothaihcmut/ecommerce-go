@@ -121,14 +121,20 @@ func (s *AuthCommandService) SignUp(ctx context.Context, command *commands.SignU
 	if err != nil {
 		return nil, err
 	}
-	user.SetCurrentRefreshToken(refreshToken)
-	//persist to db
-	tx, err := s.dbSource.Begin()
-	defer tx.Rollback()
+	err = user.SetCurrentRefreshToken(refreshToken)
 	if err != nil {
 		return nil, err
 	}
-	s.userRepo.Save(ctx, user, tx)
+	//persist to db
+	tx, err := s.dbSource.Begin()
+	defer func() { _ = tx.Rollback() }()
+	if err != nil {
+		return nil, err
+	}
+	err = s.userRepo.Save(ctx, user, tx)
+	if err != nil {
+		return nil, err
+	}
 	return &results.SignUpCommandResult{
 		AccessToken:  accessToken,
 		RefreshToken: refreshToken,

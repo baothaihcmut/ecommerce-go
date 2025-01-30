@@ -1,0 +1,10 @@
+stages:
+  - triggers
+
+trigger-user-service:
+  stage: triggers
+  trigger:
+    include: users/.gitlab-ci.yml
+  rules:
+    - changes: 
+      - users/**/*
