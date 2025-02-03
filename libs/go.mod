@@ -4,6 +4,7 @@ go 1.23.2
 
 require (
 	github.com/google/uuid v1.6.0
+	github.com/opentracing/opentracing-go v1.2.0
 	github.com/spf13/viper v1.19.0
 	go.uber.org/zap v1.27.0
 	google.golang.org/protobuf v1.35.1
@@ -11,13 +12,9 @@ require (
 )
 
 require (
-	github.com/go-kit/log v0.2.0 // indirect
-	github.com/go-logfmt/logfmt v0.5.1 // indirect
 	github.com/golang/snappy v0.0.4 // indirect
-	github.com/grpc-ecosystem/grpc-opentracing v0.0.0-20180507213350-8e809c8a8645 // indirect
 	github.com/klauspost/compress v1.17.2 // indirect
 	github.com/montanaflynn/stats v0.7.1 // indirect
-	github.com/opentracing/opentracing-go v1.2.0 // indirect
 	github.com/xdg-go/pbkdf2 v1.0.0 // indirect
 	github.com/xdg-go/scram v1.1.2 // indirect
 	github.com/xdg-go/stringprep v1.0.4 // indirect
