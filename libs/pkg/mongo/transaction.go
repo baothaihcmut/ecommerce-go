@@ -8,12 +8,18 @@ import (
 
 type MongoTransactionService interface {
 	BeginTransaction(context.Context) (mongo.Session, error)
+	EndTransansaction(context.Context, mongo.Session)
 	CommitTransaction(context.Context, mongo.Session) error
 	RollbackTransaction(context.Context, mongo.Session) error
 }
 
 type MongoTransactionServiceImpl struct {
 	mongoClient *mongo.Client
+}
+
+// EndTransansaction implements MongoTransactionService.
+func (m *MongoTransactionServiceImpl) EndTransansaction(ctx context.Context, session mongo.Session) {
+	session.EndSession(ctx)
 }
 
 // BeginTransaction implements MongoTransactionService.
