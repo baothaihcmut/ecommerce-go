@@ -8,6 +8,7 @@ import (
 type Config struct {
 	Server ServerConfig        `mapstruct:"server"`
 	Mongo  MongoConfig         `mapstruct:"mongo"`
+	Jaeger JaegerConfig        `mapstruct:"jaeger"`
 	Logger logger.ConfigLogger `mapstruct:"logger"`
 }
 
@@ -23,6 +24,10 @@ type ServerConfig struct {
 type MongoConfig struct {
 	URI      string `mapstruct:"uri"`
 	Database string `mapstruct:"database"`
+}
+
+type JaegerConfig struct {
+	Address string `mapstruct:"address"`
 }
 
 func LoadConfig() *Config {

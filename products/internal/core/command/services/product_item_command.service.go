@@ -3,6 +3,7 @@ package services
 import (
 	"context"
 
+	"github.com/baothaihcmut/Ecommerce-Go/libs/pkg/mongo"
 	productitems "github.com/baothaihcmut/Ecommerce-Go/products/internal/core/command/domain/aggregates/product_items"
 	valueobjects "github.com/baothaihcmut/Ecommerce-Go/products/internal/core/command/domain/aggregates/product_items/value_objects"
 	"github.com/baothaihcmut/Ecommerce-Go/products/internal/core/command/exceptions"
@@ -11,13 +12,12 @@ import (
 	"github.com/baothaihcmut/Ecommerce-Go/products/internal/core/command/port/inbound/results"
 	"github.com/baothaihcmut/Ecommerce-Go/products/internal/core/command/port/outbound/repositories"
 	"go.mongodb.org/mongo-driver/bson/primitive"
-	"go.mongodb.org/mongo-driver/mongo"
 )
 
 type ProductItemCommandService struct {
-	productItemRepo repositories.ProductItemCommandRepository
-	productRepo     repositories.ProductCommandRepository
-	mongoClient     *mongo.Client
+	productItemRepo    repositories.ProductItemCommandRepository
+	productRepo        repositories.ProductCommandRepository
+	transactionService mongo.MongoTransactionService
 }
 
 func (p *ProductItemCommandService) CreateProductItem(ctx context.Context, command *commands.CreateProductItemCommand) (*results.CreateProductItemResult, error) {
@@ -47,21 +47,21 @@ func (p *ProductItemCommandService) CreateProductItem(ctx context.Context, comma
 		return nil, err
 	}
 	//save to db
-	session, err := p.mongoClient.StartSession()
-	if err != nil {
-		return nil, err
-	}
-	session.StartTransaction()
+	session, err := p.transactionService.BeginTransaction(ctx)
 	defer func() {
 		if err != nil {
-			session.AbortTransaction(ctx)
+			p.transactionService.RollbackTransaction(ctx, session)
 		}
+		p.transactionService.EndTransansaction(ctx, session)
 	}()
 	err = p.productItemRepo.Save(ctx, productItem, session)
 	if err != nil {
 		return nil, err
 	}
-	session.CommitTransaction(ctx)
+	err = p.transactionService.CommitTransaction(ctx, session)
+	if err != nil {
+		return nil, err
+	}
 	return &results.CreateProductItemResult{
 		ProductItem: productItem,
 	}, nil
@@ -70,11 +70,11 @@ func (p *ProductItemCommandService) CreateProductItem(ctx context.Context, comma
 func NewProductItemCommandService(
 	productRepo repositories.ProductCommandRepository,
 	productItemRepo repositories.ProductItemCommandRepository,
-	mongoClient *mongo.Client,
+	mongoClient mongo.MongoTransactionService,
 ) handlers.ProductItemCommandHandler {
 	return &ProductItemCommandService{
-		productRepo:     productRepo,
-		productItemRepo: productItemRepo,
-		mongoClient:     mongoClient,
+		productRepo:        productRepo,
+		productItemRepo:    productItemRepo,
+		transactionService: mongoClient,
 	}
 }

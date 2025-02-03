@@ -3,11 +3,13 @@ package endpoints
 import (
 	"context"
 
+	"github.com/baothaihcmut/Ecommerce-Go/libs/pkg/grpc/middlewares"
 	"github.com/baothaihcmut/Ecommerce-Go/products/internal/core/command/port/inbound/commands"
 	commandHandler "github.com/baothaihcmut/Ecommerce-Go/products/internal/core/command/port/inbound/handlers"
 	queryHandler "github.com/baothaihcmut/Ecommerce-Go/products/internal/core/query/port/inbound/handlers"
 	"github.com/baothaihcmut/Ecommerce-Go/products/internal/core/query/port/inbound/queries"
 	"github.com/go-kit/kit/endpoint"
+	"github.com/opentracing/opentracing-go"
 )
 
 type CategoryEndpoints struct {
@@ -16,11 +18,11 @@ type CategoryEndpoints struct {
 	BulkCreateCategories endpoint.Endpoint
 }
 
-func MakeCategoryEndpoints(c commandHandler.CategoryCommandHandler, q queryHandler.CategoryQueryHandler) CategoryEndpoints {
+func MakeCategoryEndpoints(c commandHandler.CategoryCommandHandler, q queryHandler.CategoryQueryHandler, tracer opentracing.Tracer) CategoryEndpoints {
 	return CategoryEndpoints{
-		CreateCategory:       makeCreateCategoryEndpoint(c),
-		FindAllCategory:      makeFindAllCategoryEndpoint(q),
-		BulkCreateCategories: makeBulkCreateCategoriesEndpoint(c),
+		CreateCategory:       middlewares.ExtractTracingMiddleware(tracer, "Create category")(makeCreateCategoryEndpoint(c)),
+		FindAllCategory:      middlewares.ExtractTracingMiddleware(tracer, "Find all categories")(makeFindAllCategoryEndpoint(q)),
+		BulkCreateCategories: middlewares.ExtractTracingMiddleware(tracer, "Bulk create categories")(makeBulkCreateCategoriesEndpoint(c)),
 	}
 }
 

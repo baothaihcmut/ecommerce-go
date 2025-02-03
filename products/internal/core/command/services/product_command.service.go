@@ -4,6 +4,7 @@ import (
 	"context"
 	"sync"
 
+	"github.com/baothaihcmut/Ecommerce-Go/libs/pkg/mongo"
 	"github.com/baothaihcmut/Ecommerce-Go/products/internal/core/command/domain/aggregates/products"
 	valueobjects "github.com/baothaihcmut/Ecommerce-Go/products/internal/core/command/domain/aggregates/products/value_objects"
 	"github.com/baothaihcmut/Ecommerce-Go/products/internal/core/command/exceptions"
@@ -12,14 +13,13 @@ import (
 	"github.com/baothaihcmut/Ecommerce-Go/products/internal/core/command/port/inbound/results"
 	"github.com/baothaihcmut/Ecommerce-Go/products/internal/core/command/port/outbound/repositories"
 	"go.mongodb.org/mongo-driver/bson/primitive"
-	"go.mongodb.org/mongo-driver/mongo"
 )
 
 type ProductCommandService struct {
-	productRepo  repositories.ProductCommandRepository
-	categoryRepo repositories.CategoryCommandRepository
-	shopService  ShopService
-	mongo        *mongo.Client
+	productRepo        repositories.ProductCommandRepository
+	categoryRepo       repositories.CategoryCommandRepository
+	shopService        ShopService
+	transactionService mongo.MongoTransactionService
 }
 
 func (p *ProductCommandService) checkContraints(ctx context.Context, product *commands.CreateProductCommand) error {
@@ -102,24 +102,24 @@ func (p *ProductCommandService) CreateProduct(ctx context.Context, product *comm
 		return nil, err
 	}
 	//save to db
-	session, err := p.mongo.StartSession()
-	if err != nil {
-		return nil, err
-	}
-	err = session.StartTransaction()
+	session, err := p.transactionService.BeginTransaction(ctx)
 	if err != nil {
 		return nil, err
 	}
 	defer func() {
 		if err != nil {
-			session.AbortTransaction(ctx)
+			p.transactionService.RollbackTransaction(ctx, session)
 		}
+		p.transactionService.EndTransansaction(ctx, session)
 	}()
 	err = p.productRepo.Save(ctx, productDomain, session)
 	if err != nil {
 		return nil, err
 	}
-	session.CommitTransaction(ctx)
+	err = p.transactionService.CommitTransaction(ctx, session)
+	if err != nil {
+		return nil, err
+	}
 	return &results.CreateProductResult{
 		Product: productDomain,
 	}, nil
@@ -145,24 +145,24 @@ func (p *ProductCommandService) UpdateProduct(ctx context.Context, command *comm
 		product.Unit = *command.Unit
 	}
 	//save to db
-	session, err := p.mongo.StartSession()
-	if err != nil {
-		return nil, err
-	}
-	err = session.StartTransaction()
+	session, err := p.transactionService.BeginTransaction(ctx)
 	if err != nil {
 		return nil, err
 	}
 	defer func() {
 		if err != nil {
-			session.AbortTransaction(ctx)
+			p.transactionService.RollbackTransaction(ctx, session)
 		}
+		p.transactionService.EndTransansaction(ctx, session)
 	}()
 	err = p.productRepo.Save(ctx, product, session)
 	if err != nil {
 		return nil, err
 	}
-	session.CommitTransaction(ctx)
+	err = p.transactionService.CommitTransaction(ctx, session)
+	if err != nil {
+		return nil, err
+	}
 	return &results.UpdateProductResult{Product: product}, nil
 }
 
@@ -178,24 +178,25 @@ func (p *ProductCommandService) AddProductCategories(ctx context.Context, comman
 		return nil, err
 	}
 	//save to db
-	session, err := p.mongo.StartSession()
+	session, err := p.transactionService.BeginTransaction(ctx)
 	if err != nil {
 		return nil, err
 	}
-	err = session.StartTransaction()
-	if err != nil {
-		return nil, err
-	}
+
 	defer func() {
 		if err != nil {
-			session.AbortTransaction(ctx)
+			p.transactionService.RollbackTransaction(ctx, session)
 		}
+		p.transactionService.EndTransansaction(ctx, session)
 	}()
 	err = p.productRepo.Save(ctx, product, session)
 	if err != nil {
 		return nil, err
 	}
-	session.CommitTransaction(ctx)
+	err = p.transactionService.CommitTransaction(ctx, session)
+	if err != nil {
+		return nil, err
+	}
 	return &results.AddProductCategoriesResult{Product: product}, nil
 }
 
@@ -210,24 +211,25 @@ func (p *ProductCommandService) AddProductVariations(ctx context.Context, comman
 		return nil, err
 	}
 	//save to db
-	session, err := p.mongo.StartSession()
+	session, err := p.transactionService.BeginTransaction(ctx)
 	if err != nil {
 		return nil, err
 	}
-	err = session.StartTransaction()
-	if err != nil {
-		return nil, err
-	}
+
 	defer func() {
 		if err != nil {
-			session.AbortTransaction(ctx)
+			p.transactionService.RollbackTransaction(ctx, session)
 		}
+		p.transactionService.EndTransansaction(ctx, session)
 	}()
 	err = p.productRepo.Save(ctx, product, session)
 	if err != nil {
 		return nil, err
 	}
-	session.CommitTransaction(ctx)
+	err = p.transactionService.CommitTransaction(ctx, session)
+	if err != nil {
+		return nil, err
+	}
 	return &results.AddProductVariationsResult{Product: product}, nil
 }
 
@@ -235,12 +237,12 @@ func NewProductCommandService(
 	categoryRepo repositories.CategoryCommandRepository,
 	productRepo repositories.ProductCommandRepository,
 	shopService ShopService,
-	mongoClient *mongo.Client,
+	mongoClient mongo.MongoTransactionService,
 ) handlers.ProductCommandHandler {
 	return &ProductCommandService{
-		categoryRepo: categoryRepo,
-		productRepo:  productRepo,
-		shopService:  shopService,
-		mongo:        mongoClient,
+		categoryRepo:       categoryRepo,
+		productRepo:        productRepo,
+		shopService:        shopService,
+		transactionService: mongoClient,
 	}
 }

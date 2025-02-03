@@ -3,18 +3,20 @@ package endpoints
 import (
 	"context"
 
+	"github.com/baothaihcmut/Ecommerce-Go/libs/pkg/grpc/middlewares"
 	"github.com/baothaihcmut/Ecommerce-Go/products/internal/core/command/port/inbound/commands"
 	"github.com/baothaihcmut/Ecommerce-Go/products/internal/core/command/port/inbound/handlers"
 	"github.com/go-kit/kit/endpoint"
+	"github.com/opentracing/opentracing-go"
 )
 
 type ProductItemEndpoints struct {
 	CreateProductItem endpoint.Endpoint
 }
 
-func MakeProductItemEndpoints(c handlers.ProductItemCommandHandler) ProductItemEndpoints {
+func MakeProductItemEndpoints(c handlers.ProductItemCommandHandler, tracer opentracing.Tracer) ProductItemEndpoints {
 	return ProductItemEndpoints{
-		CreateProductItem: makeCreateProductItemEndpoint(c),
+		CreateProductItem: middlewares.ExtractTracingMiddleware(tracer, "Create product item")(makeCreateProductItemEndpoint(c)),
 	}
 }
 

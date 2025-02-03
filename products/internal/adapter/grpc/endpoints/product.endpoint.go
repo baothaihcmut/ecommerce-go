@@ -3,9 +3,11 @@ package endpoints
 import (
 	"context"
 
+	"github.com/baothaihcmut/Ecommerce-Go/libs/pkg/grpc/middlewares"
 	"github.com/baothaihcmut/Ecommerce-Go/products/internal/core/command/port/inbound/commands"
 	commandHandler "github.com/baothaihcmut/Ecommerce-Go/products/internal/core/command/port/inbound/handlers"
 	"github.com/go-kit/kit/endpoint"
+	"github.com/opentracing/opentracing-go"
 )
 
 type ProductEndpoints struct {
@@ -15,12 +17,12 @@ type ProductEndpoints struct {
 	AddProductVariations endpoint.Endpoint
 }
 
-func MakeProductEndpoints(c commandHandler.ProductCommandHandler) ProductEndpoints {
+func MakeProductEndpoints(c commandHandler.ProductCommandHandler, tracer opentracing.Tracer) ProductEndpoints {
 	return ProductEndpoints{
-		CreateProduct:        makeCreateProductEndpoint(c),
-		UpdateProduct:        makeUpdateProductEndpoint(c),
-		AddProductCategories: makeAddProductCategoriesEndpoint(c),
-		AddProductVariations: makeAddProductVariationsEndpoint(c),
+		CreateProduct:        middlewares.ExtractTracingMiddleware(tracer, "Create product")(makeCreateProductEndpoint(c)),
+		UpdateProduct:        middlewares.ExtractTracingMiddleware(tracer, "Update product")(makeUpdateProductEndpoint(c)),
+		AddProductCategories: middlewares.ExtractTracingMiddleware(tracer, "Add product categories")(makeAddProductCategoriesEndpoint(c)),
+		AddProductVariations: middlewares.ExtractTracingMiddleware(tracer, "Add product variations")(makeAddProductVariationsEndpoint(c)),
 	}
 }
 

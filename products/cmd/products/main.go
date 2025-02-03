@@ -14,6 +14,10 @@ func main() {
 	if err != nil {
 		logger.Fatalf("Error connect to mongoDB: %v", err)
 	}
-	s := server.NewServer(mongoClient, logger, config)
+	tracer, err := initialize.InitializeTracer(config)
+	if err != nil {
+		logger.Fatalf("Error init tracer: %v", err)
+	}
+	s := server.NewServer(mongoClient, logger, config, tracer)
 	s.Start()
 }

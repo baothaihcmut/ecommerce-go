@@ -4,6 +4,7 @@ import (
 	"context"
 	"sync"
 
+	"github.com/baothaihcmut/Ecommerce-Go/libs/pkg/mongo"
 	"github.com/baothaihcmut/Ecommerce-Go/products/internal/core/command/domain/aggregates/categories"
 	valueobjects "github.com/baothaihcmut/Ecommerce-Go/products/internal/core/command/domain/aggregates/categories/value_objects"
 	"github.com/baothaihcmut/Ecommerce-Go/products/internal/core/command/exceptions"
@@ -12,18 +13,17 @@ import (
 	"github.com/baothaihcmut/Ecommerce-Go/products/internal/core/command/port/inbound/results"
 	"github.com/baothaihcmut/Ecommerce-Go/products/internal/core/command/port/outbound/repositories"
 	"go.mongodb.org/mongo-driver/bson/primitive"
-	"go.mongodb.org/mongo-driver/mongo"
 )
 
 type CategoryCommandService struct {
-	categoryRepo repositories.CategoryCommandRepository
-	mongoClient  *mongo.Client
+	categoryRepo       repositories.CategoryCommandRepository
+	transactionService mongo.MongoTransactionService
 }
 
-func NewCategoryCommandService(repo repositories.CategoryCommandRepository, mongoClient *mongo.Client) handlers.CategoryCommandHandler {
+func NewCategoryCommandService(repo repositories.CategoryCommandRepository, mongoClient mongo.MongoTransactionService) handlers.CategoryCommandHandler {
 	return &CategoryCommandService{
-		categoryRepo: repo,
-		mongoClient:  mongoClient,
+		categoryRepo:       repo,
+		transactionService: mongoClient,
 	}
 }
 
@@ -66,26 +66,24 @@ func (c *CategoryCommandService) CreateCategory(ctx context.Context, command *co
 		parentCategoryIds,
 	)
 	//persist to db
-	session, err := c.mongoClient.StartSession()
-	if err != nil {
-		return nil, err
-	}
-	defer session.EndSession(ctx)
-	err = session.StartTransaction()
+	session, err := c.transactionService.BeginTransaction(ctx)
 	if err != nil {
 		return nil, err
 	}
 	defer func() {
 		if err != nil {
-			session.AbortTransaction(ctx)
+			err = c.transactionService.RollbackTransaction(ctx, session)
 		}
+		c.transactionService.EndTransansaction(ctx, session)
 	}()
 	err = c.categoryRepo.Save(ctx, category, session)
 	if err != nil {
 		return nil, err
 	}
-	session.CommitTransaction(ctx)
-
+	err = c.transactionService.CommitTransaction(ctx, session)
+	if err != nil {
+		return nil, err
+	}
 	return c.toCreateCategoryResult(category), nil
 }
 
@@ -151,25 +149,24 @@ func (c *CategoryCommandService) BulkCreateCategories(ctx context.Context, comma
 	default:
 	}
 	//persist to db
-	session, err := c.mongoClient.StartSession()
-	if err != nil {
-		return nil, err
-	}
-	defer session.EndSession(ctx)
-	err = session.StartTransaction()
+	session, err := c.transactionService.BeginTransaction(ctx)
 	if err != nil {
 		return nil, err
 	}
 	defer func() {
 		if err != nil {
-			session.AbortTransaction(ctx)
+			err = c.transactionService.RollbackTransaction(ctx, session)
 		}
+		c.transactionService.EndTransansaction(ctx, session)
 	}()
 	err = c.categoryRepo.BulkSave(ctx, categoryDomains, session)
 	if err != nil {
 		return nil, err
 	}
-	session.CommitTransaction(ctx)
+	err = c.transactionService.CommitTransaction(ctx, session)
+	if err != nil {
+		return nil, err
+	}
 	//map domain to result
 	mapResultWg := &sync.WaitGroup{}
 	categoryResults := make([]*results.CreateCategoryResult, len(categoryDomains))

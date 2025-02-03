@@ -10,6 +10,7 @@ import (
 
 	"github.com/baothaihcmut/Ecommerce-Go/libs/pkg/grpc/interceptors"
 	"github.com/baothaihcmut/Ecommerce-Go/libs/pkg/logger"
+	mongoLib "github.com/baothaihcmut/Ecommerce-Go/libs/pkg/mongo"
 	"github.com/baothaihcmut/Ecommerce-Go/products/internal/adapter/grpc/endpoints"
 	"github.com/baothaihcmut/Ecommerce-Go/products/internal/adapter/grpc/mappers/request"
 	"github.com/baothaihcmut/Ecommerce-Go/products/internal/adapter/grpc/mappers/response"
@@ -20,6 +21,7 @@ import (
 	"github.com/baothaihcmut/Ecommerce-Go/products/internal/config"
 	commandService "github.com/baothaihcmut/Ecommerce-Go/products/internal/core/command/services"
 	queryService "github.com/baothaihcmut/Ecommerce-Go/products/internal/core/query/services"
+	"github.com/opentracing/opentracing-go"
 	"go.mongodb.org/mongo-driver/mongo"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/keepalive"
@@ -29,26 +31,29 @@ type Server struct {
 	mongo  *mongo.Client
 	logger logger.ILogger
 	cfg    *config.Config
+	tracer opentracing.Tracer
 }
 
-func NewServer(mongo *mongo.Client, logger logger.ILogger, cfg *config.Config) *Server {
+func NewServer(mongo *mongo.Client, logger logger.ILogger, cfg *config.Config, tracer opentracing.Tracer) *Server {
 	return &Server{
 		mongo:  mongo,
 		logger: logger,
 		cfg:    cfg,
+		tracer: tracer,
 	}
 }
 
 func (s *Server) Start() {
 	mongoDB := s.mongo.Database(s.cfg.Mongo.Database)
+	mongoTransactionService := mongoLib.NewMongoTransactionService(s.mongo)
 	//for command side
 	//repository
 	mongoCategoryCommandRepo := repositories.NewMongoCategoryCommandRepository(mongoDB.Collection("categories"))
 	mongoProductCommandRepo := repositories.NewMongoProductRepository(mongoDB.Collection("products"))
 	//service
 	shopService := inmemory.NewInMemoryShopService()
-	categoryCommandService := commandService.NewCategoryCommandService(mongoCategoryCommandRepo, s.mongo)
-	productCommandService := commandService.NewProductCommandService(mongoCategoryCommandRepo, mongoProductCommandRepo, shopService, s.mongo)
+	categoryCommandService := commandService.NewCategoryCommandService(mongoCategoryCommandRepo, mongoTransactionService)
+	productCommandService := commandService.NewProductCommandService(mongoCategoryCommandRepo, mongoProductCommandRepo, shopService, mongoTransactionService)
 	//for query side
 	//repo
 	mongoCategoryQueryRepo := repositories.NewMongoCategoryQueryRepository(mongoDB.Collection("categories"))
@@ -56,8 +61,8 @@ func (s *Server) Start() {
 	categoryQueryService := queryService.NewCategoryQueryService(mongoCategoryQueryRepo)
 
 	// endpoints
-	categoryEndPoints := endpoints.MakeCategoryEndpoints(categoryCommandService, categoryQueryService)
-	productEndpoints := endpoints.MakeProductEndpoints(productCommandService)
+	categoryEndPoints := endpoints.MakeCategoryEndpoints(categoryCommandService, categoryQueryService, s.tracer)
+	productEndpoints := endpoints.MakeProductEndpoints(productCommandService, s.tracer)
 	//mappers
 	categoryRequestMapper := request.NewCategoryRequestMapper()
 	categoryResponseMapper := response.NewCategoryResponseMapper()
