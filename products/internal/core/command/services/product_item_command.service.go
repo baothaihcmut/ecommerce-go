@@ -12,15 +12,19 @@ import (
 	"github.com/baothaihcmut/Ecommerce-Go/products/internal/core/command/port/inbound/results"
 	"github.com/baothaihcmut/Ecommerce-Go/products/internal/core/command/port/outbound/repositories"
 	"go.mongodb.org/mongo-driver/bson/primitive"
+	"go.opentelemetry.io/otel/trace"
 )
 
 type ProductItemCommandService struct {
 	productItemRepo    repositories.ProductItemCommandRepository
 	productRepo        repositories.ProductCommandRepository
 	transactionService mongo.MongoTransactionService
+	tracer             trace.Tracer
 }
 
 func (p *ProductItemCommandService) CreateProductItem(ctx context.Context, command *commands.CreateProductItemCommand) (*results.CreateProductItemResult, error) {
+	ctx, span := p.tracer.Start(ctx, "ProductItem.Create: service")
+	defer span.End()
 	//check if product exist
 	product, err := p.productRepo.FindById(ctx, command.ProductId)
 	if err != nil {
@@ -71,10 +75,12 @@ func NewProductItemCommandService(
 	productRepo repositories.ProductCommandRepository,
 	productItemRepo repositories.ProductItemCommandRepository,
 	mongoClient mongo.MongoTransactionService,
+	tracer trace.Tracer,
 ) handlers.ProductItemCommandHandler {
 	return &ProductItemCommandService{
 		productRepo:        productRepo,
 		productItemRepo:    productItemRepo,
 		transactionService: mongoClient,
+		tracer:             tracer,
 	}
 }

@@ -13,17 +13,20 @@ import (
 	"github.com/baothaihcmut/Ecommerce-Go/products/internal/core/command/port/inbound/results"
 	"github.com/baothaihcmut/Ecommerce-Go/products/internal/core/command/port/outbound/repositories"
 	"go.mongodb.org/mongo-driver/bson/primitive"
+	"go.opentelemetry.io/otel/trace"
 )
 
 type CategoryCommandService struct {
 	categoryRepo       repositories.CategoryCommandRepository
 	transactionService mongo.MongoTransactionService
+	tracer             trace.Tracer
 }
 
-func NewCategoryCommandService(repo repositories.CategoryCommandRepository, mongoClient mongo.MongoTransactionService) handlers.CategoryCommandHandler {
+func NewCategoryCommandService(repo repositories.CategoryCommandRepository, mongoClient mongo.MongoTransactionService, tracer trace.Tracer) handlers.CategoryCommandHandler {
 	return &CategoryCommandService{
 		categoryRepo:       repo,
 		transactionService: mongoClient,
+		tracer:             tracer,
 	}
 }
 
@@ -47,6 +50,8 @@ func (c *CategoryCommandService) toCreateCategoryResult(category *categories.Cat
 
 // CreateCategory implements handlers.CategoryCommandHandler.
 func (c *CategoryCommandService) CreateCategory(ctx context.Context, command *commands.CreateCategoryCommand) (*results.CreateCategoryResult, error) {
+	ctx, span := c.tracer.Start(ctx, "Category.Create: service")
+	defer span.End()
 	//if category is sub category check parent category exist
 	parentCategoryIds := make([]valueobjects.CategoryId, len(command.ParentCategoryIds))
 	for idx, val := range command.ParentCategoryIds {
@@ -88,6 +93,8 @@ func (c *CategoryCommandService) CreateCategory(ctx context.Context, command *co
 }
 
 func (c *CategoryCommandService) BulkCreateCategories(ctx context.Context, command *commands.BulkCreateCategories) (*results.BulkCreateCategoriesResult, error) {
+	ctx, span := c.tracer.Start(ctx, "Category.BulkCreate: service")
+	defer span.End()
 	//create set of all parent category need to check
 	categorySet := make(map[string]struct{})
 	//mutex lock for set

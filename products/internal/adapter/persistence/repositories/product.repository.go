@@ -13,10 +13,12 @@ import (
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
+	"go.opentelemetry.io/otel/trace"
 )
 
 type MongoProductRepository struct {
 	collection *mongo.Collection
+	tracer     trace.Tracer
 }
 
 // FindById implements repositories.ProductCommandRepository.
@@ -40,6 +42,8 @@ func toProductDomain(model *models.Product) *products.Product {
 	}
 }
 func (m *MongoProductRepository) FindById(ctx context.Context, productId productValueobjects.ProductId) (*products.Product, error) {
+	ctx, span := m.tracer.Start(ctx, "Product.FindById: database")
+	defer span.End()
 	id, err := primitive.ObjectIDFromHex(string(productId))
 	if err != nil {
 		return nil, err
@@ -53,13 +57,16 @@ func (m *MongoProductRepository) FindById(ctx context.Context, productId product
 
 }
 
-func NewMongoProductRepository(collection *mongo.Collection) repositories.ProductCommandRepository {
+func NewMongoProductRepository(collection *mongo.Collection, tracer trace.Tracer) repositories.ProductCommandRepository {
 	return &MongoProductRepository{
 		collection: collection,
+		tracer:     tracer,
 	}
 }
 
 func (m *MongoProductRepository) Save(ctx context.Context, product *products.Product, session mongo.Session) error {
+	ctx, span := m.tracer.Start(ctx, "Product.Save: database")
+	defer span.End()
 	id, err := primitive.ObjectIDFromHex(string(product.Id))
 	if err != nil {
 		return err

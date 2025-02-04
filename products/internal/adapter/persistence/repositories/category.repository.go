@@ -17,10 +17,12 @@ import (
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
+	"go.opentelemetry.io/otel/trace"
 )
 
 type MongoCategoryRepository struct {
 	collection *mongo.Collection
+	tracer     trace.Tracer
 }
 
 func toCategoryDomain(model *models.Category) *categories.Category {
@@ -51,19 +53,23 @@ func handleRoutineError(ctx context.Context, cancel context.CancelFunc, errCh ch
 		errCh <- err
 	}
 }
-func NewMongoCategoryCommandRepository(collection *mongo.Collection) commandRepository.CategoryCommandRepository {
+func NewMongoCategoryCommandRepository(collection *mongo.Collection, tracer trace.Tracer) commandRepository.CategoryCommandRepository {
 	return &MongoCategoryRepository{
 		collection: collection,
+		tracer:     tracer,
 	}
 }
 
-func NewMongoCategoryQueryRepository(collection *mongo.Collection) queryRepository.CategoryQueryRepository {
+func NewMongoCategoryQueryRepository(collection *mongo.Collection, tracer trace.Tracer) queryRepository.CategoryQueryRepository {
 	return &MongoCategoryRepository{
 		collection: collection,
+		tracer:     tracer,
 	}
 }
 
 func (m *MongoCategoryRepository) Save(ctx context.Context, category *categories.Category, session mongo.Session) error {
+	ctx, span := m.tracer.Start(ctx, "Category.Save: database")
+	defer span.End()
 	id, err := primitive.ObjectIDFromHex(string(category.Id))
 	if err != nil {
 		return err
@@ -88,6 +94,8 @@ func (m *MongoCategoryRepository) Save(ctx context.Context, category *categories
 }
 
 func (m *MongoCategoryRepository) BulkSave(ctx context.Context, categories []*categories.Category, session mongo.Session) error {
+	ctx, span := m.tracer.Start(ctx, "Category.BulkSave: database")
+	defer span.End()
 	bulkOptions := make([]mongo.WriteModel, len(categories))
 	for idx, val := range categories {
 		id, err := primitive.ObjectIDFromHex(string(val.Id))
@@ -123,6 +131,8 @@ func (m *MongoCategoryRepository) BulkSave(ctx context.Context, categories []*ca
 }
 
 func (m *MongoCategoryRepository) FindCategoryById(ctx context.Context, categoryId valueobjects.CategoryId) (*categories.Category, error) {
+	ctx, span := m.tracer.Start(ctx, "Category.FindById: database")
+	defer span.End()
 	id, err := primitive.ObjectIDFromHex(string(categoryId))
 	if err != nil {
 		return nil, err
@@ -145,6 +155,8 @@ func (m *MongoCategoryRepository) FindAllCategory(
 	sorts []sort.SortParam,
 	paginate pagination.PaginationParam,
 ) (*pagination.PaginationResult[*categoryProjections.CategoryProjection], error) {
+	ctx, span := m.tracer.Start(ctx, "Category.FindAll: database")
+	defer span.End()
 	filterMongo := bson.M{}
 	for _, filter := range filters {
 		filterMongo[filter.Field] = filter.Value
@@ -227,6 +239,8 @@ func (m *MongoCategoryRepository) FindAllCategory(
 }
 
 func (m *MongoCategoryRepository) FindAllSubCategory(ctx context.Context, categoryId string) ([]*categoryProjections.CategoryProjection, error) {
+	ctx, span := m.tracer.Start(ctx, "Category.FindAllSubCategory: database")
+	defer span.End()
 	filter := bson.M{
 		"parent_category_ids": bson.M{
 			"$in": bson.A{categoryId},

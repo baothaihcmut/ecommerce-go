@@ -10,19 +10,24 @@ import (
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
+	"go.opentelemetry.io/otel/trace"
 )
 
 type MongoProductItemRepository struct {
 	collection *mongo.Collection
+	tracer     trace.Tracer
 }
 
-func NewMongoProductItemRepository(collection *mongo.Collection) repositories.ProductItemCommandRepository {
+func NewMongoProductItemRepository(collection *mongo.Collection, tracer trace.Tracer) repositories.ProductItemCommandRepository {
 	return &MongoProductItemRepository{
 		collection: collection,
+		tracer:     tracer,
 	}
 }
 
 func (m *MongoProductItemRepository) Save(ctx context.Context, productItem *productitems.ProductItem, session mongo.Session) error {
+	ctx, span := m.tracer.Start(ctx, "ProductItem.Save: database")
+	defer span.End()
 	id, err := primitive.ObjectIDFromHex(string(productItem.Id))
 	if err != nil {
 		return err

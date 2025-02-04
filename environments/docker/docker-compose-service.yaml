@@ -11,21 +11,6 @@ services:
       - "5432:5432"
     networks:
       - app-network
-
-  consul:
-      image: consul:1.15.0
-      container_name: consul
-      environment:
-        - CONSUL_BIND_INTERFACE=eth0
-      ports:
-        - "8500:8500"  # HTTP UI
-        - "8600:8600"  # DNS and gRPC port
-      volumes:
-        - consul-data:/consul/data
-      restart: always
-      networks:
-        - healthcheck-network
-        - app-network
   api-gateway:
     image: baothaihcmut/api-gateway:v1
     environment:

@@ -3,11 +3,10 @@ package endpoints
 import (
 	"context"
 
-	"github.com/baothaihcmut/Ecommerce-Go/libs/pkg/grpc/middlewares"
 	"github.com/baothaihcmut/Ecommerce-Go/products/internal/core/command/port/inbound/commands"
 	commandHandler "github.com/baothaihcmut/Ecommerce-Go/products/internal/core/command/port/inbound/handlers"
 	"github.com/go-kit/kit/endpoint"
-	"github.com/opentracing/opentracing-go"
+	"go.opentelemetry.io/otel/trace"
 )
 
 type ProductEndpoints struct {
@@ -17,17 +16,19 @@ type ProductEndpoints struct {
 	AddProductVariations endpoint.Endpoint
 }
 
-func MakeProductEndpoints(c commandHandler.ProductCommandHandler, tracer opentracing.Tracer) ProductEndpoints {
+func MakeProductEndpoints(c commandHandler.ProductCommandHandler, tracer trace.Tracer) ProductEndpoints {
 	return ProductEndpoints{
-		CreateProduct:        middlewares.ExtractTracingMiddleware(tracer, "Create product")(makeCreateProductEndpoint(c)),
-		UpdateProduct:        middlewares.ExtractTracingMiddleware(tracer, "Update product")(makeUpdateProductEndpoint(c)),
-		AddProductCategories: middlewares.ExtractTracingMiddleware(tracer, "Add product categories")(makeAddProductCategoriesEndpoint(c)),
-		AddProductVariations: middlewares.ExtractTracingMiddleware(tracer, "Add product variations")(makeAddProductVariationsEndpoint(c)),
+		CreateProduct:        makeCreateProductEndpoint(c, tracer),
+		UpdateProduct:        makeUpdateProductEndpoint(c, tracer),
+		AddProductCategories: makeAddProductCategoriesEndpoint(c, tracer),
+		AddProductVariations: makeAddProductVariationsEndpoint(c, tracer),
 	}
 }
 
-func makeCreateProductEndpoint(c commandHandler.ProductCommandHandler) endpoint.Endpoint {
+func makeCreateProductEndpoint(c commandHandler.ProductCommandHandler, tracer trace.Tracer) endpoint.Endpoint {
 	return func(ctx context.Context, request interface{}) (response interface{}, err error) {
+		ctx, span := tracer.Start(ctx, "Product.Create: endpoint")
+		defer span.End()
 		req := request.(*commands.CreateProductCommand)
 		res, err := c.CreateProduct(ctx, req)
 		if err != nil {
@@ -37,8 +38,10 @@ func makeCreateProductEndpoint(c commandHandler.ProductCommandHandler) endpoint.
 	}
 }
 
-func makeUpdateProductEndpoint(c commandHandler.ProductCommandHandler) endpoint.Endpoint {
+func makeUpdateProductEndpoint(c commandHandler.ProductCommandHandler, tracer trace.Tracer) endpoint.Endpoint {
 	return func(ctx context.Context, request interface{}) (response interface{}, err error) {
+		ctx, span := tracer.Start(ctx, "Product.Update: endpoint")
+		defer span.End()
 		req := request.(*commands.UpdateProductCommand)
 		res, err := c.UpdateProduct(ctx, req)
 		if err != nil {
@@ -47,8 +50,10 @@ func makeUpdateProductEndpoint(c commandHandler.ProductCommandHandler) endpoint.
 		return res, nil
 	}
 }
-func makeAddProductCategoriesEndpoint(c commandHandler.ProductCommandHandler) endpoint.Endpoint {
+func makeAddProductCategoriesEndpoint(c commandHandler.ProductCommandHandler, tracer trace.Tracer) endpoint.Endpoint {
 	return func(ctx context.Context, request interface{}) (response interface{}, err error) {
+		ctx, span := tracer.Start(ctx, "Product.AddCategories: endpoint")
+		defer span.End()
 		req := request.(*commands.AddProductCategoiesCommand)
 		res, err := c.AddProductCategories(ctx, req)
 		if err != nil {
@@ -57,8 +62,10 @@ func makeAddProductCategoriesEndpoint(c commandHandler.ProductCommandHandler) en
 		return res, nil
 	}
 }
-func makeAddProductVariationsEndpoint(c commandHandler.ProductCommandHandler) endpoint.Endpoint {
+func makeAddProductVariationsEndpoint(c commandHandler.ProductCommandHandler, tracer trace.Tracer) endpoint.Endpoint {
 	return func(ctx context.Context, request interface{}) (response interface{}, err error) {
+		ctx, span := tracer.Start(ctx, "Product.AddVariations: endpoints")
+		defer span.End()
 		req := request.(*commands.AddProductVariationsCommand)
 		res, err := c.AddProductVariations(ctx, req)
 		if err != nil {

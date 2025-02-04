@@ -11,3 +11,5 @@ logger:
   encoding: "json"
   level: "info"
   zap_type: "console"
+jaeger:
+  endpoint: "localhost:4317"

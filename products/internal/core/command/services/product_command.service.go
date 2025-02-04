@@ -13,6 +13,7 @@ import (
 	"github.com/baothaihcmut/Ecommerce-Go/products/internal/core/command/port/inbound/results"
 	"github.com/baothaihcmut/Ecommerce-Go/products/internal/core/command/port/outbound/repositories"
 	"go.mongodb.org/mongo-driver/bson/primitive"
+	"go.opentelemetry.io/otel/trace"
 )
 
 type ProductCommandService struct {
@@ -20,6 +21,7 @@ type ProductCommandService struct {
 	categoryRepo       repositories.CategoryCommandRepository
 	shopService        ShopService
 	transactionService mongo.MongoTransactionService
+	tracer             trace.Tracer
 }
 
 func (p *ProductCommandService) checkContraints(ctx context.Context, product *commands.CreateProductCommand) error {
@@ -81,6 +83,8 @@ func (p *ProductCommandService) checkContraints(ctx context.Context, product *co
 }
 
 func (p *ProductCommandService) CreateProduct(ctx context.Context, product *commands.CreateProductCommand) (*results.CreateProductResult, error) {
+	ctx, span := p.tracer.Start(ctx, "Product.Create: service")
+	defer span.End()
 	//check contraint
 	err := p.checkContraints(ctx, product)
 	if err != nil {
@@ -126,6 +130,8 @@ func (p *ProductCommandService) CreateProduct(ctx context.Context, product *comm
 }
 
 func (p *ProductCommandService) UpdateProduct(ctx context.Context, command *commands.UpdateProductCommand) (*results.UpdateProductResult, error) {
+	ctx, span := p.tracer.Start(ctx, "Product.Update: service")
+	defer span.End()
 	//find by id
 	product, err := p.productRepo.FindById(ctx, command.Id)
 	if err != nil {
@@ -167,6 +173,8 @@ func (p *ProductCommandService) UpdateProduct(ctx context.Context, command *comm
 }
 
 func (p *ProductCommandService) AddProductCategories(ctx context.Context, command *commands.AddProductCategoiesCommand) (*results.AddProductCategoriesResult, error) {
+	ctx, span := p.tracer.Start(ctx, "Product.AddCategories: service")
+	defer span.End()
 	//find by id
 	product, err := p.productRepo.FindById(ctx, command.ProductId)
 	if err != nil {
@@ -201,6 +209,8 @@ func (p *ProductCommandService) AddProductCategories(ctx context.Context, comman
 }
 
 func (p *ProductCommandService) AddProductVariations(ctx context.Context, command *commands.AddProductVariationsCommand) (*results.AddProductVariationsResult, error) {
+	ctx, span := p.tracer.Start(ctx, "Product.AddVariations: service")
+	defer span.End()
 	//find by id
 	product, err := p.productRepo.FindById(ctx, command.ProductId)
 	if err != nil {
@@ -238,11 +248,13 @@ func NewProductCommandService(
 	productRepo repositories.ProductCommandRepository,
 	shopService ShopService,
 	mongoClient mongo.MongoTransactionService,
+	tracer trace.Tracer,
 ) handlers.ProductCommandHandler {
 	return &ProductCommandService{
 		categoryRepo:       categoryRepo,
 		productRepo:        productRepo,
 		shopService:        shopService,
 		transactionService: mongoClient,
+		tracer:             tracer,
 	}
 }

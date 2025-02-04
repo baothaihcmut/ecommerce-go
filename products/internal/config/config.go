@@ -27,7 +27,7 @@ type MongoConfig struct {
 }
 
 type JaegerConfig struct {
-	Address string `mapstruct:"address"`
+	Endpoint string `mapstruct:"endpoint"`
 }
 
 func LoadConfig() *Config {
