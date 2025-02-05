@@ -9,6 +9,9 @@ import (
 )
 
 func setSpanAttributes(span trace.Span, attributes map[string]interface{}) {
+	if attributes == nil {
+		return
+	}
 	for key, val := range attributes {
 		switch v := val.(type) {
 		case string:
