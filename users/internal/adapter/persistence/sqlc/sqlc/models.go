@@ -64,6 +64,16 @@ type Address struct {
 	UserID   uuid.UUID
 }
 
+type Admin struct {
+	ID                  uuid.UUID
+	Email               string
+	Password            string
+	PhoneNumber         string
+	FirstName           string
+	LastName            string
+	CurrentRefreshToken sql.NullString
+}
+
 type Customer struct {
 	UserID     uuid.UUID
 	LoyalPoint sql.NullInt32

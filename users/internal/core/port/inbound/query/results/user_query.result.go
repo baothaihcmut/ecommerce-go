@@ -10,7 +10,7 @@ type UserQueryResult struct {
 	Id          valueobject.UserId
 	Email       valueobject.Email
 	PhoneNumber valueobject.PhoneNumber
-	Address     []valueobject.Address
+	Address     []*entities.Address
 	Role        enums.Role
 	FirstName   string
 	LastName    string

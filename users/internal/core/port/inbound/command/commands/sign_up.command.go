@@ -1,6 +1,9 @@
 package commands
 
-import "github.com/baothaihcmut/Ecommerce-Go/users/internal/core/domain/enums"
+import (
+	"github.com/baothaihcmut/Ecommerce-Go/users/internal/core/domain/aggregates/user"
+	"github.com/baothaihcmut/Ecommerce-Go/users/internal/core/domain/enums"
+)
 
 type Address struct {
 	Priority int
@@ -19,7 +22,7 @@ type SignUpCommand struct {
 	Email         string
 	Password      string
 	PhoneNumber   string
-	Addresses     []*Address
+	Addresses     []user.AddressArg
 	FirstName     string
 	LastName      string
 	Role          enums.Role

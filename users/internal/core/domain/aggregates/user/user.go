@@ -18,12 +18,19 @@ var (
 	ErrBadCredencial        = errors.New("email or password incorrect")
 )
 
+type AddressArg struct {
+	Street   string
+	Town     string
+	City     string
+	Province string
+}
+
 type User struct {
 	Id                  valueobject.UserId
 	Email               valueobject.Email
 	Password            valueobject.Password
 	PhoneNumber         valueobject.PhoneNumber
-	Address             []valueobject.Address
+	Address             []*entities.Address
 	Role                enums.Role
 	FirstName           string
 	LastName            string
@@ -34,7 +41,7 @@ type User struct {
 
 func validate(
 	email valueobject.Email,
-	address []valueobject.Address,
+	address []AddressArg,
 	firstName string,
 	lastName string,
 ) error {
@@ -53,16 +60,15 @@ func validate(
 	return nil
 }
 
-func NewCustomer(
+func newUser(
 	email valueobject.Email,
 	password valueobject.Password,
 	phoneNumber valueobject.PhoneNumber,
-	address []valueobject.Address,
+	addressArgs []AddressArg,
 	firstName string,
 	lastName string,
 ) (*User, error) {
-
-	err := validate(email, address, firstName, lastName)
+	err := validate(email, addressArgs, firstName, lastName)
 	if err != nil {
 		return nil, err
 	}
@@ -70,55 +76,66 @@ func NewCustomer(
 	if err != nil {
 		return nil, err
 	}
-	customer, err := entities.NewCustomer()
-	if err != nil {
-		return nil, err
+	addresses := make([]*entities.Address, len(addressArgs))
+	for idx, address := range addressArgs {
+		addresses[idx] = entities.NewAddress(idx, address.Street, address.Town, address.City, address.Province)
 	}
-
-	// Create and return a new User instance
 	return &User{
 		Id:                  *id,
 		Email:               email,
 		Password:            password,
 		CurrentRefreshToken: nil,
 		PhoneNumber:         phoneNumber,
-		Address:             address,
+		Address:             addresses,
 		Role:                enums.CUSTOMER,
 		FirstName:           firstName,
 		LastName:            lastName,
-		Customer:            customer,
 	}, nil
+}
+
+func NewCustomer(
+	email valueobject.Email,
+	password valueobject.Password,
+	phoneNumber valueobject.PhoneNumber,
+	addressArgs []AddressArg,
+	firstName string,
+	lastName string,
+) (*User, error) {
+	err := validate(email, addressArgs, firstName, lastName)
+	if err != nil {
+		return nil, err
+	}
+	user, err := newUser(email, password, phoneNumber, addressArgs, firstName, lastName)
+	if err != nil {
+		return nil, err
+	}
+	customer, err := entities.NewCustomer()
+	user.Customer = customer
+	// Create and return a new User instance
+	return user, nil
 }
 
 func NewShopOwner(
 	email valueobject.Email,
 	passwod valueobject.Password,
 	phoneNumber valueobject.PhoneNumber,
-	address []valueobject.Address,
+	addressArgs []AddressArg,
 	firstName string,
 	lastName string,
 	bussinessLincese string,
 ) (*User, error) {
-	err := validate(email, address, firstName, lastName)
+	err := validate(email, addressArgs, firstName, lastName)
 	if err != nil {
 		return nil, err
 	}
-	id, err := valueobject.NewUserId(uuid.New())
+	user, err := newUser(email, passwod, phoneNumber, addressArgs, firstName, lastName)
 	if err != nil {
 		return nil, err
 	}
+
 	shopOwner := entities.NewShopOwner(bussinessLincese)
-	return &User{
-		Id:          *id,
-		Email:       email,
-		Password:    passwod,
-		PhoneNumber: phoneNumber,
-		Address:     address,
-		Role:        enums.SHOP_OWNER,
-		FirstName:   firstName,
-		LastName:    lastName,
-		ShopOwner:   shopOwner,
-	}, nil
+	user.ShopOwner = shopOwner
+	return user, nil
 }
 
 func (u *User) SetCurrentRefreshToken(token valueobject.Token) error {

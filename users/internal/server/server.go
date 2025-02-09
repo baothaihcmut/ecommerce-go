@@ -47,10 +47,11 @@ func (s *Server) Start(env string) {
 	//init repository
 	dbService := postgres.NewPostgresTransactionService(s.db)
 	userRepo := repositories.NewPostgresUserRepo(s.db)
-	jwtPort := jwt.NewJwtAdapter(&s.config.Jwt)
+	jwtService := jwt.NewJwtService(&s.config.Jwt)
+	jwtAdminService := jwt.NewAdminJwtService(&s.config.Admin)
 	//init command
 	userCommand := commandService.NewUserCommandService(userRepo, s.db)
-	authCommand := commandService.NewAuthCommandService(userRepo, jwtPort, dbService)
+	authCommand := commandService.NewAuthCommandService(userRepo, jwtService, dbService)
 	// init query
 	userQuery := queryService.NewUserQueryService(userRepo)
 	//init enpoint

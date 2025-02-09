@@ -43,7 +43,7 @@ func (repo *PostgresUserRepo) toCreateUserArg(user *user.User) *sqlc.CreateUserP
 	}
 }
 
-func (repo *PostgresUserRepo) toCreateAddressArg(userId valueobject.UserId, address valueobject.Address) *sqlc.CreateAddressParams {
+func (repo *PostgresUserRepo) toCreateAddressArg(userId valueobject.UserId, address *entities.Address) *sqlc.CreateAddressParams {
 	return &sqlc.CreateAddressParams{
 		Priority: sql.NullInt32{Int32: int32(address.Priority), Valid: true},
 		Street:   sql.NullString{String: address.Street, Valid: true},
@@ -80,9 +80,9 @@ func (repo *PostgresUserRepo) toUserDomain(result *sqlc.FindUserByCriteriaRow, a
 	if err != nil {
 		return nil, errors.NewError(err, errors.CaptureStackTrace())
 	}
-	userAddresses := make([]valueobject.Address, len(addresses))
+	userAddresses := make([]*entities.Address, len(addresses))
 	for _, address := range addresses {
-		userAddresses = append(userAddresses, *valueobject.NewAddress(
+		userAddresses = append(userAddresses, entities.NewAddress(
 			int(address.Priority), address.Street, address.Town, address.City, address.Province,
 		))
 	}

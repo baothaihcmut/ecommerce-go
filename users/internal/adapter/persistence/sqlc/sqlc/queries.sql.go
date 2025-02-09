@@ -144,6 +144,40 @@ func (q *Queries) CreateUser(ctx context.Context, arg CreateUserParams) error {
 	return err
 }
 
+const findAdminByCriteria = `-- name: FindAdminByCriteria :one
+SELECT id, email, password, phone_number, first_name, last_name, current_refresh_token
+FROM admins a
+WHERE
+    CASE $1
+        WHEN 'email' THEN u.email = $2::text
+        WHEN 'phone_number' THEN u.phone_number = $2::text
+        WHEN 'id' THEN u.id = $2::uuid
+        WHEN 'firstName' THEN u.first_name = $2::text
+        WHEN 'lastName' THEN u.last_name = $2::text
+    END
+LIMIT 1
+`
+
+type FindAdminByCriteriaParams struct {
+	Criteria interface{}
+	Value    sql.NullString
+}
+
+func (q *Queries) FindAdminByCriteria(ctx context.Context, arg FindAdminByCriteriaParams) (Admin, error) {
+	row := q.db.QueryRowContext(ctx, findAdminByCriteria, arg.Criteria, arg.Value)
+	var i Admin
+	err := row.Scan(
+		&i.ID,
+		&i.Email,
+		&i.Password,
+		&i.PhoneNumber,
+		&i.FirstName,
+		&i.LastName,
+		&i.CurrentRefreshToken,
+	)
+	return i, err
+}
+
 const findAllAddressOfUser = `-- name: FindAllAddressOfUser :many
 SELECT priority, street, town, city, province, user_id FROM addresses WHERE user_id = $1
 `
@@ -234,6 +268,42 @@ func (q *Queries) FindUserByCriteria(ctx context.Context, arg FindUserByCriteria
 	return i, err
 }
 
+const insertAdmin = `-- name: InsertAdmin :exec
+INSERT INTO admins (id, first_name, last_name, email, password, phone_number,current_refresh_token)
+				VALUES (
+				    $1,
+					$2,
+					$3,
+					$4,
+					$5,
+					$6,
+					$7
+				)
+`
+
+type InsertAdminParams struct {
+	ID                  uuid.NullUUID
+	FirstName           sql.NullString
+	LastName            sql.NullString
+	Email               sql.NullString
+	Password            sql.NullString
+	PhoneNumber         sql.NullString
+	CurrentRefreshToken sql.NullString
+}
+
+func (q *Queries) InsertAdmin(ctx context.Context, arg InsertAdminParams) error {
+	_, err := q.db.ExecContext(ctx, insertAdmin,
+		arg.ID,
+		arg.FirstName,
+		arg.LastName,
+		arg.Email,
+		arg.Password,
+		arg.PhoneNumber,
+		arg.CurrentRefreshToken,
+	)
+	return err
+}
+
 const updateAddress = `-- name: UpdateAddress :exec
 UPDATE addresses
 SET
@@ -261,6 +331,41 @@ func (q *Queries) UpdateAddress(ctx context.Context, arg UpdateAddressParams) er
 		arg.Province,
 		arg.UserId,
 		arg.Priority,
+	)
+	return err
+}
+
+const updateAdmin = `-- name: UpdateAdmin :exec
+UPDATE admins
+SET
+    first_name = COALESCE($1, first_name),
+    last_name = COALESCE($2, last_name),
+    email = COALESCE($3, email),
+    password = COALESCE($4, password),
+    phone_number = COALESCE($5, phone_number),
+    current_refresh_token = COALESCE($6, current_refresh_token)
+WHERE id = $7
+`
+
+type UpdateAdminParams struct {
+	FirstName           sql.NullString
+	LastName            sql.NullString
+	Email               sql.NullString
+	Password            sql.NullString
+	PhoneNumber         sql.NullString
+	CurrentRefreshToken sql.NullString
+	ID                  uuid.NullUUID
+}
+
+func (q *Queries) UpdateAdmin(ctx context.Context, arg UpdateAdminParams) error {
+	_, err := q.db.ExecContext(ctx, updateAdmin,
+		arg.FirstName,
+		arg.LastName,
+		arg.Email,
+		arg.Password,
+		arg.PhoneNumber,
+		arg.CurrentRefreshToken,
+		arg.ID,
 	)
 	return err
 }

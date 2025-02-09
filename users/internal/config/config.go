@@ -11,6 +11,7 @@ type Config struct {
 	Consol   ConsulConfig        `mapstructure:"consul"`
 	Jwt      JwtConfig           `mapstructure:"jwt"`
 	Logger   logger.ConfigLogger `mapstructure:"logger"`
+	Admin    AdminConfig         `mapstructure:"admin"`
 }
 
 type JwtConfig struct {
@@ -44,6 +45,18 @@ type DatabaseConfig struct {
 type ConsulConfig struct {
 	Host string `mapstructure:"host"`
 	Port int    `mapstructure:"port"`
+}
+
+type AdminConfig struct {
+	Email              string `mapstructure:"email"`
+	Password           string `mapstructure:"password"`
+	FirstName          string `mapstructure:"first_name"`
+	LastName           string `mapstructure:"last_name"`
+	PhoneNumber        string `mapstructure:"phone_number"`
+	AccessTokenSecret  string `mapstructure:"admin_access_token_secret"`
+	AccessTokenAge     int    `mapstructure:"admin_access_token_age"`
+	RefreshTokenSecret string `mapstructure:"admin_refresh_token_secret"`
+	RefreshTokenAge    int    `mapstructure:"admin_refresh_token_age"`
 }
 
 func LoadConfig() *Config {

@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"github.com/baothaihcmut/Ecommerce-Go/users/internal/adapter/grpc/proto"
+	"github.com/baothaihcmut/Ecommerce-Go/users/internal/core/domain/aggregates/user"
 	valueobject "github.com/baothaihcmut/Ecommerce-Go/users/internal/core/domain/aggregates/user/value_object"
 	"github.com/baothaihcmut/Ecommerce-Go/users/internal/core/domain/enums"
 	"github.com/baothaihcmut/Ecommerce-Go/users/internal/core/port/inbound/command/commands"
@@ -32,10 +33,9 @@ func (m *AuthRequestMapperImpl) ToLoginCommand(_ context.Context, request interf
 
 func (m *AuthRequestMapperImpl) ToSignUpCommand(_ context.Context, request interface{}) (interface{}, error) {
 	req := request.(*proto.SignUpRequest)
-	addreses := make([]*commands.Address, len(req.Addresses))
+	addreses := make([]user.AddressArg, len(req.Addresses))
 	for idx, addr := range req.Addresses {
-		addreses[idx] = &commands.Address{
-			Priority: int(addr.Priority),
+		addreses[idx] = user.AddressArg{
 			City:     addr.City,
 			Town:     addr.Town,
 			Street:   addr.Street,
@@ -53,26 +53,21 @@ func (m *AuthRequestMapperImpl) ToSignUpCommand(_ context.Context, request inter
 	}
 	if req.Role == proto.Role_CUSTOMER {
 		dest.CustomerInfo = &commands.CustomerInfo{}
-	} else {
+	} else if req.Role == proto.Role_SHOP_OWNER {
 		dest.ShopOwnerInfo = &commands.ShopOwnerInfo{
 			BussinessLincese: req.ShopOwnerInfo.BussinessLincese,
 		}
-
 	}
 	return dest, nil
 }
 
 func (m *AuthRequestMapperImpl) ToVerifyTokenCommand(_ context.Context, request interface{}) (interface{}, error) {
 	req := request.(*proto.VerifyTokenRequest)
-	if req.Type == proto.TokenType_ACCESS_TOKEN {
-		return &commands.VerifyTokenCommand{
-			Token: valueobject.NewToken(req.Token, enums.ACCESS_TOKEN),
-		}, nil
-	} else {
-		return &commands.VerifyTokenCommand{
-			Token: valueobject.NewToken(req.Token, enums.REFRESH_TOKEN),
-		}, nil
-	}
+	return &commands.VerifyTokenCommand{
+		Token:          req.Token,
+		IsRefreshToken: req.IsRefreshToken,
+	}, nil
+
 }
 
 func NewAuthRequestMapper() AuthRequestMapper {

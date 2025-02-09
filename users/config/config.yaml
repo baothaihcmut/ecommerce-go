@@ -8,13 +8,13 @@ server:
 
 db:
   driver: "postgres"
-  host: "localhost"
+  host: "ep-bitter-cell-a4voat0v-pooler.us-east-1.aws.neon.tech"
   port: 5432
-  user: "thaibao"
-  password: "thaibao"
-  name: "userdb"
+  user: "neondb_owner"
+  password: "npg_vlJsba5iB2gP"
+  name: "user-db"
   ssl: false
-  ssl_mode: "disable"
+  ssl_mode: "require"
   ssl_cert_path: ""
 
 consul:
@@ -34,3 +34,13 @@ logger:
   encoding: "json"
   level: "info"
   zap_type: "console"
+admin:
+  email: "thaibao22042k4@gmail.com"
+  password: "baothaipassword"
+  first_name: "thai"
+  last_name: "bao"
+  phone_number: "0828537679"
+  access_token_secret: "my_access_token_secret"
+  access_token_age: 3600
+  refresh_token_secret: "my_refresh_token_secret"
+  refresh_token_age: 7200

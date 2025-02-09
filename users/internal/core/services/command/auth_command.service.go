@@ -12,6 +12,7 @@ import (
 	"github.com/baothaihcmut/Ecommerce-Go/users/internal/core/port/inbound/command/handlers"
 	"github.com/baothaihcmut/Ecommerce-Go/users/internal/core/port/inbound/command/results"
 	"github.com/baothaihcmut/Ecommerce-Go/users/internal/core/port/outbound"
+	"github.com/google/uuid"
 )
 
 var (
@@ -20,7 +21,7 @@ var (
 )
 
 type AuthCommandService struct {
-	jwtPort   outbound.JwtPort
+	jwtPort   outbound.JwtService
 	userRepo  outbound.UserRepository
 	dbService postgres.TransactionService
 }
@@ -44,11 +45,17 @@ func (s *AuthCommandService) Login(ctx context.Context, command *commands.LoginC
 		return nil, err
 	}
 	//generate access token and refresh token
-	accessToken, err := s.jwtPort.GenerateAccessToken(ctx, userDb)
+	accessToken, err := s.jwtPort.GenerateAccessToken(ctx, outbound.GenerateTokenArg{
+		UserId: uuid.UUID(userDb.Id),
+		Role:   userDb.Role,
+	})
 	if err != nil {
 		return nil, err
 	}
-	refreshToken, err := s.jwtPort.GenerateRefreshToken(ctx, userDb)
+	refreshToken, err := s.jwtPort.GenerateRefreshToken(ctx, outbound.GenerateTokenArg{
+		UserId: uuid.UUID(userDb.Id),
+		Role:   userDb.Role,
+	})
 	if err != nil {
 		return nil, err
 	}
@@ -72,20 +79,14 @@ func (s *AuthCommandService) toUserDomain(command *commands.SignUpCommand) (*use
 	if err != nil {
 		return nil, err
 	}
-	address := make([]valueobject.Address, len(command.Addresses))
-	for idx, addr := range command.Addresses {
-		address[idx] = *valueobject.NewAddress(
-			addr.Priority, addr.Street, addr.Town, addr.City, addr.Province,
-		)
-	}
 
 	if command.Role == enums.CUSTOMER {
 		return user.NewCustomer(
-			*email, password, *phoneNumber, address, command.FirstName, command.LastName,
+			*email, password, *phoneNumber, command.Addresses, command.FirstName, command.LastName,
 		)
 	} else {
 		return user.NewShopOwner(
-			*email, password, *phoneNumber, address, command.FirstName, command.LastName, command.ShopOwnerInfo.BussinessLincese,
+			*email, password, *phoneNumber, command.Addresses, command.FirstName, command.LastName, command.ShopOwnerInfo.BussinessLincese,
 		)
 	}
 }
@@ -113,15 +114,22 @@ func (s *AuthCommandService) SignUp(ctx context.Context, command *commands.SignU
 		return nil, ErrPhoneNumberExist
 	}
 	//generate token
-	accessToken, err := s.jwtPort.GenerateAccessToken(ctx, user)
+	accessToken, err := s.jwtPort.GenerateAccessToken(ctx, outbound.GenerateTokenArg{
+		UserId: uuid.UUID(user.Id),
+		Role:   user.Role,
+	})
 	if err != nil {
 		return nil, err
 	}
-	refreshToken, err := s.jwtPort.GenerateRefreshToken(ctx, user)
+	refreshToken, err := s.jwtPort.GenerateRefreshToken(ctx, outbound.GenerateTokenArg{
+		UserId: uuid.UUID(user.Id),
+		Role:   user.Role,
+	})
 	if err != nil {
 		return nil, err
 	}
-	err = user.SetCurrentRefreshToken(refreshToken)
+
+	err = user.SetCurrentRefreshToken(valueobject.NewToken(refreshToken, enums.REFRESH_TOKEN))
 	if err != nil {
 		return nil, err
 	}
@@ -142,7 +150,7 @@ func (s *AuthCommandService) SignUp(ctx context.Context, command *commands.SignU
 
 }
 func (s *AuthCommandService) VerifyToken(ctx context.Context, command *commands.VerifyTokenCommand) (*results.VerifyTokenCommandResult, error) {
-	if command.Token.TokenType == enums.ACCESS_TOKEN {
+	if !command.IsRefreshToken {
 		accesToken, err := s.jwtPort.DecodeAccessToken(ctx, command.Token)
 		if err != nil {
 			return nil, err
@@ -162,7 +170,7 @@ func (s *AuthCommandService) VerifyToken(ctx context.Context, command *commands.
 	}
 }
 
-func NewAuthCommandService(userRepo outbound.UserRepository, jwtPort outbound.JwtPort, dbService postgres.TransactionService) handlers.AuthCommandHandler {
+func NewAuthCommandService(userRepo outbound.UserRepository, jwtPort outbound.JwtService, dbService postgres.TransactionService) handlers.AuthCommandHandler {
 	return &AuthCommandService{
 		userRepo:  userRepo,
 		jwtPort:   jwtPort,

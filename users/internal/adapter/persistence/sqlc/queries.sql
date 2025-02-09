@@ -103,3 +103,38 @@ WHERE
         WHEN 'lastName' THEN u.last_name = sqlc.narg('value')::text
     END
 LIMIT 1;
+
+-- name: FindAdminByCriteria :one
+SELECT *
+FROM admins a
+WHERE
+    CASE sqlc.narg('criteria')
+        WHEN 'email' THEN u.email = sqlc.narg('value')::text
+        WHEN 'phone_number' THEN u.phone_number = sqlc.narg('value')::text
+        WHEN 'id' THEN u.id = sqlc.narg('value')::uuid
+        WHEN 'firstName' THEN u.first_name = sqlc.narg('value')::text
+        WHEN 'lastName' THEN u.last_name = sqlc.narg('value')::text
+    END
+LIMIT 1;
+
+-- name: InsertAdmin :exec
+INSERT INTO admins (id, first_name, last_name, email, password, phone_number,current_refresh_token)
+				VALUES (
+				    sqlc.narg('id'),
+					sqlc.narg('firstName'),
+					sqlc.narg('lastName'),
+					sqlc.narg('email'),
+					sqlc.narg('password'),
+					sqlc.narg('phoneNumber'),
+					sqlc.narg('currentRefreshToken')
+				);
+-- name: UpdateAdmin :exec
+UPDATE admins
+SET
+    first_name = COALESCE(sqlc.narg('firstName'), first_name),
+    last_name = COALESCE(sqlc.narg('lastName'), last_name),
+    email = COALESCE(sqlc.narg('email'), email),
+    password = COALESCE(sqlc.narg('password'), password),
+    phone_number = COALESCE(sqlc.narg('phoneNumber'), phone_number),
+    current_refresh_token = COALESCE(sqlc.narg('currentRefreshToken'), current_refresh_token)
+WHERE id = sqlc.narg('id');

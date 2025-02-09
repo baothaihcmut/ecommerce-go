@@ -20,16 +20,16 @@ type AuthResponseMapperImpl struct{}
 func (m *AuthResponseMapperImpl) ToLoginResult(_ context.Context, res interface{}) (interface{}, error) {
 	resp := res.(*commandResult.LoginCommandResult)
 	return &proto.LoginData{
-		AccessToken:  resp.AccessToken.Value,
-		RefreshToken: resp.RefreshToken.Value,
+		AccessToken:  resp.AccessToken,
+		RefreshToken: resp.RefreshToken,
 	}, nil
 }
 
 func (m *AuthResponseMapperImpl) ToSignUpResult(_ context.Context, res interface{}) (interface{}, error) {
 	resp := res.(*commandResult.SignUpCommandResult)
 	return &proto.LoginData{
-		AccessToken:  resp.AccessToken.Value,
-		RefreshToken: resp.RefreshToken.Value,
+		AccessToken:  resp.AccessToken,
+		RefreshToken: resp.RefreshToken,
 	}, nil
 }
 

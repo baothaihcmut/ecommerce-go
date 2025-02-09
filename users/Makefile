@@ -26,6 +26,16 @@ gen-proto-auth:
     --go_opt=Mauth.proto=./proto \
     --go-grpc_opt=Mauth.proto=./proto \
     "../libs/proto/auth.proto"
+gen-proto-admin:
+	@protoc \
+    --proto_path="../libs/proto/" \
+    --go_out="./internal/adapter/grpc" \
+    --go-grpc_out=require_unimplemented_servers=false:./internal/adapter/grpc \
+    --go_opt=Mshared.proto=./proto \
+    --go-grpc_opt=Mshared.proto=./proto \
+    --go_opt=Madmin.proto=./proto \
+    --go-grpc_opt=Madmin.proto=./proto \
+    "../libs/proto/admin.proto"
 
 gen-sqlc:
 	@cd internal/adapter/persistence/sqlc && sqlc generate
