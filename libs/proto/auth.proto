@@ -65,14 +65,11 @@ message SignUpResponse{
 
 //for verify access token
 
-enum TokenType {
-    ACCESS_TOKEN = 0;
-    REFRES_TOKEN = 1;
-}
+
 
 message VerifyTokenRequest {
     string token = 1;
-    TokenType type = 2; 
+    bool isRefreshToken = 2;
 }
 message VerifyTokenData {
     string id = 1;

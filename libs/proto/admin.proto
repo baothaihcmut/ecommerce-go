@@ -1,0 +1,34 @@
+syntax = "proto3";
+package proto;
+import "shared.proto";
+
+
+service AdminService {
+    rpc LogIn(AdminLoginRequest) returns (AdminLoginResponse);
+    rpc VerifyToken(AdminVerifyTokenRequest) returns (AdminVerifyTokenResponse);
+}
+message AdminLoginRequest {
+    string email = 1;
+    string password = 2;
+}
+
+
+message AdminLoginData {
+    string accessToken = 1;
+    string refreshToken = 2;
+}
+message AdminLoginResponse {
+    AdminLoginData data = 1;
+    Status status = 2;
+}
+message AdminVerifyTokenRequest {
+    string token = 1;
+    bool isRefreshToken = 2;
+}
+message AdminVerifyTokenData {
+    string id = 1;
+}
+message AdminVerifyTokenResponse {
+    AdminVerifyTokenData data = 1;
+    Status status = 2;
+}

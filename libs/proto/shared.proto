@@ -4,6 +4,7 @@ import "google/protobuf/any.proto";
 package proto;
 
 
+
 message Status {
     string message = 1;
     string code = 2 ;
@@ -26,4 +27,10 @@ message PaginationMeta {
     int32 pageSize = 2;
     int32 totalPage = 3;
     int32 totalElement = 4;
+}
+message ImageArg {
+    int32 size = 1;
+    string type = 2;
+    int32 width = 3;
+    int32 heigh = 4;
 }
