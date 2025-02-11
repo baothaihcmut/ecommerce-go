@@ -5,7 +5,7 @@ import (
 
 	"github.com/baothaihcmut/Ecommerce-Go/users/internal/adapter/grpc/mapper/utils"
 	"github.com/baothaihcmut/Ecommerce-Go/users/internal/adapter/grpc/proto"
-	commandResult "github.com/baothaihcmut/Ecommerce-Go/users/internal/core/port/inbound/command/results"
+	commandResult "github.com/baothaihcmut/Ecommerce-Go/users/internal/core/command/port/inbound/results"
 	"github.com/google/uuid"
 )
 

@@ -4,22 +4,27 @@ import (
 	"context"
 	"database/sql"
 
+	"github.com/baothaihcmut/Ecommerce-Go/libs/pkg/tracing"
 	"github.com/baothaihcmut/Ecommerce-Go/users/internal/adapter/persistence/sqlc/sqlc"
-	"github.com/baothaihcmut/Ecommerce-Go/users/internal/core/domain/aggregates/admin"
-	valueobject "github.com/baothaihcmut/Ecommerce-Go/users/internal/core/domain/aggregates/user/value_object"
-	"github.com/baothaihcmut/Ecommerce-Go/users/internal/core/domain/enums"
-	"github.com/baothaihcmut/Ecommerce-Go/users/internal/core/port/outbound"
+	"github.com/baothaihcmut/Ecommerce-Go/users/internal/core/command/domain/aggregates/admin"
+	valueobject "github.com/baothaihcmut/Ecommerce-Go/users/internal/core/command/domain/aggregates/user/value_object"
+	"github.com/baothaihcmut/Ecommerce-Go/users/internal/core/command/domain/enums"
+	"github.com/baothaihcmut/Ecommerce-Go/users/internal/core/command/port/outbound"
 	"github.com/google/uuid"
+	"go.opentelemetry.io/otel/trace"
 )
 
 type PostgresAdminRepo struct {
 	queries *sqlc.Queries
 	conn    *sql.DB
+	tracer  trace.Tracer
 }
 
-func (p *PostgresAdminRepo) Save(ctx context.Context, admin *admin.Admin) error {
+func (p *PostgresAdminRepo) Save(ctx context.Context, admin *admin.Admin) (err error) {
+	ctx, span := tracing.StartSpan(ctx, p.tracer, "Admin.save: database", nil)
+	defer tracing.EndSpan(span, err, nil)
 	var insert bool
-	_, err := p.queries.FindAdminByCriteria(ctx, sqlc.FindAdminByCriteriaParams{
+	_, err = p.queries.FindAdminByCriteria(ctx, sqlc.FindAdminByCriteriaParams{
 		Criteria: "id",
 		Value: sql.NullString{
 			String: uuid.UUID(admin.Id).String(),
@@ -109,7 +114,9 @@ func (p *PostgresAdminRepo) Save(ctx context.Context, admin *admin.Admin) error 
 	return nil
 }
 
-func (p *PostgresAdminRepo) FindByEmail(ctx context.Context, email valueobject.Email) (*admin.Admin, error) {
+func (p *PostgresAdminRepo) FindByEmail(ctx context.Context, email valueobject.Email) (resp *admin.Admin, err error) {
+	ctx, span := tracing.StartSpan(ctx, p.tracer, "Admin.FindByEmail: database ", nil)
+	defer tracing.EndSpan(span, err, nil)
 	res, err := p.queries.FindAdminByCriteria(ctx, sqlc.FindAdminByCriteriaParams{
 		Criteria: "email",
 		Value: sql.NullString{
@@ -133,9 +140,10 @@ func (p *PostgresAdminRepo) FindByEmail(ctx context.Context, email valueobject.E
 		CurrentRefreshToken: valueobject.Token{Value: res.CurrentRefreshToken.String, TokenType: enums.REFRESH_TOKEN},
 	}, nil
 }
-func NewPostgresAdminRepo(db *sql.DB) outbound.AdminRepository {
+func NewPostgresAdminRepo(db *sql.DB, tracer trace.Tracer) outbound.AdminRepository {
 	return &PostgresAdminRepo{
 		conn:    db,
 		queries: sqlc.New(db),
+		tracer:  tracer,
 	}
 }

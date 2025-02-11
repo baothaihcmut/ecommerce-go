@@ -1,9 +1,9 @@
 package transports
 
 import (
-	"github.com/baothaihcmut/Ecommerce-Go/users/internal/core/domain/aggregates/user"
-	valueobject "github.com/baothaihcmut/Ecommerce-Go/users/internal/core/domain/aggregates/user/value_object"
-	commandServices "github.com/baothaihcmut/Ecommerce-Go/users/internal/core/services/command"
+	"github.com/baothaihcmut/Ecommerce-Go/users/internal/core/command/domain/aggregates/user"
+	valueobject "github.com/baothaihcmut/Ecommerce-Go/users/internal/core/command/domain/aggregates/user/value_object"
+	commandServices "github.com/baothaihcmut/Ecommerce-Go/users/internal/core/command/services"
 	"google.golang.org/grpc/codes"
 )
 

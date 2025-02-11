@@ -2,7 +2,7 @@ package utils
 
 import (
 	"github.com/baothaihcmut/Ecommerce-Go/users/internal/adapter/grpc/proto"
-	"github.com/baothaihcmut/Ecommerce-Go/users/internal/core/domain/enums"
+	"github.com/baothaihcmut/Ecommerce-Go/users/internal/core/command/domain/enums"
 )
 
 func MapRole(src enums.Role) *proto.Role {

@@ -4,15 +4,18 @@ import (
 	"context"
 
 	"github.com/baothaihcmut/Ecommerce-Go/users/internal/adapter/grpc/proto"
-	valueobject "github.com/baothaihcmut/Ecommerce-Go/users/internal/core/domain/aggregates/user/value_object"
-	"github.com/baothaihcmut/Ecommerce-Go/users/internal/core/port/inbound/command/commands"
+	valueobject "github.com/baothaihcmut/Ecommerce-Go/users/internal/core/command/domain/aggregates/user/value_object"
+	"github.com/baothaihcmut/Ecommerce-Go/users/internal/core/command/port/inbound/commands"
 )
 
-type AdminRequestMapper interface{}
+type AdminRequestMapper interface {
+	ToAdminLoginCommand(_ context.Context, request interface{}) (interface{}, error)
+	ToAdminVerifyTokenCommand(_ context.Context, request interface{}) (interface{}, error)
+}
 
 type AdminRequestMapperImpl struct{}
 
-func ToAdminLoginCommand(_ context.Context, request interface{}) (interface{}, error) {
+func (a *AdminRequestMapperImpl) ToAdminLoginCommand(_ context.Context, request interface{}) (interface{}, error) {
 	req := request.(*proto.AdminLoginRequest)
 	email, err := valueobject.NewEmail(req.Email)
 	if err != nil {
@@ -24,10 +27,14 @@ func ToAdminLoginCommand(_ context.Context, request interface{}) (interface{}, e
 	}, nil
 }
 
-func ToAdminVerifyToken(_ context.Context, request interface{}) (interface{}, error) {
+func (a *AdminRequestMapperImpl) ToAdminVerifyTokenCommand(_ context.Context, request interface{}) (interface{}, error) {
 	req := request.(*proto.AdminVerifyTokenRequest)
 	return &commands.VerifyTokenCommand{
 		Token:          req.Token,
 		IsRefreshToken: req.IsRefreshToken,
 	}, nil
+}
+
+func NewAdminRequestMapper() AdminRequestMapper {
+	return &AdminRequestMapperImpl{}
 }

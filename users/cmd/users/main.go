@@ -1,14 +1,13 @@
 package main
 
 import (
-	"database/sql"
+	"context"
 	"flag"
-	"fmt"
 
 	"github.com/baothaihcmut/Ecommerce-Go/libs/pkg/logger"
 	"github.com/baothaihcmut/Ecommerce-Go/users/internal/config"
 	"github.com/baothaihcmut/Ecommerce-Go/users/internal/server"
-	"github.com/hashicorp/consul/api"
+	"github.com/baothaihcmut/Ecommerce-Go/users/internal/server/initialize"
 	_ "github.com/lib/pq"
 )
 
@@ -16,34 +15,25 @@ func main() {
 
 	config := config.LoadConfig()
 	logger := logger.Newlogger(config.Logger)
-
-	//db connection
-	connStr := fmt.Sprintf("user=%s password=%s dbname=%s host=%s port=%d sslmode=%s",
-		config.Database.User,
-		config.Database.Password,
-		config.Database.Name,
-		config.Database.Host,
-		config.Database.Port,
-		config.Database.SslMode,
-	)
-	db, err := sql.Open(config.Database.Driver, connStr)
+	//init db
+	db, err := initialize.InitializePostgres(&config.Database)
 	if err != nil {
-		logger.DPanic("err", err)
+		logger.DPanicf("Error connect postgres: %v", err)
+		panic(err)
 	}
 	defer db.Close()
-	//ping db
-	err = db.Ping()
-	if err != nil {
-		logger.DPanicf("Failed to ping db: %v", err)
-	}
-	//consol connection
-	consolClient, err := api.NewClient(&api.Config{
-		Address: fmt.Sprintf("%s:%d", config.Consol.Host, config.Consol.Port),
-	})
-	if err != nil {
-		logger.DPanic(err)
-	}
 
-	server := server.NewServer(db, logger, config, consolClient)
+	//init tracer
+	tp, tracer, err := initialize.InitializeTracer(&config.Jaeger)
+	if err != nil {
+		logger.DPanicf("Error connect trace provider: %v", err)
+	}
+	defer func() {
+		if err := tp.Shutdown(context.Background()); err != nil {
+			logger.Fatalf("Failed to shutdown tracer: %v", err)
+		}
+	}()
+
+	server := server.NewServer(db, logger, config, tracer)
 	server.Start(flag.Arg(0))
 }

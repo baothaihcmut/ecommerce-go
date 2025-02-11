@@ -17,10 +17,6 @@ db:
   ssl_mode: "require"
   ssl_cert_path: ""
 
-consul:
-  host: "localhost"
-  port: 8500
-
 jwt:
   access_token_secret: "my_access_token_secret"
   access_token_age: 3600
@@ -44,3 +40,5 @@ admin:
   access_token_age: 3600
   refresh_token_secret: "my_refresh_token_secret"
   refresh_token_age: 7200
+jaeger:
+  endpoint: "localhost:4317"

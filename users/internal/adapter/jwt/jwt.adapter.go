@@ -6,14 +6,16 @@ import (
 	"time"
 
 	"github.com/baothaihcmut/Ecommerce-Go/libs/pkg/errors"
+	"github.com/baothaihcmut/Ecommerce-Go/libs/pkg/tracing"
 	"github.com/baothaihcmut/Ecommerce-Go/users/internal/config"
-	valueobject "github.com/baothaihcmut/Ecommerce-Go/users/internal/core/domain/aggregates/user/value_object"
-	"github.com/baothaihcmut/Ecommerce-Go/users/internal/core/domain/enums"
-	"github.com/baothaihcmut/Ecommerce-Go/users/internal/core/models"
-	"github.com/baothaihcmut/Ecommerce-Go/users/internal/core/port/outbound"
-	services "github.com/baothaihcmut/Ecommerce-Go/users/internal/core/services/command"
+	valueobject "github.com/baothaihcmut/Ecommerce-Go/users/internal/core/command/domain/aggregates/user/value_object"
+	"github.com/baothaihcmut/Ecommerce-Go/users/internal/core/command/domain/enums"
+	"github.com/baothaihcmut/Ecommerce-Go/users/internal/core/command/models"
+	"github.com/baothaihcmut/Ecommerce-Go/users/internal/core/command/port/outbound"
+	services "github.com/baothaihcmut/Ecommerce-Go/users/internal/core/command/services"
 	"github.com/golang-jwt/jwt/v4"
 	"github.com/google/uuid"
+	"go.opentelemetry.io/otel/trace"
 )
 
 type JwtAdapter struct {
@@ -21,10 +23,13 @@ type JwtAdapter struct {
 	accessTokenAge     int
 	refreshTokenSecret string
 	refreshTokenAge    int
+	tracer             trace.Tracer
 }
 
 // DecodeRefreshToken implements outbound.JwtPort.
-func (j *JwtAdapter) DecodeRefreshToken(_ context.Context, token string) (models.RefreshTokenSub, error) {
+func (j *JwtAdapter) DecodeRefreshToken(ctx context.Context, token string) (_ models.RefreshTokenSub, err error) {
+	ctx, span := tracing.StartSpan(ctx, j.tracer, "Jwt.DecodeRefreshToken: service", nil)
+	defer tracing.EndSpan(span, err, nil)
 	tokenDecode, err := jwt.ParseWithClaims(token, &JwtAccessClaims{}, func(token *jwt.Token) (interface{}, error) {
 		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
 			return nil, fmt.Errorf("unexpected signing method: %v", token.Header["alg"])
@@ -48,7 +53,9 @@ func (j *JwtAdapter) DecodeRefreshToken(_ context.Context, token string) (models
 	return models.RefreshTokenSub{}, services.ErrInvalidToken
 }
 
-func (j *JwtAdapter) GenerateAccessToken(_ context.Context, args outbound.GenerateTokenArg) (string, error) {
+func (j *JwtAdapter) GenerateAccessToken(ctx context.Context, args outbound.GenerateTokenArg) (_ string, err error) {
+	ctx, span := tracing.StartSpan(ctx, j.tracer, "Jwt.GenerateAccessToken: service", nil)
+	defer tracing.EndSpan(span, err, nil)
 	claims := &JwtAccessClaims{
 		RegisteredClaims: jwt.RegisteredClaims{
 			ExpiresAt: jwt.NewNumericDate(time.Now().Add(time.Duration(j.accessTokenAge) * time.Hour)),
@@ -65,7 +72,9 @@ func (j *JwtAdapter) GenerateAccessToken(_ context.Context, args outbound.Genera
 }
 
 // GenerateRefreshToken implements outbound.JwtPort.
-func (j *JwtAdapter) GenerateRefreshToken(_ context.Context, args outbound.GenerateTokenArg) (string, error) {
+func (j *JwtAdapter) GenerateRefreshToken(ctx context.Context, args outbound.GenerateTokenArg) (_ string, err error) {
+	ctx, span := tracing.StartSpan(ctx, j.tracer, "Jwt.GenerateRefreshToken: service", nil)
+	defer tracing.EndSpan(span, err, nil)
 	claims := &JwtRefreshClaims{
 		RegisteredClaims: jwt.RegisteredClaims{
 			ExpiresAt: jwt.NewNumericDate(time.Now().Add(time.Duration(j.refreshTokenAge) * time.Hour)),
@@ -80,8 +89,9 @@ func (j *JwtAdapter) GenerateRefreshToken(_ context.Context, args outbound.Gener
 	return tokenString, nil
 }
 
-func (j *JwtAdapter) DecodeAccessToken(_ context.Context, token string) (models.AccessTokenSub, error) {
-
+func (j *JwtAdapter) DecodeAccessToken(ctx context.Context, token string) (_ models.AccessTokenSub, err error) {
+	ctx, span := tracing.StartSpan(ctx, j.tracer, "Jwt.DecodeAcessToken: service", nil)
+	defer tracing.EndSpan(span, err, nil)
 	tokenDecode, err := jwt.ParseWithClaims(token, &JwtAccessClaims{}, func(token *jwt.Token) (interface{}, error) {
 		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
 			return nil, fmt.Errorf("unexpected signing method: %v", token.Header["alg"])
@@ -106,20 +116,22 @@ func (j *JwtAdapter) DecodeAccessToken(_ context.Context, token string) (models.
 	return models.AccessTokenSub{}, services.ErrInvalidToken
 }
 
-func NewJwtService(jwtCfg *config.JwtConfig) outbound.JwtService {
+func NewJwtService(jwtCfg *config.JwtConfig, tracer trace.Tracer) outbound.JwtService {
 	return &JwtAdapter{
 		accessTokenSecret:  jwtCfg.AccessTokenSecret,
 		accessTokenAge:     jwtCfg.AccessTokenAge,
 		refreshTokenSecret: jwtCfg.RefreshTokenSecret,
 		refreshTokenAge:    jwtCfg.RefreshTokenAge,
+		tracer:             tracer,
 	}
 }
 
-func NewAdminJwtService(adminCfg *config.AdminConfig) outbound.JwtService {
+func NewAdminJwtService(adminCfg *config.AdminConfig, tracer trace.Tracer) outbound.JwtService {
 	return &JwtAdapter{
 		accessTokenSecret:  adminCfg.AccessTokenSecret,
 		accessTokenAge:     adminCfg.AccessTokenAge,
 		refreshTokenSecret: adminCfg.RefreshTokenSecret,
 		refreshTokenAge:    adminCfg.RefreshTokenAge,
+		tracer:             tracer,
 	}
 }

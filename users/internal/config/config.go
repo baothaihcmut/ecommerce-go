@@ -8,10 +8,10 @@ import (
 type Config struct {
 	Server   ServerConfig        `mapstructure:"server"`
 	Database DatabaseConfig      `mapstructure:"db"`
-	Consol   ConsulConfig        `mapstructure:"consul"`
 	Jwt      JwtConfig           `mapstructure:"jwt"`
 	Logger   logger.ConfigLogger `mapstructure:"logger"`
 	Admin    AdminConfig         `mapstructure:"admin"`
+	Jaeger   JaegerConfig        `mapstructure:"jaeger"`
 }
 
 type JwtConfig struct {
@@ -42,21 +42,19 @@ type DatabaseConfig struct {
 	SslCertPath string `mapstructure:"ssl_cert_path"`
 }
 
-type ConsulConfig struct {
-	Host string `mapstructure:"host"`
-	Port int    `mapstructure:"port"`
-}
-
 type AdminConfig struct {
 	Email              string `mapstructure:"email"`
 	Password           string `mapstructure:"password"`
 	FirstName          string `mapstructure:"first_name"`
 	LastName           string `mapstructure:"last_name"`
 	PhoneNumber        string `mapstructure:"phone_number"`
-	AccessTokenSecret  string `mapstructure:"admin_access_token_secret"`
-	AccessTokenAge     int    `mapstructure:"admin_access_token_age"`
-	RefreshTokenSecret string `mapstructure:"admin_refresh_token_secret"`
-	RefreshTokenAge    int    `mapstructure:"admin_refresh_token_age"`
+	AccessTokenSecret  string `mapstructure:"access_token_secret"`
+	AccessTokenAge     int    `mapstructure:"access_token_age"`
+	RefreshTokenSecret string `mapstructure:"refresh_token_secret"`
+	RefreshTokenAge    int    `mapstructure:"refresh_token_age"`
+}
+type JaegerConfig struct {
+	Endpoint string `mapstructure:"endpoint"`
 }
 
 func LoadConfig() *Config {

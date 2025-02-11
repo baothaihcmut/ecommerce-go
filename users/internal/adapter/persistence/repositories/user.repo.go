@@ -7,26 +7,30 @@ import (
 	"sync"
 
 	"github.com/baothaihcmut/Ecommerce-Go/libs/pkg/errors"
+	"github.com/baothaihcmut/Ecommerce-Go/libs/pkg/tracing"
 	"github.com/baothaihcmut/Ecommerce-Go/users/internal/adapter/persistence/sqlc/sqlc"
-	"github.com/baothaihcmut/Ecommerce-Go/users/internal/core/domain/aggregates/user"
-	"github.com/baothaihcmut/Ecommerce-Go/users/internal/core/domain/aggregates/user/entities"
-	valueobject "github.com/baothaihcmut/Ecommerce-Go/users/internal/core/domain/aggregates/user/value_object"
-	"github.com/baothaihcmut/Ecommerce-Go/users/internal/core/domain/enums"
-	"github.com/baothaihcmut/Ecommerce-Go/users/internal/core/port/outbound"
+	"github.com/baothaihcmut/Ecommerce-Go/users/internal/core/command/domain/aggregates/user"
+	"github.com/baothaihcmut/Ecommerce-Go/users/internal/core/command/domain/aggregates/user/entities"
+	valueobject "github.com/baothaihcmut/Ecommerce-Go/users/internal/core/command/domain/aggregates/user/value_object"
+	"github.com/baothaihcmut/Ecommerce-Go/users/internal/core/command/domain/enums"
+	"github.com/baothaihcmut/Ecommerce-Go/users/internal/core/command/port/outbound"
 	"github.com/google/uuid"
+	"go.opentelemetry.io/otel/trace"
 )
 
 type PostgresUserRepo struct {
 	queries *sqlc.Queries
 	conn    *sql.DB
+	tracer  trace.Tracer
 }
 
 // FindByEmail implements outbound.UserRepository.
 
-func NewPostgresUserRepo(db *sql.DB) outbound.UserRepository {
+func NewPostgresUserRepo(db *sql.DB, tracer trace.Tracer) outbound.UserRepository {
 	return &PostgresUserRepo{
 		conn:    db,
 		queries: sqlc.New(db),
+		tracer:  tracer,
 	}
 }
 
@@ -108,9 +112,11 @@ func (repo *PostgresUserRepo) toUserDomain(result *sqlc.FindUserByCriteriaRow, a
 	}, nil
 }
 
-func (repo *PostgresUserRepo) Save(ctx context.Context, user *user.User, tx *sql.Tx) error {
+func (repo *PostgresUserRepo) Save(ctx context.Context, user *user.User, tx *sql.Tx) (err error) {
+	ctx, span := tracing.StartSpan(ctx, repo.tracer, "User.Save: database", nil)
+	defer tracing.EndSpan(span, err, nil)
 	//check if user exist
-	_, err := repo.queries.CheckUserExistByCriteria(ctx, sqlc.CheckUserExistByCriteriaParams{
+	_, err = repo.queries.CheckUserExistByCriteria(ctx, sqlc.CheckUserExistByCriteriaParams{
 		Criteria: "id",
 		Value:    sql.NullString{String: uuid.UUID(user.Id).String(), Valid: true},
 	})
@@ -235,7 +241,9 @@ func (repo *PostgresUserRepo) Save(ctx context.Context, user *user.User, tx *sql
 }
 
 // FindByEmail implements outbound.UserRepository.
-func (repo *PostgresUserRepo) FindByEmail(ctx context.Context, email valueobject.Email) (*user.User, error) {
+func (repo *PostgresUserRepo) FindByEmail(ctx context.Context, email valueobject.Email) (resp *user.User, err error) {
+	ctx, span := tracing.StartSpan(ctx, repo.tracer, "User.FindByEmail: database", nil)
+	defer tracing.EndSpan(span, err, nil)
 	userRes, err := repo.queries.FindUserByCriteria(ctx, sqlc.FindUserByCriteriaParams{
 		Criteria: "email",
 		Value: sql.NullString{
@@ -256,7 +264,9 @@ func (repo *PostgresUserRepo) FindByEmail(ctx context.Context, email valueobject
 	}
 	return user, nil
 }
-func (repo *PostgresUserRepo) FindById(ctx context.Context, id valueobject.UserId) (*user.User, error) {
+func (repo *PostgresUserRepo) FindById(ctx context.Context, id valueobject.UserId) (resp *user.User, err error) {
+	ctx, span := tracing.StartSpan(ctx, repo.tracer, "User.FindById: database", nil)
+	defer tracing.EndSpan(span, err, nil)
 	userRes, err := repo.queries.FindUserByCriteria(ctx, sqlc.FindUserByCriteriaParams{
 		Criteria: "id",
 		Value: sql.NullString{
@@ -279,8 +289,10 @@ func (repo *PostgresUserRepo) FindById(ctx context.Context, id valueobject.UserI
 
 }
 
-func (repo *PostgresUserRepo) CheckEmailExist(ctx context.Context, email valueobject.Email) (bool, error) {
-	_, err := repo.queries.CheckUserExistByCriteria(ctx, sqlc.CheckUserExistByCriteriaParams{
+func (repo *PostgresUserRepo) CheckEmailExist(ctx context.Context, email valueobject.Email) (resp bool, err error) {
+	ctx, span := tracing.StartSpan(ctx, repo.tracer, "User.CheckEmailExist: database", nil)
+	defer tracing.EndSpan(span, err, nil)
+	_, err = repo.queries.CheckUserExistByCriteria(ctx, sqlc.CheckUserExistByCriteriaParams{
 		Criteria: "email",
 		Value:    sql.NullString{String: string(email), Valid: true},
 	})
@@ -295,8 +307,10 @@ func (repo *PostgresUserRepo) CheckEmailExist(ctx context.Context, email valueob
 	return true, nil
 }
 
-func (repo *PostgresUserRepo) CheckPhoneNumberExist(ctx context.Context, phoneNumber valueobject.PhoneNumber) (bool, error) {
-	_, err := repo.queries.CheckUserExistByCriteria(ctx, sqlc.CheckUserExistByCriteriaParams{
+func (repo *PostgresUserRepo) CheckPhoneNumberExist(ctx context.Context, phoneNumber valueobject.PhoneNumber) (resp bool, err error) {
+	ctx, span := tracing.StartSpan(ctx, repo.tracer, "User.FindByEmail", nil)
+	defer tracing.EndSpan(span, err, nil)
+	_, err = repo.queries.CheckUserExistByCriteria(ctx, sqlc.CheckUserExistByCriteriaParams{
 		Criteria: "phone_number",
 		Value:    sql.NullString{String: string(phoneNumber), Valid: true},
 	})

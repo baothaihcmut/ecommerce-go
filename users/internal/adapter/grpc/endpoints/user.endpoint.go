@@ -1,13 +1,12 @@
 package endpoints
 
 import (
-	commandHandler "github.com/baothaihcmut/Ecommerce-Go/users/internal/core/port/inbound/command/handlers"
-	queryHandler "github.com/baothaihcmut/Ecommerce-Go/users/internal/core/port/inbound/query/handlers"
+	commandHandler "github.com/baothaihcmut/Ecommerce-Go/users/internal/core/command/port/inbound/handlers"
 )
 
 type UserEnpoints struct {
 }
 
-func MakeUserEndpoints(c commandHandler.UserCommandHandler, q queryHandler.UserQueryHandler) UserEnpoints {
+func MakeUserEndpoints(c commandHandler.UserCommandHandler) UserEnpoints {
 	return UserEnpoints{}
 }

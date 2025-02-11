@@ -4,10 +4,10 @@ import (
 	"context"
 
 	"github.com/baothaihcmut/Ecommerce-Go/users/internal/adapter/grpc/proto"
-	"github.com/baothaihcmut/Ecommerce-Go/users/internal/core/domain/aggregates/user"
-	valueobject "github.com/baothaihcmut/Ecommerce-Go/users/internal/core/domain/aggregates/user/value_object"
-	"github.com/baothaihcmut/Ecommerce-Go/users/internal/core/domain/enums"
-	"github.com/baothaihcmut/Ecommerce-Go/users/internal/core/port/inbound/command/commands"
+	"github.com/baothaihcmut/Ecommerce-Go/users/internal/core/command/domain/aggregates/user"
+	valueobject "github.com/baothaihcmut/Ecommerce-Go/users/internal/core/command/domain/aggregates/user/value_object"
+	"github.com/baothaihcmut/Ecommerce-Go/users/internal/core/command/domain/enums"
+	"github.com/baothaihcmut/Ecommerce-Go/users/internal/core/command/port/inbound/commands"
 )
 
 type AuthRequestMapper interface {

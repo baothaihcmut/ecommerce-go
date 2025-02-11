@@ -109,11 +109,11 @@ SELECT *
 FROM admins a
 WHERE
     CASE sqlc.narg('criteria')
-        WHEN 'email' THEN u.email = sqlc.narg('value')::text
-        WHEN 'phone_number' THEN u.phone_number = sqlc.narg('value')::text
-        WHEN 'id' THEN u.id = sqlc.narg('value')::uuid
-        WHEN 'firstName' THEN u.first_name = sqlc.narg('value')::text
-        WHEN 'lastName' THEN u.last_name = sqlc.narg('value')::text
+        WHEN 'email' THEN a.email = sqlc.narg('value')::text
+        WHEN 'phone_number' THEN a.phone_number = sqlc.narg('value')::text
+        WHEN 'id' THEN a.id = sqlc.narg('value')::uuid
+        WHEN 'firstName' THEN a.first_name = sqlc.narg('value')::text
+        WHEN 'lastName' THEN a.last_name = sqlc.narg('value')::text
     END
 LIMIT 1;
 

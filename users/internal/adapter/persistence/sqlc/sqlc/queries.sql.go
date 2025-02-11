@@ -149,11 +149,11 @@ SELECT id, email, password, phone_number, first_name, last_name, current_refresh
 FROM admins a
 WHERE
     CASE $1
-        WHEN 'email' THEN u.email = $2::text
-        WHEN 'phone_number' THEN u.phone_number = $2::text
-        WHEN 'id' THEN u.id = $2::uuid
-        WHEN 'firstName' THEN u.first_name = $2::text
-        WHEN 'lastName' THEN u.last_name = $2::text
+        WHEN 'email' THEN a.email = $2::text
+        WHEN 'phone_number' THEN a.phone_number = $2::text
+        WHEN 'id' THEN a.id = $2::uuid
+        WHEN 'firstName' THEN a.first_name = $2::text
+        WHEN 'lastName' THEN a.last_name = $2::text
     END
 LIMIT 1
 `
