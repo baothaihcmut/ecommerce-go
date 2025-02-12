@@ -1,6 +1,6 @@
 package request
 
-import "github.com/baothaihcmut/Ecommerce-Go/api-gateway/internal/common/enums"
+import "github.com/baothaihcmut/Ecommerce-Go/libs/pkg/models"
 
 type Address struct {
 	Priority int32  `json:"priority" validate:"gte=0"`          // Priority must be a non-negative integer
@@ -24,7 +24,7 @@ type SignUpRequestDTO struct {
 	Addresses     []Address      `json:"addresses" validate:"required,dive"`
 	FirstName     string         `json:"first_name" validate:"required,alpha"`
 	LastName      string         `json:"last_name" validate:"required,alpha"`
-	Role          enums.Role     `json:"role" validate:"required,oneof=CUSTOMER SHOP_OWNER ADMIN"`
+	Role          models.Role    `json:"role" validate:"required,oneof=CUSTOMER SHOP_OWNER ADMIN"`
 	CustomerInfo  *CustomerInfo  `json:"customer_info,omitempty" validate:"omitempty"`
 	ShopOwnerInfo *ShopOwnerInfo `json:"shop_owner_info,omitempty" validate:"omitempty"`
 }

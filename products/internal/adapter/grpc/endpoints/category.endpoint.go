@@ -3,6 +3,7 @@ package endpoints
 import (
 	"context"
 
+	"github.com/baothaihcmut/Ecommerce-Go/libs/pkg/tracing"
 	"github.com/baothaihcmut/Ecommerce-Go/products/internal/core/command/port/inbound/commands"
 	commandHandler "github.com/baothaihcmut/Ecommerce-Go/products/internal/core/command/port/inbound/handlers"
 	queryHandler "github.com/baothaihcmut/Ecommerce-Go/products/internal/core/query/port/inbound/handlers"
@@ -26,9 +27,10 @@ func MakeCategoryEndpoints(c commandHandler.CategoryCommandHandler, q queryHandl
 }
 
 func makeCreateCategoryEndpoint(c commandHandler.CategoryCommandHandler, tracer trace.Tracer) endpoint.Endpoint {
-	return func(ctx context.Context, request interface{}) (response interface{}, err error) {
-		ctx, span := tracer.Start(ctx, "Category.Create: endpoint")
-		defer span.End()
+	return func(ctx context.Context, request interface{}) (interface{}, error) {
+		var err error
+		ctx, span := tracing.StartSpan(ctx, tracer, "Category.Create: endpoint", nil)
+		defer tracing.EndSpan(span, err, nil)
 		req := request.(*commands.CreateCategoryCommand)
 		res, err := c.CreateCategory(ctx, req)
 		if err != nil {
@@ -38,9 +40,10 @@ func makeCreateCategoryEndpoint(c commandHandler.CategoryCommandHandler, tracer 
 	}
 }
 func makeBulkCreateCategoriesEndpoint(c commandHandler.CategoryCommandHandler, tracer trace.Tracer) endpoint.Endpoint {
-	return func(ctx context.Context, request interface{}) (response interface{}, err error) {
-		ctx, span := tracer.Start(ctx, "Product.BulkCreate: endpoint")
-		defer span.End()
+	return func(ctx context.Context, request interface{}) (interface{}, error) {
+		var err error
+		ctx, span := tracing.StartSpan(ctx, tracer, "Category.BulkCreate: endpoint", nil)
+		defer tracing.EndSpan(span, err, nil)
 		req := request.(*commands.BulkCreateCategories)
 		res, err := c.BulkCreateCategories(ctx, req)
 		if err != nil {
@@ -50,9 +53,10 @@ func makeBulkCreateCategoriesEndpoint(c commandHandler.CategoryCommandHandler, t
 	}
 }
 func makeFindAllCategoryEndpoint(q queryHandler.CategoryQueryHandler, tracer trace.Tracer) endpoint.Endpoint {
-	return func(ctx context.Context, request interface{}) (response interface{}, err error) {
-		ctx, span := tracer.Start(ctx, "Product.FindAll: endpoint")
-		defer span.End()
+	return func(ctx context.Context, request interface{}) (interface{}, error) {
+		var err error
+		ctx, span := tracing.StartSpan(ctx, tracer, "Category.FindAll: endpoint", nil)
+		defer tracing.EndSpan(span, err, nil)
 		req := request.(*queries.FindAllCategoryQuery)
 		res, err := q.FindAllCategory(ctx, req)
 		if err != nil {

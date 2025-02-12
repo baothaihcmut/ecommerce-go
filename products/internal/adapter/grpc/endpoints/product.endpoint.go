@@ -3,6 +3,7 @@ package endpoints
 import (
 	"context"
 
+	"github.com/baothaihcmut/Ecommerce-Go/libs/pkg/tracing"
 	"github.com/baothaihcmut/Ecommerce-Go/products/internal/core/command/port/inbound/commands"
 	commandHandler "github.com/baothaihcmut/Ecommerce-Go/products/internal/core/command/port/inbound/handlers"
 	"github.com/go-kit/kit/endpoint"
@@ -26,9 +27,10 @@ func MakeProductEndpoints(c commandHandler.ProductCommandHandler, tracer trace.T
 }
 
 func makeCreateProductEndpoint(c commandHandler.ProductCommandHandler, tracer trace.Tracer) endpoint.Endpoint {
-	return func(ctx context.Context, request interface{}) (response interface{}, err error) {
-		ctx, span := tracer.Start(ctx, "Product.Create: endpoint")
-		defer span.End()
+	return func(ctx context.Context, request interface{}) (interface{}, error) {
+		var err error
+		ctx, span := tracing.StartSpan(ctx, tracer, "Product.Create: endpoint", nil)
+		defer tracing.EndSpan(span, err, nil)
 		req := request.(*commands.CreateProductCommand)
 		res, err := c.CreateProduct(ctx, req)
 		if err != nil {
@@ -39,9 +41,10 @@ func makeCreateProductEndpoint(c commandHandler.ProductCommandHandler, tracer tr
 }
 
 func makeUpdateProductEndpoint(c commandHandler.ProductCommandHandler, tracer trace.Tracer) endpoint.Endpoint {
-	return func(ctx context.Context, request interface{}) (response interface{}, err error) {
-		ctx, span := tracer.Start(ctx, "Product.Update: endpoint")
-		defer span.End()
+	return func(ctx context.Context, request interface{}) (interface{}, error) {
+		var err error
+		ctx, span := tracing.StartSpan(ctx, tracer, "Product.Update: endpoint", nil)
+		defer tracing.EndSpan(span, err, nil)
 		req := request.(*commands.UpdateProductCommand)
 		res, err := c.UpdateProduct(ctx, req)
 		if err != nil {
@@ -51,9 +54,10 @@ func makeUpdateProductEndpoint(c commandHandler.ProductCommandHandler, tracer tr
 	}
 }
 func makeAddProductCategoriesEndpoint(c commandHandler.ProductCommandHandler, tracer trace.Tracer) endpoint.Endpoint {
-	return func(ctx context.Context, request interface{}) (response interface{}, err error) {
-		ctx, span := tracer.Start(ctx, "Product.AddCategories: endpoint")
-		defer span.End()
+	return func(ctx context.Context, request interface{}) (interface{}, error) {
+		var err error
+		ctx, span := tracing.StartSpan(ctx, tracer, "Product.AddCategories: endpoint", nil)
+		defer tracing.EndSpan(span, err, nil)
 		req := request.(*commands.AddProductCategoiesCommand)
 		res, err := c.AddProductCategories(ctx, req)
 		if err != nil {
@@ -63,9 +67,10 @@ func makeAddProductCategoriesEndpoint(c commandHandler.ProductCommandHandler, tr
 	}
 }
 func makeAddProductVariationsEndpoint(c commandHandler.ProductCommandHandler, tracer trace.Tracer) endpoint.Endpoint {
-	return func(ctx context.Context, request interface{}) (response interface{}, err error) {
-		ctx, span := tracer.Start(ctx, "Product.AddVariations: endpoints")
-		defer span.End()
+	return func(ctx context.Context, request interface{}) (interface{}, error) {
+		var err error
+		ctx, span := tracing.StartSpan(ctx, tracer, "Product.AddVariations: endpoint", nil)
+		defer tracing.EndSpan(span, err, nil)
 		req := request.(*commands.AddProductVariationsCommand)
 		res, err := c.AddProductVariations(ctx, req)
 		if err != nil {

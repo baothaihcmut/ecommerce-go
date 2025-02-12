@@ -6,10 +6,11 @@ import (
 )
 
 type Config struct {
-	Server ServerConfig        `mapstruct:"server"`
-	Mongo  MongoConfig         `mapstruct:"mongo"`
-	Jaeger JaegerConfig        `mapstruct:"jaeger"`
-	Logger logger.ConfigLogger `mapstruct:"logger"`
+	Server ServerConfig        `mapstructure:"server"`
+	Mongo  MongoConfig         `mapstructure:"mongo"`
+	Jaeger JaegerConfig        `mapstructure:"jaeger"`
+	S3     S3Config            `mapstructure:"s3"`
+	Logger logger.ConfigLogger `mapstructure:"logger"`
 }
 
 type ServerConfig struct {
@@ -22,12 +23,20 @@ type ServerConfig struct {
 }
 
 type MongoConfig struct {
-	URI      string `mapstruct:"uri"`
-	Database string `mapstruct:"database"`
+	URI      string `mapstructure:"uri"`
+	Database string `mapstructure:"database"`
 }
 
 type JaegerConfig struct {
-	Endpoint string `mapstruct:"endpoint"`
+	Endpoint string `mapstructure:"endpoint"`
+}
+
+type S3Config struct {
+	Bucket          string `mapstructure:"bucket"`
+	StorageProvider string `mapstructure:"storage_provider"`
+	AccessKey       string `mapstructure:"access_key"`
+	SecretKey       string `mapstructure:"secret_key"`
+	Region          string `mapstructure:"region"`
 }
 
 func LoadConfig() *Config {

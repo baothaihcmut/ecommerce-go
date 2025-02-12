@@ -13,3 +13,10 @@ logger:
   zap_type: "console"
 grpc_service:
   user_service: localhost:8080
+grpc_connection:
+  min_connection: 2
+  max_connection: 10
+  connection_time_out: 1
+
+jaeger:
+  endpoint: "localhost:4318"

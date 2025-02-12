@@ -4,8 +4,8 @@ import (
 	"net/http"
 
 	"github.com/baothaihcmut/Ecommerce-Go/api-gateway/internal/common/constance"
-	"github.com/baothaihcmut/Ecommerce-Go/api-gateway/internal/common/models"
 	"github.com/baothaihcmut/Ecommerce-Go/api-gateway/internal/modules/auth/handlers"
+	"github.com/baothaihcmut/Ecommerce-Go/libs/pkg/models"
 	"github.com/labstack/echo/v4"
 )
 
@@ -28,6 +28,7 @@ func AuthMiddleware(authHandler handlers.AuthHandler) echo.MiddlewareFunc {
 				Id:   res.Id,
 				Role: res.Role,
 			})
+			c.Set(string(constance.TokenContext), token.Value)
 			return next(c)
 		}
 	}

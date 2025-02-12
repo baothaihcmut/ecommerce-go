@@ -3,6 +3,7 @@ package initialize
 import (
 	"database/sql"
 	"fmt"
+	"time"
 
 	"github.com/baothaihcmut/Ecommerce-Go/users/internal/config"
 )
@@ -25,5 +26,9 @@ func InitializePostgres(cfg *config.DatabaseConfig) (*sql.DB, error) {
 	if err != nil {
 		return nil, err
 	}
+	db.SetConnMaxLifetime(time.Duration(cfg.ConnectionMaxLifeTime))
+	db.SetConnMaxIdleTime(time.Duration(cfg.MaxIdleConnection))
+	db.SetMaxOpenConns(cfg.MaxOpenConnection)
+
 	return db, err
 }

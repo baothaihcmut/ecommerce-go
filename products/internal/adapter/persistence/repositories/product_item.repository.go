@@ -3,6 +3,7 @@ package repositories
 import (
 	"context"
 
+	"github.com/baothaihcmut/Ecommerce-Go/libs/pkg/tracing"
 	"github.com/baothaihcmut/Ecommerce-Go/products/internal/adapter/persistence/models"
 	productitems "github.com/baothaihcmut/Ecommerce-Go/products/internal/core/command/domain/aggregates/product_items"
 	"github.com/baothaihcmut/Ecommerce-Go/products/internal/core/command/port/outbound/repositories"
@@ -26,8 +27,9 @@ func NewMongoProductItemRepository(collection *mongo.Collection, tracer trace.Tr
 }
 
 func (m *MongoProductItemRepository) Save(ctx context.Context, productItem *productitems.ProductItem, session mongo.Session) error {
-	ctx, span := m.tracer.Start(ctx, "ProductItem.Save: database")
-	defer span.End()
+	var err error
+	ctx, span := tracing.StartSpan(ctx, m.tracer, "ProductItem.Save: database", nil)
+	defer tracing.EndSpan(span, err, nil)
 	id, err := primitive.ObjectIDFromHex(string(productItem.Id))
 	if err != nil {
 		return err

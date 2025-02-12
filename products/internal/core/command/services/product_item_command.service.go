@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"github.com/baothaihcmut/Ecommerce-Go/libs/pkg/mongo"
+	"github.com/baothaihcmut/Ecommerce-Go/libs/pkg/tracing"
 	productitems "github.com/baothaihcmut/Ecommerce-Go/products/internal/core/command/domain/aggregates/product_items"
 	valueobjects "github.com/baothaihcmut/Ecommerce-Go/products/internal/core/command/domain/aggregates/product_items/value_objects"
 	"github.com/baothaihcmut/Ecommerce-Go/products/internal/core/command/exceptions"
@@ -23,8 +24,9 @@ type ProductItemCommandService struct {
 }
 
 func (p *ProductItemCommandService) CreateProductItem(ctx context.Context, command *commands.CreateProductItemCommand) (*results.CreateProductItemResult, error) {
-	ctx, span := p.tracer.Start(ctx, "ProductItem.Create: service")
-	defer span.End()
+	var err error
+	ctx, span := tracing.StartSpan(ctx, p.tracer, "ProductItem.Create: service", nil)
+	defer tracing.EndSpan(span, err, nil)
 	//check if product exist
 	product, err := p.productRepo.FindById(ctx, command.ProductId)
 	if err != nil {

@@ -8,7 +8,8 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/baothaihcmut/Ecommerce-Go/libs/pkg/grpc/interceptors"
+	"github.com/aws/aws-sdk-go-v2/service/s3"
+	interceptors "github.com/baothaihcmut/Ecommerce-Go/libs/pkg/grpc/interceptors/server"
 	"github.com/baothaihcmut/Ecommerce-Go/libs/pkg/logger"
 	mongoLib "github.com/baothaihcmut/Ecommerce-Go/libs/pkg/mongo"
 	"github.com/baothaihcmut/Ecommerce-Go/products/internal/adapter/grpc/endpoints"
@@ -18,6 +19,7 @@ import (
 	"github.com/baothaihcmut/Ecommerce-Go/products/internal/adapter/grpc/transports"
 	inmemory "github.com/baothaihcmut/Ecommerce-Go/products/internal/adapter/in_memory"
 	"github.com/baothaihcmut/Ecommerce-Go/products/internal/adapter/persistence/repositories"
+	"github.com/baothaihcmut/Ecommerce-Go/products/internal/adapter/storage"
 	"github.com/baothaihcmut/Ecommerce-Go/products/internal/config"
 	commandService "github.com/baothaihcmut/Ecommerce-Go/products/internal/core/command/services"
 	queryService "github.com/baothaihcmut/Ecommerce-Go/products/internal/core/query/services"
@@ -30,23 +32,26 @@ import (
 
 type Server struct {
 	mongo  *mongo.Client
+	s3     *s3.Client
 	logger logger.ILogger
 	cfg    *config.Config
 	tracer trace.Tracer
 }
 
-func NewServer(mongo *mongo.Client, logger logger.ILogger, cfg *config.Config, tracer trace.Tracer) *Server {
+func NewServer(mongo *mongo.Client, s3 *s3.Client, logger logger.ILogger, cfg *config.Config, tracer trace.Tracer) *Server {
 	return &Server{
 		mongo:  mongo,
 		logger: logger,
 		cfg:    cfg,
 		tracer: tracer,
+		s3:     s3,
 	}
 }
 
 func (s *Server) Start() {
 	mongoDB := s.mongo.Database(s.cfg.Mongo.Database)
 	mongoTransactionService := mongoLib.NewMongoTransactionService(s.mongo)
+	storageService := storage.NewS3StorageService(s.s3)
 	//for command side
 	//repository
 	mongoCategoryCommandRepo := repositories.NewMongoCategoryCommandRepository(mongoDB.Collection("categories"), s.tracer)
@@ -54,7 +59,15 @@ func (s *Server) Start() {
 	//service
 	shopService := inmemory.NewInMemoryShopService()
 	categoryCommandService := commandService.NewCategoryCommandService(mongoCategoryCommandRepo, mongoTransactionService, s.tracer)
-	productCommandService := commandService.NewProductCommandService(mongoCategoryCommandRepo, mongoProductCommandRepo, shopService, mongoTransactionService, s.tracer)
+	productCommandService := commandService.NewProductCommandService(
+		mongoCategoryCommandRepo,
+		mongoProductCommandRepo,
+		shopService,
+		mongoTransactionService,
+		s.tracer,
+		&s.cfg.S3,
+		storageService,
+	)
 	//for query side
 	//repo
 	mongoCategoryQueryRepo := repositories.NewMongoCategoryQueryRepository(mongoDB.Collection("categories"), s.tracer)
@@ -88,7 +101,7 @@ func (s *Server) Start() {
 	serverOptions := []grpc.ServerOption{
 		// Unary option
 		grpc.ChainUnaryInterceptor(
-			grpc.UnaryServerInterceptor(interceptors.LoggingInterceptor(s.logger)),
+			grpc.UnaryServerInterceptor(interceptors.LoggingServerInterceptor(s.logger)),
 		),
 		//keep alive option
 		grpc.KeepaliveParams(keepalive.ServerParameters{

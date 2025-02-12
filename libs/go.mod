@@ -7,6 +7,7 @@ require (
 	github.com/aws/aws-sdk-go-v2/service/s3 v1.75.4
 	github.com/google/uuid v1.6.0
 	github.com/opentracing/opentracing-go v1.2.0
+	github.com/processout/grpc-go-pool v1.2.1
 	github.com/spf13/viper v1.19.0
 	go.opentelemetry.io/otel v1.34.0
 	go.opentelemetry.io/otel/trace v1.34.0
@@ -28,7 +29,6 @@ require (
 	github.com/golang/snappy v0.0.4 // indirect
 	github.com/klauspost/compress v1.17.2 // indirect
 	github.com/montanaflynn/stats v0.7.1 // indirect
-	github.com/processout/grpc-go-pool v1.2.1 // indirect
 	github.com/rogpeppe/go-internal v1.13.1 // indirect
 	github.com/xdg-go/pbkdf2 v1.0.0 // indirect
 	github.com/xdg-go/scram v1.1.2 // indirect

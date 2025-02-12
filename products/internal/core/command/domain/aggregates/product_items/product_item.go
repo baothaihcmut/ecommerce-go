@@ -19,6 +19,7 @@ type ProductItem struct {
 	Quantity        valueobjects.ProductQuantity
 	ProductId       productValueobjects.ProductId
 	VariationValues []*entities.VariationValue
+	Images          []string
 }
 
 func NewProductItem(

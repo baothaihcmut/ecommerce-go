@@ -26,6 +26,19 @@ func (p *ProductResponseMapperImpl) ToCreateProductReponse(_ context.Context, re
 	for idx, categoryId := range res.CategoryIds {
 		categoryIds[idx] = string(categoryId)
 	}
+	imageRes := make([]*proto.ImageData, len(res.Images))
+	for idx, image := range res.Images {
+		imageRes[idx] = &proto.ImageData{
+			MetaData: &proto.ImageArg{
+				Size:  int32(image.Size),
+				Width: int32(image.Width),
+				Heigh: int32(image.Height),
+				Type:  image.Type,
+			},
+			Url:    image.Id.Url.Key,
+			Method: "PUT",
+		}
+	}
 	return &proto.ProductData{
 		Id:          string(res.Id),
 		Name:        res.Name,
@@ -34,6 +47,7 @@ func (p *ProductResponseMapperImpl) ToCreateProductReponse(_ context.Context, re
 		ShopId:      string(res.ShopId),
 		Variations:  variations,
 		CategoryIds: categoryIds,
+		Images:      imageRes,
 	}, nil
 }
 

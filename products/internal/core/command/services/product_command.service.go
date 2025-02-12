@@ -5,13 +5,17 @@ import (
 	"sync"
 
 	"github.com/baothaihcmut/Ecommerce-Go/libs/pkg/mongo"
+	"github.com/baothaihcmut/Ecommerce-Go/libs/pkg/tracing"
+	"github.com/baothaihcmut/Ecommerce-Go/products/internal/config"
 	"github.com/baothaihcmut/Ecommerce-Go/products/internal/core/command/domain/aggregates/products"
 	valueobjects "github.com/baothaihcmut/Ecommerce-Go/products/internal/core/command/domain/aggregates/products/value_objects"
+	commonValueobjects "github.com/baothaihcmut/Ecommerce-Go/products/internal/core/command/domain/common/value_objects"
 	"github.com/baothaihcmut/Ecommerce-Go/products/internal/core/command/exceptions"
 	"github.com/baothaihcmut/Ecommerce-Go/products/internal/core/command/port/inbound/commands"
 	"github.com/baothaihcmut/Ecommerce-Go/products/internal/core/command/port/inbound/handlers"
 	"github.com/baothaihcmut/Ecommerce-Go/products/internal/core/command/port/inbound/results"
 	"github.com/baothaihcmut/Ecommerce-Go/products/internal/core/command/port/outbound/repositories"
+	"github.com/baothaihcmut/Ecommerce-Go/products/internal/core/command/port/outbound/storage"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.opentelemetry.io/otel/trace"
 )
@@ -22,6 +26,8 @@ type ProductCommandService struct {
 	shopService        ShopService
 	transactionService mongo.MongoTransactionService
 	tracer             trace.Tracer
+	s3Config           *config.S3Config
+	storageService     storage.StorageService
 }
 
 func (p *ProductCommandService) checkContraints(ctx context.Context, product *commands.CreateProductCommand) error {
@@ -83,16 +89,30 @@ func (p *ProductCommandService) checkContraints(ctx context.Context, product *co
 }
 
 func (p *ProductCommandService) CreateProduct(ctx context.Context, product *commands.CreateProductCommand) (*results.CreateProductResult, error) {
-	ctx, span := p.tracer.Start(ctx, "Product.Create: service")
-	defer span.End()
+	var err error
+	ctx, span := tracing.StartSpan(ctx, p.tracer, "Product.Create: endpoint", nil)
+	defer tracing.EndSpan(span, err, nil)
 	//check contraint
-	err := p.checkContraints(ctx, product)
+	err = p.checkContraints(ctx, product)
 	if err != nil {
 		return nil, err
 	}
-	//create new id
 	id := primitive.NewObjectID().Hex()
 	productId := valueobjects.NewProductId(id)
+	//key for image
+
+	imageArgs := make([]products.ProductImageArgs, len(product.Images))
+	for idx, image := range product.Images {
+		imageArgs[idx] = products.ProductImageArgs{
+			StorageProvider: p.s3Config.StorageProvider,
+			Size:            image.Size,
+			Type:            image.Type,
+			Width:           image.Width,
+			Height:          image.Height,
+			Url:             commonValueobjects.NewImageLink(p.s3Config.Bucket, id),
+		}
+	}
+
 	productDomain, err := products.NewProduct(
 		productId,
 		product.Name,
@@ -101,6 +121,7 @@ func (p *ProductCommandService) CreateProduct(ctx context.Context, product *comm
 		product.ShopId,
 		product.CategoryIds,
 		product.Variations,
+		imageArgs,
 	)
 	if err != nil {
 		return nil, err
@@ -124,14 +145,45 @@ func (p *ProductCommandService) CreateProduct(ctx context.Context, product *comm
 	if err != nil {
 		return nil, err
 	}
+	//get presign url for put
+	wg := sync.WaitGroup{}
+	errCh := make(chan error, 1)
+	ctx, cancel := context.WithCancel(ctx)
+	defer cancel()
+	for idx, image := range productDomain.Images {
+		wg.Add(1)
+		go func() {
+			defer wg.Done()
+			url, err := p.storageService.GetPresignUrl(ctx, storage.GetPresignUrlArgs{
+				Link:   image.Id.Url,
+				Method: storage.PUT,
+			})
+			if err != nil {
+				if err == context.Canceled {
+					return
+				}
+				cancel()
+				errCh <- err
+				return
+			}
+			productDomain.Images[idx].Id.Url.Key = url
+		}()
+	}
+	wg.Wait()
+	select {
+	case err = <-errCh:
+		return nil, err
+	default:
+	}
 	return &results.CreateProductResult{
 		Product: productDomain,
 	}, nil
 }
 
 func (p *ProductCommandService) UpdateProduct(ctx context.Context, command *commands.UpdateProductCommand) (*results.UpdateProductResult, error) {
-	ctx, span := p.tracer.Start(ctx, "Product.Update: service")
-	defer span.End()
+	var err error
+	ctx, span := tracing.StartSpan(ctx, p.tracer, "Product.Update: service", nil)
+	defer tracing.EndSpan(span, err, nil)
 	//find by id
 	product, err := p.productRepo.FindById(ctx, command.Id)
 	if err != nil {
@@ -173,8 +225,9 @@ func (p *ProductCommandService) UpdateProduct(ctx context.Context, command *comm
 }
 
 func (p *ProductCommandService) AddProductCategories(ctx context.Context, command *commands.AddProductCategoiesCommand) (*results.AddProductCategoriesResult, error) {
-	ctx, span := p.tracer.Start(ctx, "Product.AddCategories: service")
-	defer span.End()
+	var err error
+	ctx, span := tracing.StartSpan(ctx, p.tracer, "Product.AddCategoreis: service", nil)
+	defer tracing.EndSpan(span, err, nil)
 	//find by id
 	product, err := p.productRepo.FindById(ctx, command.ProductId)
 	if err != nil {
@@ -209,8 +262,9 @@ func (p *ProductCommandService) AddProductCategories(ctx context.Context, comman
 }
 
 func (p *ProductCommandService) AddProductVariations(ctx context.Context, command *commands.AddProductVariationsCommand) (*results.AddProductVariationsResult, error) {
-	ctx, span := p.tracer.Start(ctx, "Product.AddVariations: service")
-	defer span.End()
+	var err error
+	ctx, span := tracing.StartSpan(ctx, p.tracer, "Product.AddVariations: service", nil)
+	defer tracing.EndSpan(span, err, nil)
 	//find by id
 	product, err := p.productRepo.FindById(ctx, command.ProductId)
 	if err != nil {
@@ -249,6 +303,8 @@ func NewProductCommandService(
 	shopService ShopService,
 	mongoClient mongo.MongoTransactionService,
 	tracer trace.Tracer,
+	s3Config *config.S3Config,
+	storageService storage.StorageService,
 ) handlers.ProductCommandHandler {
 	return &ProductCommandService{
 		categoryRepo:       categoryRepo,
@@ -256,5 +312,7 @@ func NewProductCommandService(
 		shopService:        shopService,
 		transactionService: mongoClient,
 		tracer:             tracer,
+		s3Config:           s3Config,
+		storageService:     storageService,
 	}
 }

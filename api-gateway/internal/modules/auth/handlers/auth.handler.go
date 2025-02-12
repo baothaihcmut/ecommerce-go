@@ -3,16 +3,14 @@ package handlers
 import (
 	"context"
 
-	"github.com/baothaihcmut/Ecommerce-Go/api-gateway/internal/common/enums"
-	"github.com/baothaihcmut/Ecommerce-Go/api-gateway/internal/common/grpc/interceptor"
 	"github.com/baothaihcmut/Ecommerce-Go/api-gateway/internal/modules/auth/dtos/request"
 	"github.com/baothaihcmut/Ecommerce-Go/api-gateway/internal/modules/auth/dtos/response"
 	"github.com/baothaihcmut/Ecommerce-Go/api-gateway/internal/modules/auth/proto"
-	"github.com/baothaihcmut/Ecommerce-Go/api-gateway/internal/modules/grpc/services"
-	"github.com/baothaihcmut/Ecommerce-Go/api-gateway/internal/modules/grpc/tokens"
+	"github.com/baothaihcmut/Ecommerce-Go/libs/pkg/models"
+	"github.com/baothaihcmut/Ecommerce-Go/libs/pkg/tracing"
 	"github.com/google/uuid"
-	"google.golang.org/grpc"
-	"google.golang.org/grpc/credentials/insecure"
+	grpcpool "github.com/processout/grpc-go-pool"
+	"go.opentelemetry.io/otel/trace"
 )
 
 type AuthHandler interface {
@@ -21,36 +19,44 @@ type AuthHandler interface {
 	VerifyToken(context.Context, string, bool) (*response.VerifyTokenResponse, error)
 }
 
-type AuthHandlerImpl struct {
-	grpcConnectionService services.GrpcConnectionService
+type UserAuthHandler struct {
+	userAuthConnectionPool *grpcpool.Pool
+	userConnectionPool     *grpcpool.Pool
+	tracer                 trace.Tracer
 }
 
-func NewAuthHandler(connectionService services.GrpcConnectionService) AuthHandler {
-	return &AuthHandlerImpl{
-		grpcConnectionService: connectionService,
+func NewAuthHandler(
+	userAuthConnectionPool *grpcpool.Pool,
+	userConnectionPool *grpcpool.Pool,
+	tracer trace.Tracer,
+) AuthHandler {
+	return &UserAuthHandler{
+		tracer:                 tracer,
+		userAuthConnectionPool: userAuthConnectionPool,
+		userConnectionPool:     userConnectionPool,
 	}
 }
-func mapRole(src enums.Role) proto.Role {
+func mapRole(src models.Role) proto.Role {
 	switch src {
-	case enums.RoleCustomer:
+	case models.RoleCustomer:
 		return proto.Role_CUSTOMER
-	case enums.RoleShopOwner:
+	case models.RoleShopOwner:
 		return proto.Role_SHOP_OWNER
-	case enums.RoleAdmin:
+	case models.RoleAdmin:
 		return proto.Role_ADMIN
 	}
 	return proto.Role_CUSTOMER
 }
-func mapRoleProto(src proto.Role) enums.Role {
+func mapRoleProto(src proto.Role) models.Role {
 	switch src {
 	case proto.Role_CUSTOMER:
-		return enums.RoleCustomer
+		return models.RoleCustomer
 	case proto.Role_SHOP_OWNER:
-		return enums.RoleShopOwner
+		return models.RoleShopOwner
 	case proto.Role_ADMIN:
-		return enums.RoleAdmin
+		return models.RoleAdmin
 	default:
-		return enums.RoleCustomer
+		return models.RoleCustomer
 	}
 }
 
@@ -67,12 +73,11 @@ func mapAddress(addresses []request.Address) []*proto.Address {
 	}
 	return res
 }
-func (h *AuthHandlerImpl) LogIn(ctx context.Context, dto *request.LoginRequestDTO) (*response.LoginResponeDTO, error) {
-	conn, err := h.grpcConnectionService.GetConnection(
-		tokens.UserServiceToken,
-		grpc.WithTransportCredentials(insecure.NewCredentials()),
-		grpc.WithUnaryInterceptor(interceptor.ErrorHandlerClientInterceptor[proto.LoginData]()),
-	)
+func (h *UserAuthHandler) LogIn(ctx context.Context, dto *request.LoginRequestDTO) (*response.LoginResponeDTO, error) {
+	var err error
+	ctx, span := tracing.StartSpan(ctx, h.tracer, "Auth.LogIn: Call user service", nil)
+	defer tracing.EndSpan(span, err, nil)
+	conn, err := h.userConnectionPool.Get(ctx)
 	defer conn.Close()
 	if err != nil {
 		return nil, err
@@ -91,12 +96,11 @@ func (h *AuthHandlerImpl) LogIn(ctx context.Context, dto *request.LoginRequestDT
 		RefreshToken: resp.Data.RefreshToken,
 	}, nil
 }
-func (h *AuthHandlerImpl) SignUp(ctx context.Context, dto *request.SignUpRequestDTO) (*response.LoginResponeDTO, error) {
-	conn, err := h.grpcConnectionService.GetConnection(
-		tokens.UserServiceToken,
-		grpc.WithTransportCredentials(insecure.NewCredentials()),
-		grpc.WithUnaryInterceptor(interceptor.ErrorHandlerClientInterceptor[proto.LoginData]()),
-	)
+func (h *UserAuthHandler) SignUp(ctx context.Context, dto *request.SignUpRequestDTO) (*response.LoginResponeDTO, error) {
+	var err error
+	ctx, span := tracing.StartSpan(ctx, h.tracer, "Auth.SignUp: Call user service", nil)
+	defer tracing.EndSpan(span, err, nil)
+	conn, err := h.userConnectionPool.Get(ctx)
 	defer conn.Close()
 	if err != nil {
 		return nil, err
@@ -111,11 +115,12 @@ func (h *AuthHandlerImpl) SignUp(ctx context.Context, dto *request.SignUpRequest
 		Role:        mapRole(dto.Role),
 		Addresses:   mapAddress(dto.Addresses),
 	}
-	if dto.Role == enums.RoleShopOwner {
+	if dto.Role == models.RoleShopOwner {
 		req.ShopOwnerInfo = &proto.ShopOwnerInfo{
 			BussinessLincese: dto.ShopOwnerInfo.BusinessLicense,
 		}
 	}
+
 	resp, err := s.SignUp(ctx, req)
 	if err != nil {
 		return nil, err
@@ -126,12 +131,11 @@ func (h *AuthHandlerImpl) SignUp(ctx context.Context, dto *request.SignUpRequest
 	}, nil
 }
 
-func (h *AuthHandlerImpl) VerifyToken(ctx context.Context, token string, isAccessToken bool) (*response.VerifyTokenResponse, error) {
-	conn, err := h.grpcConnectionService.GetConnection(
-		tokens.UserServiceToken,
-		grpc.WithTransportCredentials(insecure.NewCredentials()),
-		grpc.WithUnaryInterceptor(interceptor.ErrorHandlerClientInterceptor[proto.LoginData]()),
-	)
+func (h *UserAuthHandler) VerifyToken(ctx context.Context, token string, isAccessToken bool) (*response.VerifyTokenResponse, error) {
+	var err error
+	ctx, span := tracing.StartSpan(ctx, h.tracer, "Auth.VerifyToken: Call user service", nil)
+	defer tracing.EndSpan(span, err, nil)
+	conn, err := h.userConnectionPool.Get(ctx)
 	defer conn.Close()
 	if err != nil {
 		return nil, err

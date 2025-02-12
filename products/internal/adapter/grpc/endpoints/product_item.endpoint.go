@@ -3,6 +3,7 @@ package endpoints
 import (
 	"context"
 
+	"github.com/baothaihcmut/Ecommerce-Go/libs/pkg/tracing"
 	"github.com/baothaihcmut/Ecommerce-Go/products/internal/core/command/port/inbound/commands"
 	"github.com/baothaihcmut/Ecommerce-Go/products/internal/core/command/port/inbound/handlers"
 	"github.com/go-kit/kit/endpoint"
@@ -20,9 +21,10 @@ func MakeProductItemEndpoints(c handlers.ProductItemCommandHandler, tracer trace
 }
 
 func makeCreateProductItemEndpoint(c handlers.ProductItemCommandHandler, tracer trace.Tracer) endpoint.Endpoint {
-	return func(ctx context.Context, request interface{}) (response interface{}, err error) {
-		ctx, span := tracer.Start(ctx, "ProductItem.Create: endpoint")
-		defer span.End()
+	return func(ctx context.Context, request interface{}) (interface{}, error) {
+		var err error
+		ctx, span := tracing.StartSpan(ctx, tracer, "ProductItem.Create: endpoint", nil)
+		defer tracing.EndSpan(span, err, nil)
 		req := request.(*commands.CreateProductItemCommand)
 		res, err := c.CreateProductItem(ctx, req)
 		if err != nil {

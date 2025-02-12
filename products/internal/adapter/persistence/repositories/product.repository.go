@@ -2,12 +2,17 @@ package repositories
 
 import (
 	"context"
+	"fmt"
+	"strings"
 
+	"github.com/baothaihcmut/Ecommerce-Go/libs/pkg/tracing"
 	"github.com/baothaihcmut/Ecommerce-Go/products/internal/adapter/persistence/models"
 	categoryValueobjects "github.com/baothaihcmut/Ecommerce-Go/products/internal/core/command/domain/aggregates/categories/value_objects"
 	"github.com/baothaihcmut/Ecommerce-Go/products/internal/core/command/domain/aggregates/products"
 	"github.com/baothaihcmut/Ecommerce-Go/products/internal/core/command/domain/aggregates/products/entities"
 	productValueobjects "github.com/baothaihcmut/Ecommerce-Go/products/internal/core/command/domain/aggregates/products/value_objects"
+	valueobjects "github.com/baothaihcmut/Ecommerce-Go/products/internal/core/command/domain/aggregates/products/value_objects"
+	commonValueobjects "github.com/baothaihcmut/Ecommerce-Go/products/internal/core/command/domain/common/value_objects"
 	"github.com/baothaihcmut/Ecommerce-Go/products/internal/core/command/port/outbound/repositories"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
@@ -32,6 +37,18 @@ func toProductDomain(model *models.Product) *products.Product {
 	for idx, variation := range model.Variations {
 		variations[idx] = entities.NewVariation(productValueobjects.NewVariationId(productId, variation))
 	}
+	images := make([]*entities.ProductImage, len(model.Images))
+	for idx, image := range model.Images {
+		urlSplit := strings.Split(image.Url, "/")
+		images[idx] = entities.NewProductImage(
+			valueobjects.NewProductImageId(productId, commonValueobjects.NewImageLink(urlSplit[0], urlSplit[1])),
+			image.StorageProvider,
+			image.Size,
+			image.Type,
+			image.Width,
+			image.Height,
+		)
+	}
 	return &products.Product{
 		Id:          productId,
 		Description: model.Description,
@@ -39,11 +56,13 @@ func toProductDomain(model *models.Product) *products.Product {
 		Unit:        model.Unit,
 		CategoryIds: categoriesIds,
 		Variations:  variations,
+		Images:      images,
 	}
 }
 func (m *MongoProductRepository) FindById(ctx context.Context, productId productValueobjects.ProductId) (*products.Product, error) {
-	ctx, span := m.tracer.Start(ctx, "Product.FindById: database")
-	defer span.End()
+	var err error
+	ctx, span := tracing.StartSpan(ctx, m.tracer, "Product.FindById: database", nil)
+	defer tracing.EndSpan(span, err, nil)
 	id, err := primitive.ObjectIDFromHex(string(productId))
 	if err != nil {
 		return nil, err
@@ -65,8 +84,9 @@ func NewMongoProductRepository(collection *mongo.Collection, tracer trace.Tracer
 }
 
 func (m *MongoProductRepository) Save(ctx context.Context, product *products.Product, session mongo.Session) error {
-	ctx, span := m.tracer.Start(ctx, "Product.Save: database")
-	defer span.End()
+	var err error
+	ctx, span := tracing.StartSpan(ctx, m.tracer, "Product.Save: database", nil)
+	defer tracing.EndSpan(span, err, nil)
 	id, err := primitive.ObjectIDFromHex(string(product.Id))
 	if err != nil {
 		return err
@@ -80,6 +100,17 @@ func (m *MongoProductRepository) Save(ctx context.Context, product *products.Pro
 	for idx, val := range product.Variations {
 		variations[idx] = val.Id.Name
 	}
+	productImages := make([]models.ProductImage, len(product.Images))
+	for idx, val := range product.Images {
+		productImages[idx] = models.ProductImage{
+			Url:             fmt.Sprintf("%s/%s", val.Id.Url.Bucket, val.Id.Url.Key),
+			Size:            val.Size,
+			StorageProvider: val.StorageProvider,
+			Type:            val.Type,
+			Width:           val.Width,
+			Height:          val.Height,
+		}
+	}
 	productModel := &models.Product{
 		Id:          id,
 		Name:        product.Name,
@@ -88,6 +119,7 @@ func (m *MongoProductRepository) Save(ctx context.Context, product *products.Pro
 		ShopId:      string(product.ShopId),
 		CategoryIds: categoryIds,
 		Variations:  variations,
+		Images:      productImages,
 	}
 	sessionCtx := mongo.NewSessionContext(ctx, session)
 	opts := options.Update().SetUpsert(true)

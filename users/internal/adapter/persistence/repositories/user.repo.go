@@ -169,14 +169,13 @@ func (repo *PostgresUserRepo) Save(ctx context.Context, user *user.User, tx *sql
 			} else {
 				err = repo.queries.WithTx(tx).CreateAddress(ctx, *repo.toCreateAddressArg(user.Id, address))
 			}
-			select {
-			case <-ctx.Done():
-				return
-			default:
-				if err != nil {
-					cancel()
-					errCh <- err
+			if err != nil {
+				fmt.Println(err)
+				if err == context.Canceled {
+					return
 				}
+				cancel()
+				errCh <- err
 			}
 		}()
 	}
@@ -193,14 +192,12 @@ func (repo *PostgresUserRepo) Save(ctx context.Context, user *user.User, tx *sql
 			} else {
 				err = repo.queries.WithTx(tx).CreateCustomer(ctx, *repo.toCreateCustomerArg(uuid.UUID(user.Id), user.Customer))
 			}
-			select {
-			case <-ctx.Done():
-				return
-			default:
-				if err != nil {
-					cancel()
-					errCh <- err
+			if err != nil {
+				if err == context.Canceled {
+					return
 				}
+				cancel()
+				errCh <- err
 			}
 		}()
 	}
@@ -216,14 +213,12 @@ func (repo *PostgresUserRepo) Save(ctx context.Context, user *user.User, tx *sql
 			} else {
 				err = repo.queries.WithTx(tx).CreateShopOwner(ctx, *repo.toCreateShopOwnerArg(uuid.UUID(user.Id), user.ShopOwner))
 			}
-			select {
-			case <-ctx.Done():
-				return
-			default:
-				if err != nil {
-					cancel()
-					errCh <- err
+			if err != nil {
+				if err == context.Canceled {
+					return
 				}
+				cancel()
+				errCh <- err
 			}
 		}()
 	}
@@ -308,7 +303,7 @@ func (repo *PostgresUserRepo) CheckEmailExist(ctx context.Context, email valueob
 }
 
 func (repo *PostgresUserRepo) CheckPhoneNumberExist(ctx context.Context, phoneNumber valueobject.PhoneNumber) (resp bool, err error) {
-	ctx, span := tracing.StartSpan(ctx, repo.tracer, "User.FindByEmail", nil)
+	ctx, span := tracing.StartSpan(ctx, repo.tracer, "User.CheckPhonenumberExist: database", nil)
 	defer tracing.EndSpan(span, err, nil)
 	_, err = repo.queries.CheckUserExistByCriteria(ctx, sqlc.CheckUserExistByCriteriaParams{
 		Criteria: "phone_number",

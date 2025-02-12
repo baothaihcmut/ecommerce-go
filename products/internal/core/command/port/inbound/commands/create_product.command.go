@@ -12,4 +12,5 @@ type CreateProductCommand struct {
 	ShopId      valueobjects.ShopId
 	CategoryIds []categoryValueobjects.CategoryId
 	Variations  []string
+	Images      []CreateImageCommand
 }

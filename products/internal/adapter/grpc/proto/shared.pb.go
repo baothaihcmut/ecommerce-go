@@ -305,6 +305,74 @@ func (x *PaginationMeta) GetTotalElement() int32 {
 	return 0
 }
 
+type ImageArg struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Size          int32                  `protobuf:"varint,1,opt,name=size,proto3" json:"size,omitempty"`
+	Type          string                 `protobuf:"bytes,2,opt,name=type,proto3" json:"type,omitempty"`
+	Width         int32                  `protobuf:"varint,3,opt,name=width,proto3" json:"width,omitempty"`
+	Heigh         int32                  `protobuf:"varint,4,opt,name=heigh,proto3" json:"heigh,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *ImageArg) Reset() {
+	*x = ImageArg{}
+	mi := &file_shared_proto_msgTypes[5]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ImageArg) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ImageArg) ProtoMessage() {}
+
+func (x *ImageArg) ProtoReflect() protoreflect.Message {
+	mi := &file_shared_proto_msgTypes[5]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ImageArg.ProtoReflect.Descriptor instead.
+func (*ImageArg) Descriptor() ([]byte, []int) {
+	return file_shared_proto_rawDescGZIP(), []int{5}
+}
+
+func (x *ImageArg) GetSize() int32 {
+	if x != nil {
+		return x.Size
+	}
+	return 0
+}
+
+func (x *ImageArg) GetType() string {
+	if x != nil {
+		return x.Type
+	}
+	return ""
+}
+
+func (x *ImageArg) GetWidth() int32 {
+	if x != nil {
+		return x.Width
+	}
+	return 0
+}
+
+func (x *ImageArg) GetHeigh() int32 {
+	if x != nil {
+		return x.Heigh
+	}
+	return 0
+}
+
 var File_shared_proto protoreflect.FileDescriptor
 
 var file_shared_proto_rawDesc = []byte{
@@ -337,7 +405,13 @@ var file_shared_proto_rawDesc = []byte{
 	0x6c, 0x50, 0x61, 0x67, 0x65, 0x18, 0x03, 0x20, 0x01, 0x28, 0x05, 0x52, 0x09, 0x74, 0x6f, 0x74,
 	0x61, 0x6c, 0x50, 0x61, 0x67, 0x65, 0x12, 0x22, 0x0a, 0x0c, 0x74, 0x6f, 0x74, 0x61, 0x6c, 0x45,
 	0x6c, 0x65, 0x6d, 0x65, 0x6e, 0x74, 0x18, 0x04, 0x20, 0x01, 0x28, 0x05, 0x52, 0x0c, 0x74, 0x6f,
-	0x74, 0x61, 0x6c, 0x45, 0x6c, 0x65, 0x6d, 0x65, 0x6e, 0x74, 0x62, 0x06, 0x70, 0x72, 0x6f, 0x74,
+	0x74, 0x61, 0x6c, 0x45, 0x6c, 0x65, 0x6d, 0x65, 0x6e, 0x74, 0x22, 0x5e, 0x0a, 0x08, 0x49, 0x6d,
+	0x61, 0x67, 0x65, 0x41, 0x72, 0x67, 0x12, 0x12, 0x0a, 0x04, 0x73, 0x69, 0x7a, 0x65, 0x18, 0x01,
+	0x20, 0x01, 0x28, 0x05, 0x52, 0x04, 0x73, 0x69, 0x7a, 0x65, 0x12, 0x12, 0x0a, 0x04, 0x74, 0x79,
+	0x70, 0x65, 0x18, 0x02, 0x20, 0x01, 0x28, 0x09, 0x52, 0x04, 0x74, 0x79, 0x70, 0x65, 0x12, 0x14,
+	0x0a, 0x05, 0x77, 0x69, 0x64, 0x74, 0x68, 0x18, 0x03, 0x20, 0x01, 0x28, 0x05, 0x52, 0x05, 0x77,
+	0x69, 0x64, 0x74, 0x68, 0x12, 0x14, 0x0a, 0x05, 0x68, 0x65, 0x69, 0x67, 0x68, 0x18, 0x04, 0x20,
+	0x01, 0x28, 0x05, 0x52, 0x05, 0x68, 0x65, 0x69, 0x67, 0x68, 0x62, 0x06, 0x70, 0x72, 0x6f, 0x74,
 	0x6f, 0x33,
 }
 
@@ -353,17 +427,18 @@ func file_shared_proto_rawDescGZIP() []byte {
 	return file_shared_proto_rawDescData
 }
 
-var file_shared_proto_msgTypes = make([]protoimpl.MessageInfo, 5)
+var file_shared_proto_msgTypes = make([]protoimpl.MessageInfo, 6)
 var file_shared_proto_goTypes = []any{
 	(*Status)(nil),          // 0: proto.Status
 	(*FilterParam)(nil),     // 1: proto.FilterParam
 	(*SortParam)(nil),       // 2: proto.SortParam
 	(*PaginationParam)(nil), // 3: proto.PaginationParam
 	(*PaginationMeta)(nil),  // 4: proto.PaginationMeta
-	(*anypb.Any)(nil),       // 5: google.protobuf.Any
+	(*ImageArg)(nil),        // 5: proto.ImageArg
+	(*anypb.Any)(nil),       // 6: google.protobuf.Any
 }
 var file_shared_proto_depIdxs = []int32{
-	5, // 0: proto.FilterParam.value:type_name -> google.protobuf.Any
+	6, // 0: proto.FilterParam.value:type_name -> google.protobuf.Any
 	1, // [1:1] is the sub-list for method output_type
 	1, // [1:1] is the sub-list for method input_type
 	1, // [1:1] is the sub-list for extension type_name
@@ -382,7 +457,7 @@ func file_shared_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: file_shared_proto_rawDesc,
 			NumEnums:      0,
-			NumMessages:   5,
+			NumMessages:   6,
 			NumExtensions: 0,
 			NumServices:   0,
 		},

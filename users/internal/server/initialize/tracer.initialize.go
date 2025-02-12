@@ -2,6 +2,7 @@ package initialize
 
 import (
 	"context"
+	"errors"
 	"time"
 
 	"github.com/baothaihcmut/Ecommerce-Go/users/internal/config"
@@ -23,8 +24,18 @@ func InitializeTracer(cfg *config.JaegerConfig) (*sdkTrace.TracerProvider, trace
 	if err != nil {
 		return nil, nil, err
 	}
+	var sampler sdkTrace.Sampler
+	if cfg.Sample == 100 {
+		sampler = sdkTrace.AlwaysSample()
+	} else if cfg.Sample < 100 && cfg.Sample > 0 {
+		sampler = sdkTrace.TraceIDRatioBased(float64(cfg.Sample) / 100)
+	} else if cfg.Sample == 0 {
+		sampler = sdkTrace.NeverSample()
+	} else {
+		return nil, nil, errors.New("Trace sample must less than or equal 100 and greater or equal zero")
+	}
 	traceProvider := sdkTrace.NewTracerProvider(
-		sdkTrace.WithSampler(sdkTrace.AlwaysSample()),
+		sdkTrace.WithSampler(sampler),
 		sdkTrace.WithBatcher(exporter, sdkTrace.WithBatchTimeout(5*time.Second), sdkTrace.WithMaxExportBatchSize(50)),
 		sdkTrace.WithResource(
 			resource.NewWithAttributes(

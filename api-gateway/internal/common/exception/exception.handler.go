@@ -21,7 +21,6 @@ func AppExceptionHandler(logger logger.ILogger) func(error, echo.Context) {
 			return
 		}
 		//handler grpc error
-
 		//else return internal error
 		c.Error(err)
 		c.JSON(http.StatusInternalServerError, response.InitResponse(false, []string{"Unknown error"}, nil))

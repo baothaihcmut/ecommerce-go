@@ -84,6 +84,7 @@ func (s *Server) Start(env string) {
 	serverOptions := []grpc.ServerOption{
 		// Unary option
 		grpc.ChainUnaryInterceptor(
+			grpc.UnaryServerInterceptor(serverInterceptor.RecoverInterceptor(s.tracer)),
 			grpc.UnaryServerInterceptor(serverInterceptor.LoggingServerInterceptor(s.logger)),
 		),
 		//keep alive option

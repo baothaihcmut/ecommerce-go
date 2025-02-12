@@ -5,6 +5,7 @@ import (
 	"sync"
 
 	"github.com/baothaihcmut/Ecommerce-Go/libs/pkg/mongo"
+	"github.com/baothaihcmut/Ecommerce-Go/libs/pkg/tracing"
 	"github.com/baothaihcmut/Ecommerce-Go/products/internal/core/command/domain/aggregates/categories"
 	valueobjects "github.com/baothaihcmut/Ecommerce-Go/products/internal/core/command/domain/aggregates/categories/value_objects"
 	"github.com/baothaihcmut/Ecommerce-Go/products/internal/core/command/exceptions"
@@ -50,13 +51,14 @@ func (c *CategoryCommandService) toCreateCategoryResult(category *categories.Cat
 
 // CreateCategory implements handlers.CategoryCommandHandler.
 func (c *CategoryCommandService) CreateCategory(ctx context.Context, command *commands.CreateCategoryCommand) (*results.CreateCategoryResult, error) {
-	ctx, span := c.tracer.Start(ctx, "Category.Create: service")
-	defer span.End()
+	var err error
+	ctx, span := tracing.StartSpan(ctx, c.tracer, "Category.Create: service", nil)
+	defer tracing.EndSpan(span, err, nil)
 	//if category is sub category check parent category exist
 	parentCategoryIds := make([]valueobjects.CategoryId, len(command.ParentCategoryIds))
 	for idx, val := range command.ParentCategoryIds {
 		parentCategoryId := valueobjects.NewCategoryId(val)
-		err := c.checkCategoryExist(ctx, parentCategoryId)
+		err = c.checkCategoryExist(ctx, parentCategoryId)
 		if err != nil {
 			return nil, err
 		}
@@ -93,8 +95,9 @@ func (c *CategoryCommandService) CreateCategory(ctx context.Context, command *co
 }
 
 func (c *CategoryCommandService) BulkCreateCategories(ctx context.Context, command *commands.BulkCreateCategories) (*results.BulkCreateCategoriesResult, error) {
-	ctx, span := c.tracer.Start(ctx, "Category.BulkCreate: service")
-	defer span.End()
+	var err error
+	ctx, span := tracing.StartSpan(ctx, c.tracer, "Category.BulkCreate: service", nil)
+	defer tracing.EndSpan(span, err, nil)
 	//create set of all parent category need to check
 	categorySet := make(map[string]struct{})
 	//mutex lock for set
@@ -139,7 +142,7 @@ func (c *CategoryCommandService) BulkCreateCategories(ctx context.Context, comma
 		checkExistWg.Add(1)
 		go func() {
 			defer checkExistWg.Done()
-			if err := c.checkCategoryExist(ctx, valueobjects.NewCategoryId(category)); err != nil {
+			if err = c.checkCategoryExist(ctx, valueobjects.NewCategoryId(category)); err != nil {
 				select {
 				case <-ctx.Done():
 				default:
@@ -151,7 +154,7 @@ func (c *CategoryCommandService) BulkCreateCategories(ctx context.Context, comma
 	}
 	checkExistWg.Wait()
 	select {
-	case err := <-errCh:
+	case err = <-errCh:
 		return nil, err
 	default:
 	}

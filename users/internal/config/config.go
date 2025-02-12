@@ -31,15 +31,18 @@ type ServerConfig struct {
 }
 
 type DatabaseConfig struct {
-	Driver      string `mapstructure:"driver"`
-	Host        string `mapstructure:"host"`
-	Port        int    `mapstructure:"port"`
-	User        string `mapstructure:"user"`
-	Password    string `mapstructure:"password"`
-	Name        string `mapstructure:"name"`
-	Ssl         bool   `mapstructure:"ssl"`
-	SslMode     string `mapstructure:"ssl_mode"`
-	SslCertPath string `mapstructure:"ssl_cert_path"`
+	Driver                string `mapstructure:"driver"`
+	Host                  string `mapstructure:"host"`
+	Port                  int    `mapstructure:"port"`
+	User                  string `mapstructure:"user"`
+	Password              string `mapstructure:"password"`
+	Name                  string `mapstructure:"name"`
+	Ssl                   bool   `mapstructure:"ssl"`
+	SslMode               string `mapstructure:"ssl_mode"`
+	SslCertPath           string `mapstructure:"ssl_cert_path"`
+	MaxOpenConnection     int    `mapstructure:"max_open_connection"`
+	MaxIdleConnection     int    `mapstructure:"max_idle_connection"`
+	ConnectionMaxLifeTime int    `mapstructure:"connection_max_lifetime"`
 }
 
 type AdminConfig struct {
@@ -55,6 +58,7 @@ type AdminConfig struct {
 }
 type JaegerConfig struct {
 	Endpoint string `mapstructure:"endpoint"`
+	Sample   int    `mapstructure:"sample"`
 }
 
 func LoadConfig() *Config {

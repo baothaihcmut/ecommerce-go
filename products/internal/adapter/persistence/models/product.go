@@ -10,4 +10,5 @@ type Product struct {
 	ShopId      string             `bson:"shop_id"`
 	CategoryIds []string           `bson:"category_ids"`
 	Variations  []string           `bson:"variations"`
+	Images      []ProductImage     `bson:"images"`
 }

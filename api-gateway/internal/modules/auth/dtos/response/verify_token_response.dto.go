@@ -1,11 +1,11 @@
 package response
 
 import (
-	"github.com/baothaihcmut/Ecommerce-Go/api-gateway/internal/common/enums"
+	"github.com/baothaihcmut/Ecommerce-Go/libs/pkg/models"
 	"github.com/google/uuid"
 )
 
 type VerifyTokenResponse struct {
 	Id   uuid.UUID
-	Role enums.Role
+	Role models.Role
 }

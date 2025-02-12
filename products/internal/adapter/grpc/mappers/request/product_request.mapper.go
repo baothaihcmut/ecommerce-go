@@ -25,6 +25,15 @@ func (p *ProductRequestMapperImpl) ToCreateProductCommand(_ context.Context, req
 	for idx, categoryId := range req.CategoryIds {
 		categoryIds[idx] = categoryValueobjects.NewCategoryId(categoryId)
 	}
+	imageArgs := make([]commands.CreateImageCommand, len(req.Images))
+	for idx, image := range req.Images {
+		imageArgs[idx] = commands.CreateImageCommand{
+			Size:   int(image.Size),
+			Width:  int(image.Width),
+			Height: int(image.Heigh),
+			Type:   image.Type,
+		}
+	}
 	return &commands.CreateProductCommand{
 		Name:        req.Name,
 		Description: req.Description,
@@ -32,6 +41,7 @@ func (p *ProductRequestMapperImpl) ToCreateProductCommand(_ context.Context, req
 		ShopId:      valueobjects.NewShopId(req.ShopId),
 		CategoryIds: categoryIds,
 		Variations:  req.Variations,
+		Images:      imageArgs,
 	}, nil
 
 }

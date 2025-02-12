@@ -7,6 +7,7 @@ import (
 	"github.com/baothaihcmut/Ecommerce-Go/libs/pkg/filter"
 	"github.com/baothaihcmut/Ecommerce-Go/libs/pkg/pagination"
 	"github.com/baothaihcmut/Ecommerce-Go/libs/pkg/sort"
+	"github.com/baothaihcmut/Ecommerce-Go/libs/pkg/tracing"
 	"github.com/baothaihcmut/Ecommerce-Go/products/internal/adapter/persistence/models"
 	"github.com/baothaihcmut/Ecommerce-Go/products/internal/core/command/domain/aggregates/categories"
 	valueobjects "github.com/baothaihcmut/Ecommerce-Go/products/internal/core/command/domain/aggregates/categories/value_objects"
@@ -68,8 +69,11 @@ func NewMongoCategoryQueryRepository(collection *mongo.Collection, tracer trace.
 }
 
 func (m *MongoCategoryRepository) Save(ctx context.Context, category *categories.Category, session mongo.Session) error {
-	ctx, span := m.tracer.Start(ctx, "Category.Save: database")
-	defer span.End()
+	var err error
+	ctx, span := tracing.StartSpan(ctx, m.tracer, "Category.Save: database", map[string]interface{}{
+		"category_id": string(category.Id),
+	})
+	defer tracing.EndSpan(span, err, nil)
 	id, err := primitive.ObjectIDFromHex(string(category.Id))
 	if err != nil {
 		return err
@@ -94,8 +98,9 @@ func (m *MongoCategoryRepository) Save(ctx context.Context, category *categories
 }
 
 func (m *MongoCategoryRepository) BulkSave(ctx context.Context, categories []*categories.Category, session mongo.Session) error {
-	ctx, span := m.tracer.Start(ctx, "Category.BulkSave: database")
-	defer span.End()
+	var err error
+	ctx, span := tracing.StartSpan(ctx, m.tracer, "Category.BulkSave: database", nil)
+	defer tracing.EndSpan(span, err, nil)
 	bulkOptions := make([]mongo.WriteModel, len(categories))
 	for idx, val := range categories {
 		id, err := primitive.ObjectIDFromHex(string(val.Id))
@@ -122,7 +127,7 @@ func (m *MongoCategoryRepository) BulkSave(ctx context.Context, categories []*ca
 		bulkOptions[idx] = upsertOpt
 	}
 	sessionCtx := mongo.NewSessionContext(ctx, session)
-	_, err := m.collection.BulkWrite(sessionCtx, bulkOptions)
+	_, err = m.collection.BulkWrite(sessionCtx, bulkOptions)
 	if err != nil {
 		return err
 	}
@@ -131,8 +136,9 @@ func (m *MongoCategoryRepository) BulkSave(ctx context.Context, categories []*ca
 }
 
 func (m *MongoCategoryRepository) FindCategoryById(ctx context.Context, categoryId valueobjects.CategoryId) (*categories.Category, error) {
-	ctx, span := m.tracer.Start(ctx, "Category.FindById: database")
-	defer span.End()
+	var err error
+	ctx, span := tracing.StartSpan(ctx, m.tracer, "Category.FindById: database", nil)
+	defer tracing.EndSpan(span, err, nil)
 	id, err := primitive.ObjectIDFromHex(string(categoryId))
 	if err != nil {
 		return nil, err
@@ -155,8 +161,9 @@ func (m *MongoCategoryRepository) FindAllCategory(
 	sorts []sort.SortParam,
 	paginate pagination.PaginationParam,
 ) (*pagination.PaginationResult[*categoryProjections.CategoryProjection], error) {
-	ctx, span := m.tracer.Start(ctx, "Category.FindAll: database")
-	defer span.End()
+	var err error
+	ctx, span := tracing.StartSpan(ctx, m.tracer, "Category.FindAllCategory: database", nil)
+	defer tracing.EndSpan(span, err, nil)
 	filterMongo := bson.M{}
 	for _, filter := range filters {
 		filterMongo[filter.Field] = filter.Value
@@ -239,8 +246,9 @@ func (m *MongoCategoryRepository) FindAllCategory(
 }
 
 func (m *MongoCategoryRepository) FindAllSubCategory(ctx context.Context, categoryId string) ([]*categoryProjections.CategoryProjection, error) {
-	ctx, span := m.tracer.Start(ctx, "Category.FindAllSubCategory: database")
-	defer span.End()
+	var err error
+	ctx, span := tracing.StartSpan(ctx, m.tracer, "Category.FindAllCategory: database", nil)
+	defer tracing.EndSpan(span, err, nil)
 	filter := bson.M{
 		"parent_category_ids": bson.M{
 			"$in": bson.A{categoryId},

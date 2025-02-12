@@ -16,7 +16,9 @@ db:
   ssl: false
   ssl_mode: "require"
   ssl_cert_path: ""
-
+  max_open_connection: 10
+  max_idle_connection: 5
+  connection_max_lifetime: 10
 jwt:
   access_token_secret: "my_access_token_secret"
   access_token_age: 3600
@@ -42,3 +44,4 @@ admin:
   refresh_token_age: 7200
 jaeger:
   endpoint: "localhost:4317"
+  sample: 100

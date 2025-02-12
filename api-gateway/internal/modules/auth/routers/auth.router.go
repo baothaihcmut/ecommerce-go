@@ -4,12 +4,11 @@ import (
 	"net/http"
 
 	"github.com/baothaihcmut/Ecommerce-Go/api-gateway/internal/common/constance"
-	"github.com/baothaihcmut/Ecommerce-Go/api-gateway/internal/common/enums"
 	middleware "github.com/baothaihcmut/Ecommerce-Go/api-gateway/internal/common/middlewares"
-	"github.com/baothaihcmut/Ecommerce-Go/api-gateway/internal/common/models"
 	"github.com/baothaihcmut/Ecommerce-Go/api-gateway/internal/common/response"
 	"github.com/baothaihcmut/Ecommerce-Go/api-gateway/internal/modules/auth/dtos/request"
 	"github.com/baothaihcmut/Ecommerce-Go/api-gateway/internal/modules/auth/handlers"
+	"github.com/baothaihcmut/Ecommerce-Go/libs/pkg/models"
 	"github.com/labstack/echo/v4"
 )
 
@@ -29,7 +28,7 @@ func (a *AuthRouterImpl) InitRouter(e *echo.Echo) {
 	//private
 	internal := e.Group("/auth")
 	internal.Use(middleware.AuthMiddleware(a.handler))
-	internal.POST("/test", a.testAuth, middleware.RoleMiddleware(enums.RoleCustomer))
+	internal.POST("/test", a.testAuth, middleware.RoleMiddleware(models.RoleCustomer))
 
 }
 
