@@ -25,3 +25,13 @@ gen-proto-categories:
     --go_opt=Mcategory.proto=./modules/products/proto \
     --go-grpc_opt=Mcategory.proto=./modules/products/proto \
     "../libs/proto/category.proto"
+gen-proto-admin:
+	@protoc \
+    --proto_path="../libs/proto/" \
+    --go_out="./internal" \
+    --go-grpc_out=require_unimplemented_servers=false:./internal \
+    --go_opt=Mshared.proto=github.com/baothaihcmut/Ecommerce-Go/api-gateway/internal/common/grpc/proto \
+    --go-grpc_opt=Mshared.proto=github.com/baothaihcmut/Ecommerce-Go/api-gateway/internal/common/grpc/proto \
+    --go_opt=Madmin.proto=./modules/admin/proto \
+    --go-grpc_opt=Madmin.proto=./modules/admin/proto \
+    "../libs/proto/admin.proto"

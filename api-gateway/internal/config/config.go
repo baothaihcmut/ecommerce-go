@@ -25,7 +25,8 @@ type GrpcConnectionConfig struct {
 }
 
 type GrpcServiceConfig struct {
-	UserService string `mapstructure:"user_service"`
+	UserService    string `mapstructure:"user_service"`
+	ProductService string `mapstructure:"product_service"`
 }
 type JaegerConfig struct {
 	Endpoint string `mapstructure:"endpoint"`

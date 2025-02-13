@@ -13,8 +13,12 @@ import (
 	"github.com/baothaihcmut/Ecommerce-Go/api-gateway/internal/common/grpc/interceptor"
 	middleware "github.com/baothaihcmut/Ecommerce-Go/api-gateway/internal/common/middlewares"
 	"github.com/baothaihcmut/Ecommerce-Go/api-gateway/internal/config"
+	adminHandlers "github.com/baothaihcmut/Ecommerce-Go/api-gateway/internal/modules/admin/handlers"
+	adminRouters "github.com/baothaihcmut/Ecommerce-Go/api-gateway/internal/modules/admin/routers"
 	authHandler "github.com/baothaihcmut/Ecommerce-Go/api-gateway/internal/modules/auth/handlers"
 	authRouter "github.com/baothaihcmut/Ecommerce-Go/api-gateway/internal/modules/auth/routers"
+	productHandler "github.com/baothaihcmut/Ecommerce-Go/api-gateway/internal/modules/products/handlers"
+	productRouter "github.com/baothaihcmut/Ecommerce-Go/api-gateway/internal/modules/products/routers"
 	grpcLib "github.com/baothaihcmut/Ecommerce-Go/libs/pkg/grpc"
 	"github.com/baothaihcmut/Ecommerce-Go/libs/pkg/grpc/interceptors/client"
 	"github.com/baothaihcmut/Ecommerce-Go/libs/pkg/logger"
@@ -73,11 +77,31 @@ func (s *Server) initApp() error {
 		return err
 	}
 	userConnPool, err := grpcLib.GetConnectionPool(s.Cfg.GrpcService.UserService, connectionPoolOption, noAuthDialOption...)
+	if err != nil {
+		return err
+	}
+
+	productAuthConnPool, err := grpcLib.GetConnectionPool(s.Cfg.GrpcService.ProductService, connectionPoolOption, authDialOption...)
+	if err != nil {
+		return err
+	}
 	//init handler
 	authHandler := authHandler.NewAuthHandler(userAuthConnPool, userConnPool, s.Tracer)
+	adminHandler := adminHandlers.NewAdminHandler(userAuthConnPool, userConnPool, s.Tracer)
+	categoryHandler := productHandler.NewCategoryHandler(productAuthConnPool, s.Tracer)
+
 	//init router
+	globalRouter := s.Echo.Group("/api/v1")
+
 	authRouter := authRouter.NewAuthRouter(authHandler)
-	authRouter.InitRouter(s.Echo)
+	authRouter.InitRouter(globalRouter)
+
+	adminRouter := adminRouters.NewAdminRouter(adminHandler)
+	adminRouter.InitRouter(globalRouter)
+
+	productRouter := productRouter.NewCaterogyRouter(categoryHandler, adminHandler)
+	productRouter.InitRouter(globalRouter)
+
 	//init error response
 	s.Echo.HTTPErrorHandler = exception.AppExceptionHandler(s.Logger)
 	s.Echo.Use(middleware.RecoverMiddleware(s.Tracer))

@@ -2,8 +2,8 @@ server:
   host: "localhost"
   port: 50051
 mongo:
-  uri: "mongodb+srv://thaibao22042k4:FWSfTBSCEFte8EiY@ecommerce-go.xbph8.mongodb.net/?retryWrites=true&w=majority&appName=ecommerce-go"
-  database: "product-db"
+  uri: "mongodb://admin:admin@localhost:27017"
+  database: "product_db"
 logger:
   mode: "production"
   disable_caller: false

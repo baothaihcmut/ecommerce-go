@@ -8,19 +8,18 @@ import (
 	"github.com/baothaihcmut/Ecommerce-Go/api-gateway/internal/common/response"
 	"github.com/baothaihcmut/Ecommerce-Go/api-gateway/internal/modules/auth/dtos/request"
 	"github.com/baothaihcmut/Ecommerce-Go/api-gateway/internal/modules/auth/handlers"
-	"github.com/baothaihcmut/Ecommerce-Go/libs/pkg/models"
 	"github.com/labstack/echo/v4"
 )
 
 type AuthRouter interface {
-	InitRouter(e *echo.Echo)
+	InitRouter(e *echo.Group)
 }
 type AuthRouterImpl struct {
 	handler handlers.AuthHandler
 }
 
 // InitRouter implements AuthRouter.
-func (a *AuthRouterImpl) InitRouter(e *echo.Echo) {
+func (a *AuthRouterImpl) InitRouter(e *echo.Group) {
 	//public
 	external := e.Group("/auth")
 	external.POST("/log-in", a.handleLogin, middleware.ValidateMiddleware[request.LoginRequestDTO]())
@@ -28,7 +27,6 @@ func (a *AuthRouterImpl) InitRouter(e *echo.Echo) {
 	//private
 	internal := e.Group("/auth")
 	internal.Use(middleware.AuthMiddleware(a.handler))
-	internal.POST("/test", a.testAuth, middleware.RoleMiddleware(models.RoleCustomer))
 
 }
 
@@ -73,8 +71,4 @@ func (r *AuthRouterImpl) handleSignUp(c echo.Context) error {
 	c.SetCookie(cookieToken(true, res.AccessToken))
 	c.SetCookie(cookieToken(false, res.RefreshToken))
 	return c.JSON(http.StatusCreated, response.InitResponse(true, []string{"Sign up success"}, nil))
-}
-func (r *AuthRouterImpl) testAuth(c echo.Context) error {
-	user := c.Get(string(constance.UserContext)).(*models.UserContext)
-	return c.JSON(http.StatusOK, user)
 }

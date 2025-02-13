@@ -1,15 +1,17 @@
 package middleware
 
 import (
+	"context"
 	"net/http"
 
 	"github.com/baothaihcmut/Ecommerce-Go/api-gateway/internal/common/constance"
-	"github.com/baothaihcmut/Ecommerce-Go/api-gateway/internal/modules/auth/handlers"
 	"github.com/baothaihcmut/Ecommerce-Go/libs/pkg/models"
 	"github.com/labstack/echo/v4"
 )
 
-func AuthMiddleware(authHandler handlers.AuthHandler) echo.MiddlewareFunc {
+func AuthMiddleware(authHandler interface {
+	VerifyToken(ctx context.Context, token string, isRefreshToken bool) (*models.UserContext, error)
+}) echo.MiddlewareFunc {
 	return func(next echo.HandlerFunc) echo.HandlerFunc {
 		return func(c echo.Context) error {
 			//get token from cookie

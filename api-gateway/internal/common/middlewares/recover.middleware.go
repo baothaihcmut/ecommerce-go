@@ -15,15 +15,15 @@ func RecoverMiddleware(tracer trace.Tracer) echo.MiddlewareFunc {
 			defer tracing.EndSpan(span, err, nil)
 			defer func() {
 				if r := recover(); r != nil {
-					switch r.(type) {
+					switch r := r.(type) {
 					case string:
 						tracing.SetSpanAttribute(span, map[string]interface{}{
-							"detail": r.(string),
+							"detail": r,
 						})
 					case error:
-						err = r.(error)
+						err = r
 						tracing.SetSpanAttribute(span, map[string]interface{}{
-							"detail": r.(error).Error(),
+							"detail": r.Error(),
 						})
 					}
 					buf := make([]byte, 1024)
