@@ -1,9 +1,8 @@
 package enums
 
-type Role string
+type Role int
 
 const (
-	CUSTOMER   Role = "CUSTOMER"
-	SHOP_OWNER Role = "SHOP_OWNER"
-	ADMIN      Role = "ADMIN"
+	USER Role = iota
+	ADMIN
 )

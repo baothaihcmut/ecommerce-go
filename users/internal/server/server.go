@@ -52,22 +52,18 @@ func (s *Server) Start(env string) {
 	jwtAdminService := jwt.NewAdminJwtService(&s.config.Admin, s.tracer)
 	//init command
 	adminCommand := commandService.NewAdminCommandService(adminRepo, jwtAdminService, s.tracer)
-	userCommand := commandService.NewUserCommandService(userRepo, s.db)
 	authCommand := commandService.NewAuthCommandService(userRepo, jwtService, dbService, s.tracer)
 	//init enpoint
-	userEndpoint := endpoints.MakeUserEndpoints(userCommand)
 	authEndpoints := endpoints.MakeAuthEndpoints(authCommand, s.tracer)
 	adminEndpoints := endpoints.MakeAdminEndpoints(adminCommand, s.tracer)
 	//init mapper
-	userReqMapper := request.NewUserRequestMapper()
-	userResponseMapper := response.NewUserResponseMapper()
+
 	authRequestMapper := request.NewAuthRequestMapper()
 	authResponseMapper := response.NewAuthResponseMapper()
 	adminRequestMapper := request.NewAdminRequestMapper()
 	adminResponseMapper := response.NewAdminResponseMapper()
 	//init grpc server
 	authServer := transports.NewAuthServer(authEndpoints, authRequestMapper, authResponseMapper)
-	userServer := transports.NewUserServer(userEndpoint, userReqMapper, userResponseMapper)
 	adminServer := transports.NewAdminServer(adminEndpoints, adminRequestMapper, adminResponseMapper)
 	err := make(chan error)
 	go func() {
@@ -100,7 +96,6 @@ func (s *Server) Start(env string) {
 	baseServer := grpc.NewServer(serverOptions...)
 	go func() {
 		//base server
-		proto.RegisterUserServiceServer(baseServer, userServer)
 		proto.RegisterAuthServiceServer(baseServer, authServer)
 		proto.RegisterAdminServiceServer(baseServer, adminServer)
 		s.logger.Info("Server started successfully 🚀")

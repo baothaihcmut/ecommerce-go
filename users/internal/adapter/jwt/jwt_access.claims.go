@@ -7,6 +7,6 @@ import (
 
 type JwtAccessClaims struct {
 	jwt.RegisteredClaims
-	UserId uuid.UUID `json:"userId"`
-	Role   string    `json:"role"`
+	UserId            uuid.UUID `json:"userId"`
+	IsShopOwnerActive bool      `json:"isShopOwnerActive"`
 }

@@ -9,10 +9,13 @@ import (
 	"github.com/baothaihcmut/Ecommerce-Go/users/internal/core/command/domain/aggregates/user"
 	valueobject "github.com/baothaihcmut/Ecommerce-Go/users/internal/core/command/domain/aggregates/user/value_object"
 	"github.com/baothaihcmut/Ecommerce-Go/users/internal/core/command/domain/enums"
+	"github.com/baothaihcmut/Ecommerce-Go/users/internal/core/command/events"
+	"github.com/baothaihcmut/Ecommerce-Go/users/internal/core/command/exception"
 	"github.com/baothaihcmut/Ecommerce-Go/users/internal/core/command/port/inbound/commands"
 	"github.com/baothaihcmut/Ecommerce-Go/users/internal/core/command/port/inbound/handlers"
 	"github.com/baothaihcmut/Ecommerce-Go/users/internal/core/command/port/inbound/results"
-	"github.com/baothaihcmut/Ecommerce-Go/users/internal/core/command/port/outbound"
+	"github.com/baothaihcmut/Ecommerce-Go/users/internal/core/command/port/outbound/external"
+	"github.com/baothaihcmut/Ecommerce-Go/users/internal/core/command/port/outbound/repositories"
 	"github.com/google/uuid"
 	"go.opentelemetry.io/otel/trace"
 )
@@ -23,10 +26,11 @@ var (
 )
 
 type AuthCommandService struct {
-	jwtPort   outbound.JwtService
-	userRepo  outbound.UserRepository
-	dbService postgres.TransactionService
-	tracer    trace.Tracer
+	jwtPort            external.JwtService
+	userRepo           repositories.UserRepository
+	userConfirmService external.UserConfirmService
+	dbService          postgres.TransactionService
+	tracer             trace.Tracer
 }
 
 // VerifyToken implements handlers.AuthCommandHandler.
@@ -52,16 +56,15 @@ func (s *AuthCommandService) Login(ctx context.Context, command *commands.LoginC
 		return nil, err
 	}
 	//generate access token and refresh token
-	accessToken, err := s.jwtPort.GenerateAccessToken(ctx, outbound.GenerateTokenArg{
-		UserId: uuid.UUID(userDb.Id),
-		Role:   userDb.Role,
+	accessToken, err := s.jwtPort.GenerateAccessToken(ctx, external.GenerateAccessTokenArg{
+		UserId:            uuid.UUID(userDb.Id),
+		IsShopOwnerActive: userDb.IsShopOwnerActive,
 	})
 	if err != nil {
 		return nil, err
 	}
-	refreshToken, err := s.jwtPort.GenerateRefreshToken(ctx, outbound.GenerateTokenArg{
+	refreshToken, err := s.jwtPort.GenerateRefreshToken(ctx, external.GenerateRefreshTokenArg{
 		UserId: uuid.UUID(userDb.Id),
-		Role:   userDb.Role,
 	})
 	if err != nil {
 		return nil, err
@@ -86,16 +89,22 @@ func (s *AuthCommandService) toUserDomain(command *commands.SignUpCommand) (*use
 	if err != nil {
 		return nil, err
 	}
-
-	if command.Role == enums.CUSTOMER {
-		return user.NewCustomer(
-			*email, password, *phoneNumber, command.Addresses, command.FirstName, command.LastName,
-		)
-	} else {
-		return user.NewShopOwner(
-			*email, password, *phoneNumber, command.Addresses, command.FirstName, command.LastName, command.ShopOwnerInfo.BussinessLincese,
-		)
+	addrArgs := make([]user.AddressArg, len(command.Addresses))
+	for idx, addr := range command.Addresses {
+		addrArgs[idx] = user.AddressArg{
+			Street: addr.Street,
+			City:   addr.City,
+			Town:   addr.Town,
+		}
 	}
+	return user.NewUser(
+		*email,
+		password,
+		*phoneNumber,
+		addrArgs,
+		command.FirstName,
+		command.LastName,
+	)
 }
 
 func (s *AuthCommandService) SignUp(ctx context.Context, command *commands.SignUpCommand) (_ *results.SignUpCommandResult, err error) {
@@ -103,61 +112,51 @@ func (s *AuthCommandService) SignUp(ctx context.Context, command *commands.SignU
 		"email": string(command.Email),
 	})
 	defer tracing.EndSpan(span, err, nil)
-	user, err := s.toUserDomain(command)
+	newUser, err := s.toUserDomain(command)
 	if err != nil {
 		return nil, err
 	}
 	//check if email exist
-	emailExist, err := s.userRepo.CheckEmailExist(ctx, user.Email)
+	emailExist, err := s.userRepo.CheckEmailExist(ctx, newUser.Email)
 	if err != nil {
 		return nil, err
 	}
 	if emailExist {
-		return nil, ErrEmailExist
+		return nil, exception.ErrEmailExist
 	}
 
 	//check if phone number exist
-	phoneExist, err := s.userRepo.CheckPhoneNumberExist(ctx, user.PhoneNumber)
+	phoneExist, err := s.userRepo.CheckPhoneNumberExist(ctx, newUser.PhoneNumber)
 	if err != nil {
 		return nil, err
 	}
 	if phoneExist {
-		return nil, ErrPhoneNumberExist
+		return nil, exception.ErrPhoneNumberExist
 	}
-	//generate token
-	accessToken, err := s.jwtPort.GenerateAccessToken(ctx, outbound.GenerateTokenArg{
-		UserId: uuid.UUID(user.Id),
-		Role:   user.Role,
-	})
+	//if user activate shopowner
+	if command.IsShopOwnerActive {
+		newUser.ActivateShopOwner(user.ActivateShopOwnerArg{
+			BussinessLincese: command.ShopOwnerInfo.BussinessLincese,
+		})
+	}
+	//store user in pending
+	code, err := s.userConfirmService.StoreUserInfo(ctx, newUser)
 	if err != nil {
 		return nil, err
 	}
-	refreshToken, err := s.jwtPort.GenerateRefreshToken(ctx, outbound.GenerateTokenArg{
-		UserId: uuid.UUID(user.Id),
-		Role:   user.Role,
-	})
-	if err != nil {
+	//publish event for mail sending,...
+	e := events.UserSignUpEvent{
+		Email:          string(newUser.Email),
+		PhoneNumber:    string(newUser.PhoneNumber),
+		FirstName:      newUser.FirstName,
+		LastName:       newUser.LastName,
+		VericationCode: code,
+	}
+	if err = s.userConfirmService.PublishSignUpEvent(ctx, &e); err != nil {
 		return nil, err
 	}
 
-	err = user.SetCurrentRefreshToken(valueobject.NewToken(refreshToken, enums.REFRESH_TOKEN))
-	if err != nil {
-		return nil, err
-	}
-	//persist to db
-	tx, err := s.dbService.BeginTransaction(ctx)
-	defer func() { _ = s.dbService.RollbackTransaction(ctx, tx) }()
-	if err != nil {
-		return nil, err
-	}
-	err = s.userRepo.Save(ctx, user, tx)
-	if err != nil {
-		return nil, err
-	}
-	return &results.SignUpCommandResult{
-		AccessToken:  accessToken,
-		RefreshToken: refreshToken,
-	}, s.dbService.CommitTransaction(ctx, tx)
+	return &results.SignUpCommandResult{}, nil
 
 }
 func (s *AuthCommandService) VerifyToken(ctx context.Context, command *commands.VerifyTokenCommand) (_ *results.VerifyTokenCommandResult, err error) {
@@ -170,7 +169,7 @@ func (s *AuthCommandService) VerifyToken(ctx context.Context, command *commands.
 		}
 		return &results.VerifyTokenCommandResult{
 			Id:   accesToken.Id,
-			Role: accesToken.Role,
+			Role: enums.USER,
 		}, nil
 	} else {
 		refreshToken, err := s.jwtPort.DecodeRefreshToken(ctx, command.Token)
@@ -183,7 +182,7 @@ func (s *AuthCommandService) VerifyToken(ctx context.Context, command *commands.
 	}
 }
 
-func NewAuthCommandService(userRepo outbound.UserRepository, jwtPort outbound.JwtService, dbService postgres.TransactionService, tracer trace.Tracer) handlers.AuthCommandHandler {
+func NewAuthCommandService(userRepo repositories.UserRepository, jwtPort external.JwtService, dbService postgres.TransactionService, tracer trace.Tracer) handlers.AuthCommandHandler {
 	return &AuthCommandService{
 		userRepo:  userRepo,
 		jwtPort:   jwtPort,

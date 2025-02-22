@@ -8,8 +8,7 @@ import (
 	"github.com/baothaihcmut/Ecommerce-Go/users/internal/adapter/persistence/sqlc/sqlc"
 	"github.com/baothaihcmut/Ecommerce-Go/users/internal/core/command/domain/aggregates/admin"
 	valueobject "github.com/baothaihcmut/Ecommerce-Go/users/internal/core/command/domain/aggregates/user/value_object"
-	"github.com/baothaihcmut/Ecommerce-Go/users/internal/core/command/domain/enums"
-	"github.com/baothaihcmut/Ecommerce-Go/users/internal/core/command/port/outbound"
+	"github.com/baothaihcmut/Ecommerce-Go/users/internal/core/command/port/outbound/repositories"
 	"github.com/google/uuid"
 	"go.opentelemetry.io/otel/trace"
 )
@@ -46,7 +45,6 @@ func (p *PostgresAdminRepo) Save(ctx context.Context, admin *admin.Admin) (err e
 				UUID:  uuid.UUID(admin.Id),
 				Valid: true,
 			},
-
 			FirstName: sql.NullString{
 				String: admin.FirstName,
 				Valid:  true,
@@ -68,7 +66,7 @@ func (p *PostgresAdminRepo) Save(ctx context.Context, admin *admin.Admin) (err e
 				Valid:  true,
 			},
 			CurrentRefreshToken: sql.NullString{
-				String: admin.CurrentRefreshToken.Value,
+				String: admin.CurrentRefreshToken,
 				Valid:  true,
 			},
 		})
@@ -103,7 +101,7 @@ func (p *PostgresAdminRepo) Save(ctx context.Context, admin *admin.Admin) (err e
 				Valid:  true,
 			},
 			CurrentRefreshToken: sql.NullString{
-				String: admin.CurrentRefreshToken.Value,
+				String: admin.CurrentRefreshToken,
 				Valid:  true,
 			},
 		})
@@ -137,10 +135,10 @@ func (p *PostgresAdminRepo) FindByEmail(ctx context.Context, email valueobject.E
 		FirstName:           res.FirstName,
 		LastName:            res.LastName,
 		PhoneNumber:         valueobject.PhoneNumber(res.PhoneNumber),
-		CurrentRefreshToken: valueobject.Token{Value: res.CurrentRefreshToken.String, TokenType: enums.REFRESH_TOKEN},
+		CurrentRefreshToken: res.CurrentRefreshToken.String,
 	}, nil
 }
-func NewPostgresAdminRepo(db *sql.DB, tracer trace.Tracer) outbound.AdminRepository {
+func NewPostgresAdminRepo(db *sql.DB, tracer trace.Tracer) repositories.AdminRepository {
 	return &PostgresAdminRepo{
 		conn:    db,
 		queries: sqlc.New(db),

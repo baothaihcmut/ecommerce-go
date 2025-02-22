@@ -1,4 +1,4 @@
-package outbound
+package repositories
 
 import (
 	"context"
@@ -9,7 +9,11 @@ import (
 )
 
 type UserRepository interface {
-	Save(context.Context, *user.User, *sql.Tx) error
+	CreateUser(context.Context, *user.User, *sql.Tx) error
+	UpdateUser(context.Context, *user.User, *sql.Tx) error
+	ActivateShopOwner(context.Context, *user.User, *sql.Tx) error
+	UpdateUserAddress(ctx context.Context, user *user.User, t *sql.Tx) (err error)
+
 	FindById(context.Context, valueobject.UserId) (*user.User, error)
 	FindByEmail(context.Context, valueobject.Email) (*user.User, error)
 	CheckEmailExist(context.Context, valueobject.Email) (bool, error)

@@ -1,12 +1,12 @@
 -- name: CreateUser :exec
-INSERT INTO users(id,email, password ,phone_number, first_name,last_name,role, current_refresh_token)
+INSERT INTO users(id,email, password ,phone_number, first_name,last_name,is_shop_owner_active,current_refresh_token)
 VALUES (sqlc.narg('id'),
         sqlc.narg('email'),
         sqlc.narg('password'),
         sqlc.narg('phoneNumber'),
         sqlc.narg('firstName'),
         sqlc.narg('lastName'),
-        sqlc.narg('role'),
+        sqlc.narg('isShopOwnerActive'),
         sqlc.narg('currentRefreshToken')
         );
 
@@ -18,7 +18,7 @@ SET
     phone_number = COALESCE(sqlc.narg('phoneNumber'),phone_number),
     first_name = COALESCE(sqlc.narg('firstName'),first_name),
     last_name = COALESCE(sqlc.narg('lastName'),last_name),
-    role = COALESCE(sqlc.narg('role'),role),
+    is_shop_owner_active = COALESCE(sqlc.narg('isShopOwnerActive'),is_shop_owner_active),
     current_refresh_token = COALESCE(sqlc.narg('currentRefreshToken'),current_refresh_token)
 WHERE id = sqlc.narg('id');
 
@@ -103,6 +103,12 @@ WHERE
         WHEN 'lastName' THEN u.last_name = sqlc.narg('value')::text
     END
 LIMIT 1;
+
+-- name: FindUserAddress :many
+SELECT *
+FROM addresses a
+WHERE
+    a.user_id = sqlc.narg('user_id');
 
 -- name: FindAdminByCriteria :one
 SELECT *

@@ -9,14 +9,15 @@ import (
 	"github.com/baothaihcmut/Ecommerce-Go/users/internal/core/command/port/inbound/commands"
 	"github.com/baothaihcmut/Ecommerce-Go/users/internal/core/command/port/inbound/handlers"
 	"github.com/baothaihcmut/Ecommerce-Go/users/internal/core/command/port/inbound/results"
-	"github.com/baothaihcmut/Ecommerce-Go/users/internal/core/command/port/outbound"
+	"github.com/baothaihcmut/Ecommerce-Go/users/internal/core/command/port/outbound/external"
+	"github.com/baothaihcmut/Ecommerce-Go/users/internal/core/command/port/outbound/repositories"
 	"github.com/google/uuid"
 	"go.opentelemetry.io/otel/trace"
 )
 
 type AdminCommandService struct {
-	adminRepo outbound.AdminRepository
-	jwtPort   outbound.JwtService
+	adminRepo repositories.AdminRepository
+	jwtPort   external.JwtService
 	tracer    trace.Tracer
 }
 
@@ -37,16 +38,15 @@ func (a *AdminCommandService) LogIn(ctx context.Context, command *commands.Login
 		return nil, err
 	}
 	//generate access token and refresh token
-	accessToken, err := a.jwtPort.GenerateAccessToken(ctx, outbound.GenerateTokenArg{
-		UserId: uuid.UUID(admin.Id),
-		Role:   enums.ADMIN,
+	accessToken, err := a.jwtPort.GenerateAccessToken(ctx, external.GenerateAccessTokenArg{
+		UserId:            uuid.UUID(admin.Id),
+		IsShopOwnerActive: true,
 	})
 	if err != nil {
 		return nil, err
 	}
-	refreshToken, err := a.jwtPort.GenerateRefreshToken(ctx, outbound.GenerateTokenArg{
+	refreshToken, err := a.jwtPort.GenerateRefreshToken(ctx, external.GenerateRefreshTokenArg{
 		UserId: uuid.UUID(admin.Id),
-		Role:   enums.ADMIN,
 	})
 	if err != nil {
 		return nil, err
@@ -67,7 +67,7 @@ func (a *AdminCommandService) VerifyToken(ctx context.Context, command *commands
 		}
 		return &results.VerifyTokenCommandResult{
 			Id:   accesToken.Id,
-			Role: accesToken.Role,
+			Role: enums.ADMIN,
 		}, nil
 	} else {
 		refreshToken, err := a.jwtPort.DecodeRefreshToken(ctx, command.Token)
@@ -80,7 +80,7 @@ func (a *AdminCommandService) VerifyToken(ctx context.Context, command *commands
 	}
 }
 
-func NewAdminCommandService(adminRepo outbound.AdminRepository, jwtService outbound.JwtService, tracer trace.Tracer) handlers.AdminCommandHandler {
+func NewAdminCommandService(adminRepo repositories.AdminRepository, jwtService external.JwtService, tracer trace.Tracer) handlers.AdminCommandHandler {
 	return &AdminCommandService{
 		adminRepo: adminRepo,
 		jwtPort:   jwtService,

@@ -6,7 +6,6 @@ import (
 	"github.com/baothaihcmut/Ecommerce-Go/users/internal/adapter/grpc/proto"
 	"github.com/baothaihcmut/Ecommerce-Go/users/internal/core/command/domain/aggregates/user"
 	valueobject "github.com/baothaihcmut/Ecommerce-Go/users/internal/core/command/domain/aggregates/user/value_object"
-	"github.com/baothaihcmut/Ecommerce-Go/users/internal/core/command/domain/enums"
 	"github.com/baothaihcmut/Ecommerce-Go/users/internal/core/command/port/inbound/commands"
 )
 
@@ -48,12 +47,9 @@ func (m *AuthRequestMapperImpl) ToSignUpCommand(_ context.Context, request inter
 		Email:       req.Email,
 		Password:    req.Password,
 		PhoneNumber: req.PhoneNumber,
-		Role:        enums.Role(req.Role.String()),
 		Addresses:   addreses,
 	}
-	if req.Role == proto.Role_CUSTOMER {
-		dest.CustomerInfo = &commands.CustomerInfo{}
-	} else if req.Role == proto.Role_SHOP_OWNER {
+	if req.Role == proto.Role_SHOP_OWNER {
 		dest.ShopOwnerInfo = &commands.ShopOwnerInfo{
 			BussinessLincese: req.ShopOwnerInfo.BussinessLincese,
 		}

@@ -2,7 +2,6 @@ package commands
 
 import (
 	"github.com/baothaihcmut/Ecommerce-Go/users/internal/core/command/domain/aggregates/user"
-	"github.com/baothaihcmut/Ecommerce-Go/users/internal/core/command/domain/enums"
 )
 
 type Address struct {
@@ -19,13 +18,12 @@ type ShopOwnerInfo struct {
 	BussinessLincese string
 }
 type SignUpCommand struct {
-	Email         string
-	Password      string
-	PhoneNumber   string
-	Addresses     []user.AddressArg
-	FirstName     string
-	LastName      string
-	Role          enums.Role
-	CustomerInfo  *CustomerInfo
-	ShopOwnerInfo *ShopOwnerInfo
+	Email             string
+	Password          string
+	PhoneNumber       string
+	Addresses         []user.AddressArg
+	FirstName         string
+	LastName          string
+	IsShopOwnerActive bool
+	ShopOwnerInfo     *ShopOwnerInfo
 }

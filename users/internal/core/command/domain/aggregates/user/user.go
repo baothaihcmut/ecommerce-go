@@ -5,7 +5,6 @@ import (
 
 	"github.com/baothaihcmut/Ecommerce-Go/users/internal/core/command/domain/aggregates/user/entities"
 	valueobject "github.com/baothaihcmut/Ecommerce-Go/users/internal/core/command/domain/aggregates/user/value_object"
-	"github.com/baothaihcmut/Ecommerce-Go/users/internal/core/command/domain/enums"
 	"github.com/google/uuid"
 )
 
@@ -24,6 +23,9 @@ type AddressArg struct {
 	City     string
 	Province string
 }
+type ActivateShopOwnerArg struct {
+	BussinessLincese string
+}
 
 type User struct {
 	Id                  valueobject.UserId
@@ -31,10 +33,10 @@ type User struct {
 	Password            valueobject.Password
 	PhoneNumber         valueobject.PhoneNumber
 	Address             []*entities.Address
-	Role                enums.Role
+	IsShopOwnerActive   bool
 	FirstName           string
 	LastName            string
-	CurrentRefreshToken *valueobject.Token
+	CurrentRefreshToken string
 	Customer            *entities.Customer
 	ShopOwner           *entities.ShopOwner
 }
@@ -60,7 +62,7 @@ func validate(
 	return nil
 }
 
-func newUser(
+func NewUser(
 	email valueobject.Email,
 	password valueobject.Password,
 	phoneNumber valueobject.PhoneNumber,
@@ -80,77 +82,25 @@ func newUser(
 	for idx, address := range addressArgs {
 		addresses[idx] = entities.NewAddress(idx, address.Street, address.Town, address.City, address.Province)
 	}
+	// create customer info
+	customer, err := entities.NewCustomer()
+	if err != nil {
+		return nil, err
+	}
 	return &User{
-		Id:                  *id,
-		Email:               email,
-		Password:            password,
-		CurrentRefreshToken: nil,
-		PhoneNumber:         phoneNumber,
-		Address:             addresses,
-		Role:                enums.CUSTOMER,
-		FirstName:           firstName,
-		LastName:            lastName,
+		Id:          *id,
+		Email:       email,
+		Password:    password,
+		PhoneNumber: phoneNumber,
+		Address:     addresses,
+		FirstName:   firstName,
+		LastName:    lastName,
+		Customer:    customer,
 	}, nil
 }
 
-func NewCustomer(
-	email valueobject.Email,
-	password valueobject.Password,
-	phoneNumber valueobject.PhoneNumber,
-	addressArgs []AddressArg,
-	firstName string,
-	lastName string,
-) (*User, error) {
-	err := validate(email, addressArgs, firstName, lastName)
-	if err != nil {
-		return nil, err
-	}
-	user, err := newUser(email, password, phoneNumber, addressArgs, firstName, lastName)
-	if err != nil {
-		return nil, err
-	}
-	customer, err := entities.NewCustomer()
-	user.Customer = customer
-	// Create and return a new User instance
-	return user, nil
-}
-
-func NewShopOwner(
-	email valueobject.Email,
-	passwod valueobject.Password,
-	phoneNumber valueobject.PhoneNumber,
-	addressArgs []AddressArg,
-	firstName string,
-	lastName string,
-	bussinessLincese string,
-) (*User, error) {
-	err := validate(email, addressArgs, firstName, lastName)
-	if err != nil {
-		return nil, err
-	}
-	user, err := newUser(email, passwod, phoneNumber, addressArgs, firstName, lastName)
-	if err != nil {
-		return nil, err
-	}
-
-	shopOwner := entities.NewShopOwner(bussinessLincese)
-	user.ShopOwner = shopOwner
-	return user, nil
-}
-
-func (u *User) SetCurrentRefreshToken(token valueobject.Token) error {
-	// check if refesh token is refresh token
-	if token.TokenType != enums.REFRESH_TOKEN {
-		return ErrInvalidTokenType
-	}
-
-	// if old refresh token != null compare
-	if u.CurrentRefreshToken != nil && !u.CurrentRefreshToken.IsEqual(token) {
-		return ErrMisMatchRefreshToken
-	}
-
-	u.CurrentRefreshToken = &token
-	return nil
+func (u *User) SetCurrentRefreshToken(token string) {
+	u.CurrentRefreshToken = token
 }
 
 func (u *User) ValidateAuth(password string) error {
@@ -158,4 +108,8 @@ func (u *User) ValidateAuth(password string) error {
 		return ErrBadCredencial
 	}
 	return nil
+}
+func (u *User) ActivateShopOwner(args ActivateShopOwnerArg) {
+	u.IsShopOwnerActive = true
+	u.ShopOwner = entities.NewShopOwner(args.BussinessLincese)
 }

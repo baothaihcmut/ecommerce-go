@@ -9,9 +9,8 @@ import (
 	"github.com/baothaihcmut/Ecommerce-Go/libs/pkg/tracing"
 	"github.com/baothaihcmut/Ecommerce-Go/users/internal/config"
 	valueobject "github.com/baothaihcmut/Ecommerce-Go/users/internal/core/command/domain/aggregates/user/value_object"
-	"github.com/baothaihcmut/Ecommerce-Go/users/internal/core/command/domain/enums"
 	"github.com/baothaihcmut/Ecommerce-Go/users/internal/core/command/models"
-	"github.com/baothaihcmut/Ecommerce-Go/users/internal/core/command/port/outbound"
+	"github.com/baothaihcmut/Ecommerce-Go/users/internal/core/command/port/outbound/external"
 	services "github.com/baothaihcmut/Ecommerce-Go/users/internal/core/command/services"
 	"github.com/golang-jwt/jwt/v4"
 	"github.com/google/uuid"
@@ -28,7 +27,7 @@ type JwtAdapter struct {
 
 // DecodeRefreshToken implements outbound.JwtPort.
 func (j *JwtAdapter) DecodeRefreshToken(ctx context.Context, token string) (_ models.RefreshTokenSub, err error) {
-	ctx, span := tracing.StartSpan(ctx, j.tracer, "Jwt.DecodeRefreshToken: service", nil)
+	_, span := tracing.StartSpan(ctx, j.tracer, "Jwt.DecodeRefreshToken: service", nil)
 	defer tracing.EndSpan(span, err, nil)
 	tokenDecode, err := jwt.ParseWithClaims(token, &JwtAccessClaims{}, func(token *jwt.Token) (interface{}, error) {
 		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
@@ -53,15 +52,15 @@ func (j *JwtAdapter) DecodeRefreshToken(ctx context.Context, token string) (_ mo
 	return models.RefreshTokenSub{}, services.ErrInvalidToken
 }
 
-func (j *JwtAdapter) GenerateAccessToken(ctx context.Context, args outbound.GenerateTokenArg) (_ string, err error) {
+func (j *JwtAdapter) GenerateAccessToken(ctx context.Context, args external.GenerateAccessTokenArg) (_ string, err error) {
 	ctx, span := tracing.StartSpan(ctx, j.tracer, "Jwt.GenerateAccessToken: service", nil)
 	defer tracing.EndSpan(span, err, nil)
 	claims := &JwtAccessClaims{
 		RegisteredClaims: jwt.RegisteredClaims{
 			ExpiresAt: jwt.NewNumericDate(time.Now().Add(time.Duration(j.accessTokenAge) * time.Hour)),
 		},
-		UserId: uuid.UUID(args.UserId),
-		Role:   string(args.Role),
+		UserId:            uuid.UUID(args.UserId),
+		IsShopOwnerActive: args.IsShopOwnerActive,
 	}
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
 	tokenString, err := token.SignedString([]byte(j.accessTokenSecret))
@@ -72,7 +71,7 @@ func (j *JwtAdapter) GenerateAccessToken(ctx context.Context, args outbound.Gene
 }
 
 // GenerateRefreshToken implements outbound.JwtPort.
-func (j *JwtAdapter) GenerateRefreshToken(ctx context.Context, args outbound.GenerateTokenArg) (_ string, err error) {
+func (j *JwtAdapter) GenerateRefreshToken(ctx context.Context, args external.GenerateRefreshTokenArg) (_ string, err error) {
 	ctx, span := tracing.StartSpan(ctx, j.tracer, "Jwt.GenerateRefreshToken: service", nil)
 	defer tracing.EndSpan(span, err, nil)
 	claims := &JwtRefreshClaims{
@@ -108,15 +107,15 @@ func (j *JwtAdapter) DecodeAccessToken(ctx context.Context, token string) (_ mod
 				return models.AccessTokenSub{}, services.ErrTokenExpire
 			}
 			return models.AccessTokenSub{
-				Id:   valueobject.UserId(claims.UserId),
-				Role: enums.Role(claims.Role),
+				Id:                valueobject.UserId(claims.UserId),
+				IsShopOwnerActive: claims.IsShopOwnerActive,
 			}, nil
 		}
 	}
 	return models.AccessTokenSub{}, services.ErrInvalidToken
 }
 
-func NewJwtService(jwtCfg *config.JwtConfig, tracer trace.Tracer) outbound.JwtService {
+func NewJwtService(jwtCfg *config.JwtConfig, tracer trace.Tracer) external.JwtService {
 	return &JwtAdapter{
 		accessTokenSecret:  jwtCfg.AccessTokenSecret,
 		accessTokenAge:     jwtCfg.AccessTokenAge,
@@ -126,7 +125,7 @@ func NewJwtService(jwtCfg *config.JwtConfig, tracer trace.Tracer) outbound.JwtSe
 	}
 }
 
-func NewAdminJwtService(adminCfg *config.AdminConfig, tracer trace.Tracer) outbound.JwtService {
+func NewAdminJwtService(adminCfg *config.AdminConfig, tracer trace.Tracer) external.JwtService {
 	return &JwtAdapter{
 		accessTokenSecret:  adminCfg.AccessTokenSecret,
 		accessTokenAge:     adminCfg.AccessTokenAge,

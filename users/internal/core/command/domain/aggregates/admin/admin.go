@@ -13,7 +13,7 @@ type Admin struct {
 	Email               valueobject.Email
 	Password            valueobject.Password
 	PhoneNumber         valueobject.PhoneNumber
-	CurrentRefreshToken valueobject.Token
+	CurrentRefreshToken string
 	FirstName           string
 	LastName            string
 	LastLoginTime       time.Time
@@ -47,10 +47,6 @@ func (a *Admin) LogIn(password string) error {
 	a.LastLoginTime = time.Now()
 	return nil
 }
-func (a *Admin) RefreshToken(token valueobject.Token) error {
-	if !a.CurrentRefreshToken.IsEqual(token) {
-		return user.ErrMisMatchRefreshToken
-	}
+func (a *Admin) SetCurrentRefreshToken(token string) {
 	a.CurrentRefreshToken = token
-	return nil
 }
