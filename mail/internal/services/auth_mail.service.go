@@ -3,9 +3,8 @@ package services
 import (
 	"context"
 
-	"github.com/baothaihcmut/Ecommerce-go/libs/pkg/events"
-	"github.com/baothaihcmut/ecommerce-go/mail/internal/mailer"
-	"github.com/baothaihcmut/ecommerce-go/mail/internal/models"
+	"github.com/baothaihcmut/Ecommerce-go/mail/internal/mailer"
+	"github.com/baothaihcmut/Ecommerce-go/mail/internal/models"
 )
 
 type AuthMailService interface {

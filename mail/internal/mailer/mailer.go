@@ -5,7 +5,7 @@ import (
 	"context"
 	"html/template"
 
-	"github.com/baothaihcmut/ecommerce-go/mail/internal/config"
+	"github.com/baothaihcmut/Ecommerce-go/mail/internal/config"
 	"gopkg.in/gomail.v2"
 )
 
