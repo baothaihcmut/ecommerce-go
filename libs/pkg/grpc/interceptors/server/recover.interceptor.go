@@ -5,7 +5,7 @@ import (
 	"errors"
 	"runtime"
 
-	"github.com/baothaihcmut/Ecommerce-Go/libs/pkg/tracing"
+	"github.com/baothaihcmut/Ecommerce-go/libs/pkg/tracing"
 	"go.opentelemetry.io/otel/trace"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"

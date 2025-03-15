@@ -2,31 +2,27 @@ package main
 
 import (
 	"context"
+	"net/http"
 
-	"github.com/baothaihcmut/Ecommerce-Go/api-gateway/internal/config"
-	"github.com/baothaihcmut/Ecommerce-Go/api-gateway/internal/server"
-	"github.com/baothaihcmut/Ecommerce-Go/api-gateway/internal/server/initialize"
-	"github.com/baothaihcmut/Ecommerce-Go/libs/pkg/logger"
-	"github.com/labstack/echo/v4"
+	userProto "github.com/baothaihcmut/Ecommerce-go/libs/pkg/proto/users/v1"
+	"github.com/grpc-ecosystem/grpc-gateway/v2/runtime"
+	"google.golang.org/grpc"
+	"google.golang.org/grpc/credentials/insecure"
 )
 
 func main() {
-	config := config.LoadConfig()
-
-	logger := logger.Newlogger(config.LoggerConfig)
-
-	tp, tracer, err := initialize.InitializeTracer(config)
+	conn, err := grpc.NewClient(
+		"localhost:50051",
+		grpc.WithTransportCredentials(insecure.NewCredentials()),
+	)
 	if err != nil {
-		logger.Fatalf("Error init trace: %v", err)
+		return
 	}
-	defer func() {
-		if err := tp.Shutdown(context.Background()); err != nil {
-			logger.Fatalf("Failed to shutdown tracer: %v", err)
-		}
-	}()
-
-	echo := echo.New()
-
-	s := server.NewServer(echo, config, logger, tracer)
-	s.Run()
+	defer conn.Close()
+	mux := runtime.NewServeMux()
+	err = userProto.RegisterAuthServiceHandler(context.Background(), mux, conn)
+	if err != nil {
+		return
+	}
+	http.ListenAndServe(":8080", mux)
 }

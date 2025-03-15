@@ -3,11 +3,11 @@ package services
 import (
 	"context"
 
-	"github.com/baothaihcmut/Ecommerce-Go/libs/pkg/utils"
-	"github.com/baothaihcmut/Ecommerce-Go/products/internal/core/query/port/inbound/handlers"
-	"github.com/baothaihcmut/Ecommerce-Go/products/internal/core/query/port/inbound/queries"
-	"github.com/baothaihcmut/Ecommerce-Go/products/internal/core/query/port/inbound/results"
-	"github.com/baothaihcmut/Ecommerce-Go/products/internal/core/query/port/outbound/repositories"
+	"github.com/baothaihcmut/Ecommerce-go/libs/pkg/utils"
+	"github.com/baothaihcmut/Ecommerce-go/products/internal/core/query/port/inbound/handlers"
+	"github.com/baothaihcmut/Ecommerce-go/products/internal/core/query/port/inbound/queries"
+	"github.com/baothaihcmut/Ecommerce-go/products/internal/core/query/port/inbound/results"
+	"github.com/baothaihcmut/Ecommerce-go/products/internal/core/query/port/outbound/repositories"
 	"google.golang.org/protobuf/types/known/anypb"
 )
 

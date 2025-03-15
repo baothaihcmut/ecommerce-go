@@ -1,7 +1,7 @@
 package valueobjects
 
 import (
-	"github.com/baothaihcmut/Ecommerce-Go/products/internal/core/command/domain/exceptions"
+	"github.com/baothaihcmut/Ecommerce-go/products/internal/core/command/domain/exceptions"
 )
 
 type ProductPrice int

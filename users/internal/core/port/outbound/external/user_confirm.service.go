@@ -3,7 +3,7 @@ package external
 import (
 	"context"
 
-	"github.com/baothaihcmut/ecommerce-go/users/internal/core/domain/entities"
+	"github.com/baothaihcmut/Ecommerce-go/users/internal/core/domain/entities"
 )
 
 type SendEmailArg struct {

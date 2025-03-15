@@ -3,10 +3,10 @@ package response
 import (
 	"context"
 
-	"github.com/baothaihcmut/Ecommerce-Go/products/internal/adapter/grpc/proto"
-	"github.com/baothaihcmut/Ecommerce-Go/products/internal/core/command/port/inbound/results"
-	commandResult "github.com/baothaihcmut/Ecommerce-Go/products/internal/core/command/port/inbound/results"
-	queryResult "github.com/baothaihcmut/Ecommerce-Go/products/internal/core/query/port/inbound/results"
+	"github.com/baothaihcmut/Ecommerce-go/products/internal/adapter/grpc/proto"
+	"github.com/baothaihcmut/Ecommerce-go/products/internal/core/command/port/inbound/results"
+	commandResult "github.com/baothaihcmut/Ecommerce-go/products/internal/core/command/port/inbound/results"
+	queryResult "github.com/baothaihcmut/Ecommerce-go/products/internal/core/query/port/inbound/results"
 )
 
 type CategoryResponseMapper interface {

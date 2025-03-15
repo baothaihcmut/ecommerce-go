@@ -3,10 +3,10 @@ package repositories
 import (
 	"context"
 
-	"github.com/baothaihcmut/Ecommerce-Go/libs/pkg/filter"
-	"github.com/baothaihcmut/Ecommerce-Go/libs/pkg/pagination"
-	"github.com/baothaihcmut/Ecommerce-Go/libs/pkg/sort"
-	"github.com/baothaihcmut/Ecommerce-Go/products/internal/core/query/projections/categories"
+	"github.com/baothaihcmut/Ecommerce-go/libs/pkg/filter"
+	"github.com/baothaihcmut/Ecommerce-go/libs/pkg/pagination"
+	"github.com/baothaihcmut/Ecommerce-go/libs/pkg/sort"
+	"github.com/baothaihcmut/Ecommerce-go/products/internal/core/query/projections/categories"
 )
 
 type CategoryQueryRepository interface {

@@ -3,10 +3,10 @@ package request
 import (
 	"context"
 
-	"github.com/baothaihcmut/Ecommerce-Go/products/internal/adapter/grpc/proto"
-	categoryValueobjects "github.com/baothaihcmut/Ecommerce-Go/products/internal/core/command/domain/aggregates/categories/value_objects"
-	valueobjects "github.com/baothaihcmut/Ecommerce-Go/products/internal/core/command/domain/aggregates/products/value_objects"
-	"github.com/baothaihcmut/Ecommerce-Go/products/internal/core/command/port/inbound/commands"
+	"github.com/baothaihcmut/Ecommerce-go/products/internal/adapter/grpc/proto"
+	categoryValueobjects "github.com/baothaihcmut/Ecommerce-go/products/internal/core/command/domain/aggregates/categories/value_objects"
+	valueobjects "github.com/baothaihcmut/Ecommerce-go/products/internal/core/command/domain/aggregates/products/value_objects"
+	"github.com/baothaihcmut/Ecommerce-go/products/internal/core/command/port/inbound/commands"
 )
 
 type ProductRequestMapper interface {

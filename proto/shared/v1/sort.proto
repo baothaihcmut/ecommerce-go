@@ -1,7 +1,0 @@
-syntax ="proto3";
-package shared.v1;
-
-message SortParam {
-    string field = 1;
-    bool is_asc = 2;
-}

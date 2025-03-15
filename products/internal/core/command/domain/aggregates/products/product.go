@@ -1,11 +1,11 @@
 package products
 
 import (
-	categoryValueobjects "github.com/baothaihcmut/Ecommerce-Go/products/internal/core/command/domain/aggregates/categories/value_objects"
-	"github.com/baothaihcmut/Ecommerce-Go/products/internal/core/command/domain/aggregates/products/entities"
-	valueobjects "github.com/baothaihcmut/Ecommerce-Go/products/internal/core/command/domain/aggregates/products/value_objects"
-	commonValueobjects "github.com/baothaihcmut/Ecommerce-Go/products/internal/core/command/domain/common/value_objects"
-	"github.com/baothaihcmut/Ecommerce-Go/products/internal/core/command/domain/exceptions"
+	categoryValueobjects "github.com/baothaihcmut/Ecommerce-go/products/internal/core/command/domain/aggregates/categories/value_objects"
+	"github.com/baothaihcmut/Ecommerce-go/products/internal/core/command/domain/aggregates/products/entities"
+	valueobjects "github.com/baothaihcmut/Ecommerce-go/products/internal/core/command/domain/aggregates/products/value_objects"
+	commonValueobjects "github.com/baothaihcmut/Ecommerce-go/products/internal/core/command/domain/common/value_objects"
+	"github.com/baothaihcmut/Ecommerce-go/products/internal/core/command/domain/exceptions"
 )
 
 type ProductImageArgs struct {

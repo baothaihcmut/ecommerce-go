@@ -3,8 +3,8 @@ package repositories
 import (
 	"context"
 
-	"github.com/baothaihcmut/Ecommerce-Go/products/internal/core/command/domain/aggregates/categories"
-	valueobjects "github.com/baothaihcmut/Ecommerce-Go/products/internal/core/command/domain/aggregates/categories/value_objects"
+	"github.com/baothaihcmut/Ecommerce-go/products/internal/core/command/domain/aggregates/categories"
+	valueobjects "github.com/baothaihcmut/Ecommerce-go/products/internal/core/command/domain/aggregates/categories/value_objects"
 	"go.mongodb.org/mongo-driver/mongo"
 )
 

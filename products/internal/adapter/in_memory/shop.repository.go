@@ -3,8 +3,8 @@ package inmemory
 import (
 	"context"
 
-	"github.com/baothaihcmut/Ecommerce-Go/products/internal/core/command/models"
-	"github.com/baothaihcmut/Ecommerce-Go/products/internal/core/command/services"
+	"github.com/baothaihcmut/Ecommerce-go/products/internal/core/command/models"
+	"github.com/baothaihcmut/Ecommerce-go/products/internal/core/command/services"
 )
 
 type InMemoryShopRepository struct {

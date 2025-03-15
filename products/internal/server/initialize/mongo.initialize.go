@@ -4,8 +4,8 @@ import (
 	"context"
 	"time"
 
-	"github.com/baothaihcmut/Ecommerce-Go/libs/pkg/logger"
-	"github.com/baothaihcmut/Ecommerce-Go/products/internal/config"
+	"github.com/baothaihcmut/Ecommerce-go/libs/pkg/logger"
+	"github.com/baothaihcmut/Ecommerce-go/products/internal/config"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
 )

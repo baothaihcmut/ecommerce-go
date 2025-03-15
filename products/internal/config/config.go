@@ -1,8 +1,8 @@
 package config
 
 import (
-	"github.com/baothaihcmut/Ecommerce-Go/libs/pkg/config"
-	"github.com/baothaihcmut/Ecommerce-Go/libs/pkg/logger"
+	"github.com/baothaihcmut/Ecommerce-go/libs/pkg/config"
+	"github.com/baothaihcmut/Ecommerce-go/libs/pkg/logger"
 )
 
 type Config struct {

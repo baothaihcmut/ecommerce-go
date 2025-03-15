@@ -1,6 +1,6 @@
 package valueobjects
 
-import valueobjects "github.com/baothaihcmut/Ecommerce-Go/products/internal/core/command/domain/common/value_objects"
+import valueobjects "github.com/baothaihcmut/Ecommerce-go/products/internal/core/command/domain/common/value_objects"
 
 type ProductImageId struct {
 	ProductId ProductId

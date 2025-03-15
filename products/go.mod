@@ -1,4 +1,4 @@
-module github.com/baothaihcmut/Ecommerce-Go/products
+module github.com/baothaihcmut/Ecommerce-go/products
 
 go 1.23.2
 
@@ -69,7 +69,7 @@ require (
 )
 
 require (
-	github.com/baothaihcmut/Ecommerce-Go/libs v1.0.24
+	github.com/baothaihcmut/Ecommerce-go/libs v1.0.24
 	github.com/go-kit/kit v0.13.0
 	github.com/golang/snappy v0.0.4 // indirect
 	github.com/klauspost/compress v1.17.11 // indirect
@@ -83,4 +83,4 @@ require (
 	golang.org/x/text v0.21.0 // indirect
 )
 
-replace github.com/baothaihcmut/Ecommerce-Go/libs => ../libs
+replace github.com/baothaihcmut/Ecommerce-go/libs => ../libs

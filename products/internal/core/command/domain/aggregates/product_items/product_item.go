@@ -1,10 +1,10 @@
 package productitems
 
 import (
-	"github.com/baothaihcmut/Ecommerce-Go/products/internal/core/command/domain/aggregates/product_items/entities"
-	valueobjects "github.com/baothaihcmut/Ecommerce-Go/products/internal/core/command/domain/aggregates/product_items/value_objects"
-	productValueobjects "github.com/baothaihcmut/Ecommerce-Go/products/internal/core/command/domain/aggregates/products/value_objects"
-	"github.com/baothaihcmut/Ecommerce-Go/products/internal/core/command/domain/exceptions"
+	"github.com/baothaihcmut/Ecommerce-go/products/internal/core/command/domain/aggregates/product_items/entities"
+	valueobjects "github.com/baothaihcmut/Ecommerce-go/products/internal/core/command/domain/aggregates/product_items/value_objects"
+	productValueobjects "github.com/baothaihcmut/Ecommerce-go/products/internal/core/command/domain/aggregates/products/value_objects"
+	"github.com/baothaihcmut/Ecommerce-go/products/internal/core/command/domain/exceptions"
 )
 
 type VariationValueArg struct {

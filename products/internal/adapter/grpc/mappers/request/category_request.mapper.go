@@ -3,12 +3,12 @@ package request
 import (
 	"context"
 
-	"github.com/baothaihcmut/Ecommerce-Go/libs/pkg/filter"
-	"github.com/baothaihcmut/Ecommerce-Go/libs/pkg/pagination"
-	"github.com/baothaihcmut/Ecommerce-Go/libs/pkg/sort"
-	"github.com/baothaihcmut/Ecommerce-Go/products/internal/adapter/grpc/proto"
-	"github.com/baothaihcmut/Ecommerce-Go/products/internal/core/command/port/inbound/commands"
-	"github.com/baothaihcmut/Ecommerce-Go/products/internal/core/query/port/inbound/queries"
+	"github.com/baothaihcmut/Ecommerce-go/libs/pkg/filter"
+	"github.com/baothaihcmut/Ecommerce-go/libs/pkg/pagination"
+	"github.com/baothaihcmut/Ecommerce-go/libs/pkg/sort"
+	"github.com/baothaihcmut/Ecommerce-go/products/internal/adapter/grpc/proto"
+	"github.com/baothaihcmut/Ecommerce-go/products/internal/core/command/port/inbound/commands"
+	"github.com/baothaihcmut/Ecommerce-go/products/internal/core/query/port/inbound/queries"
 )
 
 type CategoryRequestMapper interface {

@@ -4,12 +4,12 @@ import (
 	"context"
 	"sync"
 
-	"github.com/baothaihcmut/ecommerce-go/users/internal/core/domain/entities"
-	"github.com/baothaihcmut/ecommerce-go/users/internal/core/exception"
-	"github.com/baothaihcmut/ecommerce-go/users/internal/core/port/inbound/commands"
-	"github.com/baothaihcmut/ecommerce-go/users/internal/core/port/inbound/results"
-	"github.com/baothaihcmut/ecommerce-go/users/internal/core/port/outbound/external"
-	"github.com/baothaihcmut/ecommerce-go/users/internal/core/port/outbound/repositories"
+	"github.com/baothaihcmut/Ecommerce-go/users/internal/core/domain/entities"
+	"github.com/baothaihcmut/Ecommerce-go/users/internal/core/exception"
+	"github.com/baothaihcmut/Ecommerce-go/users/internal/core/port/inbound/commands"
+	"github.com/baothaihcmut/Ecommerce-go/users/internal/core/port/inbound/results"
+	"github.com/baothaihcmut/Ecommerce-go/users/internal/core/port/outbound/external"
+	"github.com/baothaihcmut/Ecommerce-go/users/internal/core/port/outbound/repositories"
 	"github.com/samber/lo"
 )
 

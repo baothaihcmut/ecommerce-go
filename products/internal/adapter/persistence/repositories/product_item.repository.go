@@ -3,10 +3,10 @@ package repositories
 import (
 	"context"
 
-	"github.com/baothaihcmut/Ecommerce-Go/libs/pkg/tracing"
-	"github.com/baothaihcmut/Ecommerce-Go/products/internal/adapter/persistence/models"
-	productitems "github.com/baothaihcmut/Ecommerce-Go/products/internal/core/command/domain/aggregates/product_items"
-	"github.com/baothaihcmut/Ecommerce-Go/products/internal/core/command/port/outbound/repositories"
+	"github.com/baothaihcmut/Ecommerce-go/libs/pkg/tracing"
+	"github.com/baothaihcmut/Ecommerce-go/products/internal/adapter/persistence/models"
+	productitems "github.com/baothaihcmut/Ecommerce-go/products/internal/core/command/domain/aggregates/product_items"
+	"github.com/baothaihcmut/Ecommerce-go/products/internal/core/command/port/outbound/repositories"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"

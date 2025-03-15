@@ -3,11 +3,11 @@ package transports
 import (
 	"context"
 
-	"github.com/baothaihcmut/Ecommerce-Go/products/internal/adapter/grpc/endpoints"
-	"github.com/baothaihcmut/Ecommerce-Go/products/internal/adapter/grpc/errors"
-	"github.com/baothaihcmut/Ecommerce-Go/products/internal/adapter/grpc/mappers/request"
-	"github.com/baothaihcmut/Ecommerce-Go/products/internal/adapter/grpc/mappers/response"
-	"github.com/baothaihcmut/Ecommerce-Go/products/internal/adapter/grpc/proto"
+	"github.com/baothaihcmut/Ecommerce-go/products/internal/adapter/grpc/endpoints"
+	"github.com/baothaihcmut/Ecommerce-go/products/internal/adapter/grpc/errors"
+	"github.com/baothaihcmut/Ecommerce-go/products/internal/adapter/grpc/mappers/request"
+	"github.com/baothaihcmut/Ecommerce-go/products/internal/adapter/grpc/mappers/response"
+	"github.com/baothaihcmut/Ecommerce-go/products/internal/adapter/grpc/proto"
 	gt "github.com/go-kit/kit/transport/grpc"
 	"google.golang.org/grpc/codes"
 )

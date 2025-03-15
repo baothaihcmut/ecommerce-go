@@ -5,8 +5,8 @@ import (
 	"time"
 
 	"github.com/aws/aws-sdk-go-v2/service/s3"
-	s3Lib "github.com/baothaihcmut/Ecommerce-Go/libs/pkg/s3"
-	"github.com/baothaihcmut/Ecommerce-Go/products/internal/core/command/port/outbound/storage"
+	s3Lib "github.com/baothaihcmut/Ecommerce-go/libs/pkg/s3"
+	"github.com/baothaihcmut/Ecommerce-go/products/internal/core/command/port/outbound/storage"
 )
 
 type S3StorageService struct {

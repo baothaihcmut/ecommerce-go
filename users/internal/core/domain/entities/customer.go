@@ -1,6 +1,6 @@
 package entities
 
-import "github.com/baothaihcmut/ecommerce-go/users/internal/core/domain/enums"
+import "github.com/baothaihcmut/Ecommerce-go/users/internal/core/domain/enums"
 
 type Customer struct {
 	User         *User

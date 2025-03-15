@@ -3,8 +3,8 @@ package client
 import (
 	"context"
 
-	"github.com/baothaihcmut/Ecommerce-Go/libs/pkg/constance"
-	"github.com/baothaihcmut/Ecommerce-Go/libs/pkg/models"
+	"github.com/baothaihcmut/Ecommerce-go/libs/pkg/constance"
+	"github.com/baothaihcmut/Ecommerce-go/libs/pkg/models"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/metadata"
 )

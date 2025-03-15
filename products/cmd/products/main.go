@@ -3,10 +3,10 @@ package main
 import (
 	"context"
 
-	"github.com/baothaihcmut/Ecommerce-Go/libs/pkg/logger"
-	"github.com/baothaihcmut/Ecommerce-Go/products/internal/config"
-	"github.com/baothaihcmut/Ecommerce-Go/products/internal/server"
-	"github.com/baothaihcmut/Ecommerce-Go/products/internal/server/initialize"
+	"github.com/baothaihcmut/Ecommerce-go/libs/pkg/logger"
+	"github.com/baothaihcmut/Ecommerce-go/products/internal/config"
+	"github.com/baothaihcmut/Ecommerce-go/products/internal/server"
+	"github.com/baothaihcmut/Ecommerce-go/products/internal/server/initialize"
 )
 
 func main() {

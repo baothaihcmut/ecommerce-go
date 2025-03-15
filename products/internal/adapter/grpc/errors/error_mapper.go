@@ -1,8 +1,8 @@
 package errors
 
 import (
-	domainException "github.com/baothaihcmut/Ecommerce-Go/products/internal/core/command/domain/exceptions"
-	commandException "github.com/baothaihcmut/Ecommerce-Go/products/internal/core/command/exceptions"
+	domainException "github.com/baothaihcmut/Ecommerce-go/products/internal/core/command/domain/exceptions"
+	commandException "github.com/baothaihcmut/Ecommerce-go/products/internal/core/command/exceptions"
 	"google.golang.org/grpc/codes"
 )
 

@@ -3,7 +3,7 @@ package storage
 import (
 	"context"
 
-	valueobjects "github.com/baothaihcmut/Ecommerce-Go/products/internal/core/command/domain/common/value_objects"
+	valueobjects "github.com/baothaihcmut/Ecommerce-go/products/internal/core/command/domain/common/value_objects"
 )
 
 type GetPresignUrlMethod string

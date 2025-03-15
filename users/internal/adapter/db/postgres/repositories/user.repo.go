@@ -5,9 +5,9 @@ import (
 	"database/sql"
 	"sync"
 
-	"github.com/baothaihcmut/ecommerce-go/users/internal/adapter/db/postgres/sqlc"
-	"github.com/baothaihcmut/ecommerce-go/users/internal/core/domain/entities"
-	"github.com/baothaihcmut/ecommerce-go/users/internal/core/port/outbound/repositories"
+	"github.com/baothaihcmut/Ecommerce-go/users/internal/adapter/db/postgres/sqlc"
+	"github.com/baothaihcmut/Ecommerce-go/users/internal/core/domain/entities"
+	"github.com/baothaihcmut/Ecommerce-go/users/internal/core/port/outbound/repositories"
 	"github.com/google/uuid"
 )
 

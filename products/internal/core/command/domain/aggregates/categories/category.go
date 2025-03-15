@@ -1,6 +1,6 @@
 package categories
 
-import valueobjects "github.com/baothaihcmut/Ecommerce-Go/products/internal/core/command/domain/aggregates/categories/value_objects"
+import valueobjects "github.com/baothaihcmut/Ecommerce-go/products/internal/core/command/domain/aggregates/categories/value_objects"
 
 type Category struct {
 	Id               valueobjects.CategoryId

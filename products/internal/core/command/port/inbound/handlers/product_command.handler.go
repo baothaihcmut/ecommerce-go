@@ -3,8 +3,8 @@ package handlers
 import (
 	"context"
 
-	"github.com/baothaihcmut/Ecommerce-Go/products/internal/core/command/port/inbound/commands"
-	"github.com/baothaihcmut/Ecommerce-Go/products/internal/core/command/port/inbound/results"
+	"github.com/baothaihcmut/Ecommerce-go/products/internal/core/command/port/inbound/commands"
+	"github.com/baothaihcmut/Ecommerce-go/products/internal/core/command/port/inbound/results"
 )
 
 type ProductCommandHandler interface {

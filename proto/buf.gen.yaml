@@ -1,6 +1,13 @@
 version: v1
 plugins:
   - name: go
-    out: gen/go
-  - name: grpc-go
-    out: gen/go
+    out: ../libs/pkg/proto
+    opt: paths=source_relative
+
+  - name: go-grpc
+    out: ../libs/pkg/proto
+    opt: paths=source_relative
+
+  - name: grpc-gateway
+    out: ../libs/pkg/proto
+    opt: paths=source_relative

@@ -1,7 +1,7 @@
 package results
 
 import (
-	"github.com/baothaihcmut/Ecommerce-Go/products/internal/core/command/domain/aggregates/categories"
+	"github.com/baothaihcmut/Ecommerce-go/products/internal/core/command/domain/aggregates/categories"
 )
 
 type CreateCategoryResult struct {

@@ -3,11 +3,11 @@ package endpoints
 import (
 	"context"
 
-	"github.com/baothaihcmut/Ecommerce-Go/libs/pkg/tracing"
-	"github.com/baothaihcmut/Ecommerce-Go/products/internal/core/command/port/inbound/commands"
-	commandHandler "github.com/baothaihcmut/Ecommerce-Go/products/internal/core/command/port/inbound/handlers"
-	queryHandler "github.com/baothaihcmut/Ecommerce-Go/products/internal/core/query/port/inbound/handlers"
-	"github.com/baothaihcmut/Ecommerce-Go/products/internal/core/query/port/inbound/queries"
+	"github.com/baothaihcmut/Ecommerce-go/libs/pkg/tracing"
+	"github.com/baothaihcmut/Ecommerce-go/products/internal/core/command/port/inbound/commands"
+	commandHandler "github.com/baothaihcmut/Ecommerce-go/products/internal/core/command/port/inbound/handlers"
+	queryHandler "github.com/baothaihcmut/Ecommerce-go/products/internal/core/query/port/inbound/handlers"
+	"github.com/baothaihcmut/Ecommerce-go/products/internal/core/query/port/inbound/queries"
 	"github.com/go-kit/kit/endpoint"
 	"go.opentelemetry.io/otel/trace"
 )

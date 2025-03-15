@@ -3,7 +3,7 @@ package interceptors
 import (
 	"context"
 
-	"github.com/baothaihcmut/Ecommerce-Go/libs/pkg/logger"
+	"github.com/baothaihcmut/Ecommerce-go/libs/pkg/logger"
 	"google.golang.org/grpc"
 )
 

@@ -1,6 +1,6 @@
 package entities
 
-import productValueobjects "github.com/baothaihcmut/Ecommerce-Go/products/internal/core/command/domain/aggregates/products/value_objects"
+import productValueobjects "github.com/baothaihcmut/Ecommerce-go/products/internal/core/command/domain/aggregates/products/value_objects"
 
 type VariationValue struct {
 	VariationId productValueobjects.VariationId

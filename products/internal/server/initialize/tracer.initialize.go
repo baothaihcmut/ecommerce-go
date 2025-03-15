@@ -4,7 +4,7 @@ import (
 	"context"
 	"time"
 
-	appCfg "github.com/baothaihcmut/Ecommerce-Go/products/internal/config"
+	appCfg "github.com/baothaihcmut/Ecommerce-go/products/internal/config"
 	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracegrpc"
 	"go.opentelemetry.io/otel/propagation"

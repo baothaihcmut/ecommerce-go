@@ -6,7 +6,7 @@ import (
 	awsConfig "github.com/aws/aws-sdk-go-v2/config"
 	"github.com/aws/aws-sdk-go-v2/credentials"
 	"github.com/aws/aws-sdk-go-v2/service/s3"
-	"github.com/baothaihcmut/Ecommerce-Go/products/internal/config"
+	"github.com/baothaihcmut/Ecommerce-go/products/internal/config"
 )
 
 func InitalizeS3(cfg *config.Config) (*s3.Client, error) {
