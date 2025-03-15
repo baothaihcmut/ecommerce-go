@@ -6,5 +6,5 @@ sql:
     gen:
       go:
         package: "sqlc"
-        out: "internal/adapter/db/postgres/sqlc"
         sql_package: "pgx/v5"
+        out: "../internal/adapter/db/postgres/sqlc"

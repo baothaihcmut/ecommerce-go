@@ -5,9 +5,7 @@
 package sqlc
 
 import (
-	"database/sql"
-
-	"github.com/google/uuid"
+	"github.com/jackc/pgx/v5/pgtype"
 )
 
 type Address struct {
@@ -16,36 +14,36 @@ type Address struct {
 	Town     string
 	City     string
 	Province string
-	UserID   uuid.UUID
+	UserID   pgtype.UUID
 }
 
 type Admin struct {
-	ID                  uuid.UUID
+	ID                  pgtype.UUID
 	Email               string
 	Password            string
 	PhoneNumber         string
 	FirstName           string
 	LastName            string
-	CurrentRefreshToken sql.NullString
+	CurrentRefreshToken pgtype.Text
 }
 
 type Customer struct {
-	UserID     uuid.UUID
-	LoyalPoint sql.NullInt32
+	UserID     pgtype.UUID
+	LoyalPoint pgtype.Int4
 }
 
 type ShopOwner struct {
-	UserID           uuid.UUID
-	BussinessLicense sql.NullString
+	UserID           pgtype.UUID
+	BussinessLicense pgtype.Text
 }
 
 type User struct {
-	ID                  uuid.UUID
+	ID                  pgtype.UUID
 	Email               string
 	Password            string
-	IsShopOwnerActive   sql.NullBool
+	IsShopOwnerActive   bool
 	PhoneNumber         string
 	FirstName           string
 	LastName            string
-	CurrentRefreshToken sql.NullString
+	CurrentRefreshToken pgtype.Text
 }

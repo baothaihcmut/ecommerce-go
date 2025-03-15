@@ -1,32 +1,28 @@
 package main
 
 import (
-	"net"
-	"os"
-	"time"
+	"fmt"
 
-	userProto "github.com/baothaihcmut/Ecommerce-go/libs/pkg/proto/users/v1"
-	"github.com/baothaihcmut/Ecommerce-go/users/internal/adapter/grpc/services"
-	"google.golang.org/grpc"
-	"google.golang.org/grpc/keepalive"
+	cfgLib "github.com/baothaihcmut/Ecommerce-go/libs/pkg/config"
+	"github.com/baothaihcmut/Ecommerce-go/users/internal/config"
+	"github.com/baothaihcmut/Ecommerce-go/users/internal/server"
+	"github.com/baothaihcmut/Ecommerce-go/users/internal/server/initialize"
 )
 
 func main() {
-	grpcListener, listErr := net.Listen("tcp", ":50051")
-	if listErr != nil {
-		os.Exit(1)
+	config := config.CoreConfig{}
+
+	if err := cfgLib.LoadConfig(&config, "config"); err != nil {
+		fmt.Println(err)
+		return
 	}
-	// grpc options
-	serverOptions := []grpc.ServerOption{
-		// Unary option
-		grpc.KeepaliveParams(keepalive.ServerParameters{
-			MaxConnectionIdle: 5 * time.Duration(5),
-			MaxConnectionAge:  10 * time.Minute,
-			Time:              2 * time.Minute,
-			Timeout:           20 * time.Second,
-		}),
+	//init db
+	pool, err := initialize.InitializePostgres(config.DB)
+	if err != nil {
+		fmt.Println(err)
+		return
 	}
-	baseServer := grpc.NewServer(serverOptions...)
-	userProto.RegisterAuthServiceServer(baseServer, services.NewAuthService())
-	baseServer.Serve(grpcListener)
+	defer pool.Close()
+	s := server.NewServer(pool, &config)
+	s.Start()
 }

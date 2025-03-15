@@ -7,9 +7,8 @@ package sqlc
 
 import (
 	"context"
-	"database/sql"
 
-	"github.com/google/uuid"
+	"github.com/jackc/pgx/v5/pgtype"
 )
 
 const checkUserExistByCriteria = `-- name: CheckUserExistByCriteria :one
@@ -27,11 +26,11 @@ WHERE
 
 type CheckUserExistByCriteriaParams struct {
 	Criteria interface{}
-	Value    sql.NullString
+	Value    pgtype.Text
 }
 
 func (q *Queries) CheckUserExistByCriteria(ctx context.Context, arg CheckUserExistByCriteriaParams) (int32, error) {
-	row := q.db.QueryRowContext(ctx, checkUserExistByCriteria, arg.Criteria, arg.Value)
+	row := q.db.QueryRow(ctx, checkUserExistByCriteria, arg.Criteria, arg.Value)
 	var column_1 int32
 	err := row.Scan(&column_1)
 	return column_1, err
@@ -50,16 +49,16 @@ VALUES (
 `
 
 type CreateAddressParams struct {
-	Priority sql.NullInt32
-	Street   sql.NullString
-	Town     sql.NullString
-	City     sql.NullString
-	Province sql.NullString
-	UserId   uuid.NullUUID
+	Priority pgtype.Int4
+	Street   pgtype.Text
+	Town     pgtype.Text
+	City     pgtype.Text
+	Province pgtype.Text
+	UserId   pgtype.UUID
 }
 
 func (q *Queries) CreateAddress(ctx context.Context, arg CreateAddressParams) error {
-	_, err := q.db.ExecContext(ctx, createAddress,
+	_, err := q.db.Exec(ctx, createAddress,
 		arg.Priority,
 		arg.Street,
 		arg.Town,
@@ -79,12 +78,12 @@ VALUES(
 `
 
 type CreateCustomerParams struct {
-	UserId     uuid.NullUUID
-	LoyalPoint sql.NullInt32
+	UserId     pgtype.UUID
+	LoyalPoint pgtype.Int4
 }
 
 func (q *Queries) CreateCustomer(ctx context.Context, arg CreateCustomerParams) error {
-	_, err := q.db.ExecContext(ctx, createCustomer, arg.UserId, arg.LoyalPoint)
+	_, err := q.db.Exec(ctx, createCustomer, arg.UserId, arg.LoyalPoint)
 	return err
 }
 
@@ -97,12 +96,12 @@ VALUES(
 `
 
 type CreateShopOwnerParams struct {
-	UserId           uuid.NullUUID
-	BussinessLicense sql.NullString
+	UserId           pgtype.UUID
+	BussinessLicense pgtype.Text
 }
 
 func (q *Queries) CreateShopOwner(ctx context.Context, arg CreateShopOwnerParams) error {
-	_, err := q.db.ExecContext(ctx, createShopOwner, arg.UserId, arg.BussinessLicense)
+	_, err := q.db.Exec(ctx, createShopOwner, arg.UserId, arg.BussinessLicense)
 	return err
 }
 
@@ -120,18 +119,18 @@ VALUES ($1,
 `
 
 type CreateUserParams struct {
-	ID                  uuid.NullUUID
-	Email               sql.NullString
-	Password            sql.NullString
-	PhoneNumber         sql.NullString
-	FirstName           sql.NullString
-	LastName            sql.NullString
-	IsShopOwnerActive   sql.NullBool
-	CurrentRefreshToken sql.NullString
+	ID                  pgtype.UUID
+	Email               pgtype.Text
+	Password            pgtype.Text
+	PhoneNumber         pgtype.Text
+	FirstName           pgtype.Text
+	LastName            pgtype.Text
+	IsShopOwnerActive   pgtype.Bool
+	CurrentRefreshToken pgtype.Text
 }
 
 func (q *Queries) CreateUser(ctx context.Context, arg CreateUserParams) error {
-	_, err := q.db.ExecContext(ctx, createUser,
+	_, err := q.db.Exec(ctx, createUser,
 		arg.ID,
 		arg.Email,
 		arg.Password,
@@ -160,11 +159,11 @@ LIMIT 1
 
 type FindAdminByCriteriaParams struct {
 	Criteria interface{}
-	Value    sql.NullString
+	Value    pgtype.Text
 }
 
 func (q *Queries) FindAdminByCriteria(ctx context.Context, arg FindAdminByCriteriaParams) (Admin, error) {
-	row := q.db.QueryRowContext(ctx, findAdminByCriteria, arg.Criteria, arg.Value)
+	row := q.db.QueryRow(ctx, findAdminByCriteria, arg.Criteria, arg.Value)
 	var i Admin
 	err := row.Scan(
 		&i.ID,
@@ -182,8 +181,8 @@ const findAllAddressOfUser = `-- name: FindAllAddressOfUser :many
 SELECT priority, street, town, city, province, user_id FROM addresses WHERE user_id = $1
 `
 
-func (q *Queries) FindAllAddressOfUser(ctx context.Context, userid uuid.NullUUID) ([]Address, error) {
-	rows, err := q.db.QueryContext(ctx, findAllAddressOfUser, userid)
+func (q *Queries) FindAllAddressOfUser(ctx context.Context, userid pgtype.UUID) ([]Address, error) {
+	rows, err := q.db.Query(ctx, findAllAddressOfUser, userid)
 	if err != nil {
 		return nil, err
 	}
@@ -202,9 +201,6 @@ func (q *Queries) FindAllAddressOfUser(ctx context.Context, userid uuid.NullUUID
 			return nil, err
 		}
 		items = append(items, i)
-	}
-	if err := rows.Close(); err != nil {
-		return nil, err
 	}
 	if err := rows.Err(); err != nil {
 		return nil, err
@@ -219,8 +215,8 @@ WHERE
     a.user_id = $1
 `
 
-func (q *Queries) FindUserAddress(ctx context.Context, userID uuid.NullUUID) ([]Address, error) {
-	rows, err := q.db.QueryContext(ctx, findUserAddress, userID)
+func (q *Queries) FindUserAddress(ctx context.Context, userID pgtype.UUID) ([]Address, error) {
+	rows, err := q.db.Query(ctx, findUserAddress, userID)
 	if err != nil {
 		return nil, err
 	}
@@ -239,9 +235,6 @@ func (q *Queries) FindUserAddress(ctx context.Context, userID uuid.NullUUID) ([]
 			return nil, err
 		}
 		items = append(items, i)
-	}
-	if err := rows.Close(); err != nil {
-		return nil, err
 	}
 	if err := rows.Err(); err != nil {
 		return nil, err
@@ -267,26 +260,26 @@ LIMIT 1
 
 type FindUserByCriteriaParams struct {
 	Criteria interface{}
-	Value    sql.NullString
+	Value    pgtype.Text
 }
 
 type FindUserByCriteriaRow struct {
-	ID                  uuid.UUID
+	ID                  pgtype.UUID
 	Email               string
 	Password            string
-	IsShopOwnerActive   sql.NullBool
+	IsShopOwnerActive   bool
 	PhoneNumber         string
 	FirstName           string
 	LastName            string
-	CurrentRefreshToken sql.NullString
-	UserID              uuid.NullUUID
-	LoyalPoint          sql.NullInt32
-	UserID_2            uuid.NullUUID
-	BussinessLicense    sql.NullString
+	CurrentRefreshToken pgtype.Text
+	UserID              pgtype.UUID
+	LoyalPoint          pgtype.Int4
+	UserID_2            pgtype.UUID
+	BussinessLicense    pgtype.Text
 }
 
 func (q *Queries) FindUserByCriteria(ctx context.Context, arg FindUserByCriteriaParams) (FindUserByCriteriaRow, error) {
-	row := q.db.QueryRowContext(ctx, findUserByCriteria, arg.Criteria, arg.Value)
+	row := q.db.QueryRow(ctx, findUserByCriteria, arg.Criteria, arg.Value)
 	var i FindUserByCriteriaRow
 	err := row.Scan(
 		&i.ID,
@@ -319,17 +312,17 @@ INSERT INTO admins (id, first_name, last_name, email, password, phone_number,cur
 `
 
 type InsertAdminParams struct {
-	ID                  uuid.NullUUID
-	FirstName           sql.NullString
-	LastName            sql.NullString
-	Email               sql.NullString
-	Password            sql.NullString
-	PhoneNumber         sql.NullString
-	CurrentRefreshToken sql.NullString
+	ID                  pgtype.UUID
+	FirstName           pgtype.Text
+	LastName            pgtype.Text
+	Email               pgtype.Text
+	Password            pgtype.Text
+	PhoneNumber         pgtype.Text
+	CurrentRefreshToken pgtype.Text
 }
 
 func (q *Queries) InsertAdmin(ctx context.Context, arg InsertAdminParams) error {
-	_, err := q.db.ExecContext(ctx, insertAdmin,
+	_, err := q.db.Exec(ctx, insertAdmin,
 		arg.ID,
 		arg.FirstName,
 		arg.LastName,
@@ -352,16 +345,16 @@ WHERE user_id = $5 AND priority = $6
 `
 
 type UpdateAddressParams struct {
-	Street   sql.NullString
-	Town     sql.NullString
-	City     sql.NullString
-	Province sql.NullString
-	UserId   uuid.NullUUID
-	Priority sql.NullInt32
+	Street   pgtype.Text
+	Town     pgtype.Text
+	City     pgtype.Text
+	Province pgtype.Text
+	UserId   pgtype.UUID
+	Priority pgtype.Int4
 }
 
 func (q *Queries) UpdateAddress(ctx context.Context, arg UpdateAddressParams) error {
-	_, err := q.db.ExecContext(ctx, updateAddress,
+	_, err := q.db.Exec(ctx, updateAddress,
 		arg.Street,
 		arg.Town,
 		arg.City,
@@ -385,17 +378,17 @@ WHERE id = $7
 `
 
 type UpdateAdminParams struct {
-	FirstName           sql.NullString
-	LastName            sql.NullString
-	Email               sql.NullString
-	Password            sql.NullString
-	PhoneNumber         sql.NullString
-	CurrentRefreshToken sql.NullString
-	ID                  uuid.NullUUID
+	FirstName           pgtype.Text
+	LastName            pgtype.Text
+	Email               pgtype.Text
+	Password            pgtype.Text
+	PhoneNumber         pgtype.Text
+	CurrentRefreshToken pgtype.Text
+	ID                  pgtype.UUID
 }
 
 func (q *Queries) UpdateAdmin(ctx context.Context, arg UpdateAdminParams) error {
-	_, err := q.db.ExecContext(ctx, updateAdmin,
+	_, err := q.db.Exec(ctx, updateAdmin,
 		arg.FirstName,
 		arg.LastName,
 		arg.Email,
@@ -415,12 +408,12 @@ WHERE user_id = $2
 `
 
 type UpdateCustomerParams struct {
-	LoyalPoint sql.NullInt32
-	UserId     uuid.NullUUID
+	LoyalPoint pgtype.Int4
+	UserId     pgtype.UUID
 }
 
 func (q *Queries) UpdateCustomer(ctx context.Context, arg UpdateCustomerParams) error {
-	_, err := q.db.ExecContext(ctx, updateCustomer, arg.LoyalPoint, arg.UserId)
+	_, err := q.db.Exec(ctx, updateCustomer, arg.LoyalPoint, arg.UserId)
 	return err
 }
 
@@ -432,12 +425,12 @@ WHERE user_id = $2
 `
 
 type UpdateShopOwnerParams struct {
-	BussinessLicense sql.NullString
-	UserId           uuid.NullUUID
+	BussinessLicense pgtype.Text
+	UserId           pgtype.UUID
 }
 
 func (q *Queries) UpdateShopOwner(ctx context.Context, arg UpdateShopOwnerParams) error {
-	_, err := q.db.ExecContext(ctx, updateShopOwner, arg.BussinessLicense, arg.UserId)
+	_, err := q.db.Exec(ctx, updateShopOwner, arg.BussinessLicense, arg.UserId)
 	return err
 }
 
@@ -455,18 +448,18 @@ WHERE id = $8
 `
 
 type UpdateUserParams struct {
-	Email               sql.NullString
-	Password            sql.NullString
-	PhoneNumber         sql.NullString
-	FirstName           sql.NullString
-	LastName            sql.NullString
-	IsShopOwnerActive   sql.NullBool
-	CurrentRefreshToken sql.NullString
-	ID                  uuid.NullUUID
+	Email               pgtype.Text
+	Password            pgtype.Text
+	PhoneNumber         pgtype.Text
+	FirstName           pgtype.Text
+	LastName            pgtype.Text
+	IsShopOwnerActive   pgtype.Bool
+	CurrentRefreshToken pgtype.Text
+	ID                  pgtype.UUID
 }
 
 func (q *Queries) UpdateUser(ctx context.Context, arg UpdateUserParams) error {
-	_, err := q.db.ExecContext(ctx, updateUser,
+	_, err := q.db.Exec(ctx, updateUser,
 		arg.Email,
 		arg.Password,
 		arg.PhoneNumber,
