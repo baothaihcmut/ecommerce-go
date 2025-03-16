@@ -1,46 +1,51 @@
 syntax = "proto3";
-import "shared/v1/status.proto";
-import "google/api/annotations.proto";  
 package users.v1;
+
+import "google/api/annotations.proto";
+import "shared/v1/status.proto";
+
 option go_package = "github.com/baothaihcmut/Ecommerce-go/libs/pkg/proto/users/v1";
 
 service AuthService {
-    rpc LogIn(LogInRequest) returns (LogInResponse){
-        option (google.api.http) = {
-            post: "/api/v1/auth"
-            body: "*"
-        };
+  rpc LogIn(LogInRequest) returns (LogInResponse) {
+    option (google.api.http) = {
+      post: "/api/v1/auth/sign-up"
+      body: "*"
     };
-
+  }
+  rpc SignUp(SignUpRequest) returns (SignUpResponse) {
+    option (google.api.http) = {
+      post: "/api/v1/auth/log-in"
+      body: "*"
+    };
+  }
 }
 
 message SignUpRequest {
-    string email = 1 [json_name = "email"];
-    string password = 2 [json_name = "password"];
-    string first_name = 3 [json_name = "firstName"];
-    string last_name = 4 [json_name = "lastName"];
+  string email = 1 [json_name = "email"];
+  string password = 2 [json_name = "password"];
+  string first_name = 3 [json_name = "firstName"];
+  string last_name = 4 [json_name = "lastName"];
+  string phone_number = 5 [json_name = "phoneNumber"];
 }
 
 message SignUpResponse {
-    shared.v1.Status status = 1 [json_name = "status"];
-    SignUpData data = 2 [json_name = "data"];
+  shared.v1.Status status = 1 [json_name = "status"];
+  SignUpData data = 2 [json_name = "data"];
 }
 
-message SignUpData {
-}
+message SignUpData {}
 
 message LogInRequest {
-    string email = 1  [json_name = "email"];
-    string password = 2 [json_name="password"];
+  string email = 1 [json_name = "email"];
+  string password = 2 [json_name = "password"];
 }
-
 
 message LogInResponse {
-    shared.v1.Status status = 1 [json_name = "status"];
-    LogInData data = 2 [json_name = "data"];
+  shared.v1.Status status = 1 [json_name = "status"];
+  LogInData data = 2 [json_name = "data"];
 }
 message LogInData {
-    string access_token = 1 [json_name = "access_token"];
-    string refresh_token = 2 [json_name = "refresh_token"];
+  string access_token = 1 [json_name = "access_token"];
+  string refresh_token = 2 [json_name = "refresh_token"];
 }
-

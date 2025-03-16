@@ -1,3 +1,13 @@
 {
-    "editor.defaultFormatter": "golang.go"
-}
+    "go.goroot": "/home/baothai/.gvm/gos/go1.23.7",
+    "go.gopath": "/home/baothai/go",
+    "go.alternateTools": {
+      "go": "/home/baothai/.gvm/gos/go1.23.7/bin/go"
+    },
+    "terminal.integrated.env.osx": {
+      "GOPATH": "/home/baothai/go",
+      "GOROOT": "/home/baothai/.gvm/gos/go1.23.7",
+      "PATH": "/home/baothai/.gvm/gos/go1.23.7/bin:$PATH"
+    }
+  }
+  

@@ -2,13 +2,13 @@ package repositories
 
 import (
 	"context"
-	"database/sql"
 	"sync"
 
 	"github.com/baothaihcmut/Ecommerce-go/users/internal/adapter/db/postgres/sqlc"
 	"github.com/baothaihcmut/Ecommerce-go/users/internal/core/domain/entities"
 	"github.com/baothaihcmut/Ecommerce-go/users/internal/core/port/outbound/repositories"
-	"github.com/google/uuid"
+	"github.com/jackc/pgx/v5/pgtype"
+	"github.com/jackc/pgx/v5/pgxpool"
 )
 
 type PostgresUserRepo struct {
@@ -17,21 +17,21 @@ type PostgresUserRepo struct {
 
 func toDBUser(user *entities.User) sqlc.CreateUserParams {
 	return sqlc.CreateUserParams{
-		ID:                  uuid.NullUUID{UUID: user.Id, Valid: true},
-		Email:               sql.NullString{String: user.Email, Valid: user.Email != ""},
-		Password:            sql.NullString{String: user.Password, Valid: user.Password != ""},
-		PhoneNumber:         sql.NullString{String: user.PhoneNumber, Valid: user.PhoneNumber != ""},
-		IsShopOwnerActive:   sql.NullBool{Bool: user.IsShopOwnerActive, Valid: true},
-		FirstName:           sql.NullString{String: user.FirstName, Valid: user.FirstName != ""},
-		LastName:            sql.NullString{String: user.LastName, Valid: user.LastName != ""},
+		ID:                  pgtype.UUID{Bytes: user.Id, Valid: true},
+		Email:               pgtype.Text{String: user.Email, Valid: user.Email != ""},
+		Password:            pgtype.Text{String: user.Password, Valid: user.Password != ""},
+		PhoneNumber:         pgtype.Text{String: user.PhoneNumber, Valid: user.PhoneNumber != ""},
+		IsShopOwnerActive:   pgtype.Bool{Bool: user.IsShopOwnerActive, Valid: true},
+		FirstName:           pgtype.Text{String: user.FirstName, Valid: user.FirstName != ""},
+		LastName:            pgtype.Text{String: user.LastName, Valid: user.LastName != ""},
 		CurrentRefreshToken: fromNullableString(user.CurrentRefreshToken),
 	}
 }
-func fromNullableString(s *string) sql.NullString {
+func fromNullableString(s *string) pgtype.Text {
 	if s == nil {
-		return sql.NullString{Valid: false}
+		return pgtype.Text{Valid: false}
 	}
-	return sql.NullString{String: *s, Valid: true}
+	return pgtype.Text{String: *s, Valid: true}
 }
 
 // CreateUser implements repositories.UserRepo.
@@ -51,8 +51,8 @@ func (p PostgresUserRepo) CreateUser(ctx context.Context, user *entities.User) e
 		go func() {
 			defer wg.Done()
 			err = p.q.CreateCustomer(ctx, sqlc.CreateCustomerParams{
-				UserId:     uuid.NullUUID{UUID: user.Id, Valid: true},
-				LoyalPoint: sql.NullInt32{Int32: int32(user.Customer.LoyaltyPoint), Valid: true},
+				UserId:     pgtype.UUID{Bytes: user.Id, Valid: true},
+				LoyalPoint: pgtype.Int4{Int32: int32(user.Customer.LoyaltyPoint), Valid: true},
 			})
 			if err != nil {
 				select {
@@ -70,8 +70,8 @@ func (p PostgresUserRepo) CreateUser(ctx context.Context, user *entities.User) e
 		go func() {
 			defer wg.Done()
 			err = p.q.CreateShopOwner(ctx, sqlc.CreateShopOwnerParams{
-				UserId:           uuid.NullUUID{UUID: user.Id, Valid: true},
-				BussinessLicense: sql.NullString{String: user.ShopOwner.BussinessLicense, Valid: user.ShopOwner.BussinessLicense != ""},
+				UserId:           pgtype.UUID{Bytes: user.Id, Valid: true},
+				BussinessLicense: pgtype.Text{String: user.ShopOwner.BussinessLicense, Valid: user.ShopOwner.BussinessLicense != ""},
 			})
 			if err != nil {
 				select {
@@ -88,12 +88,12 @@ func (p PostgresUserRepo) CreateUser(ctx context.Context, user *entities.User) e
 		wg.Add(1)
 		go func() {
 			err = p.q.CreateAddress(ctx, sqlc.CreateAddressParams{
-				Priority: sql.NullInt32{Int32: int32(address.Priority), Valid: true},
-				UserId:   uuid.NullUUID{UUID: user.Id, Valid: true},
-				Street:   sql.NullString{String: address.Street, Valid: true},
-				Town:     sql.NullString{String: address.Town, Valid: true},
-				City:     sql.NullString{String: address.City, Valid: true},
-				Province: sql.NullString{String: address.Province, Valid: true},
+				Priority: pgtype.Int4{Int32: int32(address.Priority), Valid: true},
+				UserId:   pgtype.UUID{Bytes: user.Id, Valid: true},
+				Street:   pgtype.Text{String: address.Street, Valid: true},
+				Town:     pgtype.Text{String: address.Town, Valid: true},
+				City:     pgtype.Text{String: address.City, Valid: true},
+				Province: pgtype.Text{String: address.Province, Valid: true},
 			})
 			if err != nil {
 				select {
@@ -119,7 +119,7 @@ func (p PostgresUserRepo) CreateUser(ctx context.Context, user *entities.User) e
 func (p PostgresUserRepo) FindUserByEmail(ctx context.Context, email string) (*entities.User, error) {
 	res, err := p.q.FindUserByCriteria(ctx, sqlc.FindUserByCriteriaParams{
 		Criteria: "phone_number",
-		Value: sql.NullString{
+		Value: pgtype.Text{
 			String: email,
 			Valid:  true,
 		},
@@ -132,13 +132,13 @@ func (p PostgresUserRepo) FindUserByEmail(ctx context.Context, email string) (*e
 		currentRefreshToken = &res.CurrentRefreshToken.String
 	}
 	return &entities.User{
-		Id:                  res.ID,
+		Id:                  res.ID.Bytes,
 		Email:               res.Email,
 		FirstName:           res.FirstName,
 		LastName:            res.LastName,
 		Password:            res.Password,
 		PhoneNumber:         res.PhoneNumber,
-		IsShopOwnerActive:   res.IsShopOwnerActive.Bool,
+		IsShopOwnerActive:   res.IsShopOwnerActive,
 		CurrentRefreshToken: currentRefreshToken,
 	}, nil
 }
@@ -147,7 +147,7 @@ func (p PostgresUserRepo) FindUserByEmail(ctx context.Context, email string) (*e
 func (p PostgresUserRepo) FindUserByPhoneNumber(ctx context.Context, phoneNumber string) (*entities.User, error) {
 	res, err := p.q.FindUserByCriteria(ctx, sqlc.FindUserByCriteriaParams{
 		Criteria: "phone_number",
-		Value: sql.NullString{
+		Value: pgtype.Text{
 			String: phoneNumber,
 			Valid:  true,
 		},
@@ -160,20 +160,20 @@ func (p PostgresUserRepo) FindUserByPhoneNumber(ctx context.Context, phoneNumber
 		currentRefreshToken = &res.CurrentRefreshToken.String
 	}
 	return &entities.User{
-		Id:                  res.ID,
+		Id:                  res.ID.Bytes,
 		Email:               res.Email,
 		FirstName:           res.FirstName,
 		LastName:            res.LastName,
 		Password:            res.Password,
 		PhoneNumber:         res.PhoneNumber,
-		IsShopOwnerActive:   res.IsShopOwnerActive.Bool,
+		IsShopOwnerActive:   res.IsShopOwnerActive,
 		CurrentRefreshToken: currentRefreshToken,
 	}, nil
 
 }
 
-func NewPostgresUserRepo(db *sql.DB) repositories.UserRepo {
+func NewPostgresUserRepo(conn *pgxpool.Pool) repositories.UserRepo {
 	return PostgresUserRepo{
-		q: sqlc.New(db),
+		q: sqlc.New(conn),
 	}
 }

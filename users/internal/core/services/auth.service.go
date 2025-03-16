@@ -7,6 +7,7 @@ import (
 	"github.com/baothaihcmut/Ecommerce-go/users/internal/core/domain/entities"
 	"github.com/baothaihcmut/Ecommerce-go/users/internal/core/exception"
 	"github.com/baothaihcmut/Ecommerce-go/users/internal/core/port/inbound/commands"
+	"github.com/baothaihcmut/Ecommerce-go/users/internal/core/port/inbound/handlers"
 	"github.com/baothaihcmut/Ecommerce-go/users/internal/core/port/inbound/results"
 	"github.com/baothaihcmut/Ecommerce-go/users/internal/core/port/outbound/external"
 	"github.com/baothaihcmut/Ecommerce-go/users/internal/core/port/outbound/repositories"
@@ -96,4 +97,16 @@ func (a *AuthService) SignUp(ctx context.Context, command *commands.SignUpComman
 	})
 	return &results.SignUpResult{}, nil
 
+}
+
+func NewAuthService(
+	userRepo repositories.UserRepo,
+	jwtService external.JwtService,
+	userConfirmService external.UserConfirmService,
+) handlers.AuthHandler {
+	return &AuthService{
+		userRepo:           userRepo,
+		jwtService:         jwtService,
+		userConfirmService: userConfirmService,
+	}
 }
