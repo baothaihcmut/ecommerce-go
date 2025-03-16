@@ -5,7 +5,7 @@ import (
 	"context"
 	"html/template"
 
-	"github.com/baothaihcmut/ecommerce-go/mail/internal/config"
+	"github.com/baothaihcmut/Ecommerce-go/mail/internal/config"
 	"gopkg.in/gomail.v2"
 )
 
@@ -45,7 +45,7 @@ func (g *MailerImpl) SendMail(_ context.Context, arg SendMailArg) error {
 	}
 	return nil
 }
-func NewGmailService(dialer *gomail.Dialer, mailConfig *config.MailerConfig) Mailer {
+func NewMailer(dialer *gomail.Dialer, mailConfig *config.MailerConfig) Mailer {
 	return &MailerImpl{
 		dialer:     dialer,
 		mailConfig: mailConfig,

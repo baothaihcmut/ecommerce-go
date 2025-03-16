@@ -4,17 +4,18 @@ import (
 	"context"
 
 	"github.com/baothaihcmut/Ecommerce-go/libs/pkg/events"
-	"github.com/baothaihcmut/ecommerce-go/mail/internal/mailer"
-	"github.com/baothaihcmut/ecommerce-go/mail/internal/models"
-)
 
+	"github.com/baothaihcmut/Ecommerce-go/mail/internal/mailer"
+	"github.com/baothaihcmut/Ecommerce-go/mail/internal/models"
+)
 type AuthMailService interface {
+	SendMailConfirmSignUp(ctx context.Context, e *events.UserSignUpEvent) error
+	
 }
 type AuthMailServiceImpl struct {
 	mailer mailer.Mailer
 }
-
-func (a *AuthMailServiceImpl) SendMailConfirmSignUp(ctx context.Context, e events.UserSignUpEvent) error {
+func (a *AuthMailServiceImpl) SendMailConfirmSignUp(ctx context.Context, e *events.UserSignUpEvent) error {
 	err := a.mailer.SendMail(
 		ctx,
 		mailer.SendMailArg{
@@ -33,4 +34,9 @@ func (a *AuthMailServiceImpl) SendMailConfirmSignUp(ctx context.Context, e event
 		return err
 	}
 	return nil
+}
+func NewAuthMailService(mailer mailer.Mailer) AuthMailService {
+	return &AuthMailServiceImpl{
+		mailer: mailer,
+	}
 }

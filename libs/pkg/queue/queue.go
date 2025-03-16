@@ -1,5 +1,10 @@
 package queue
 
+import amqp "github.com/rabbitmq/amqp091-go"
+
 type QueueService interface {
-	PublishMessage(topic string, value interface{}, headers map[string]string) (int32, int64, error)
+	Close() error
+	CreateQueue(name string, durable, autodelete bool) error
+	BindQueue(queueName, binding, exchange string) error
+	Consume(queueName, consumer string, autoAck bool) (<-chan amqp.Delivery, error)
 }
