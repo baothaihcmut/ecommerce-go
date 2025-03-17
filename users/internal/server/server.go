@@ -8,43 +8,63 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/baothaihcmut/Ecommerce-go/libs/pkg/cache"
 	userProto "github.com/baothaihcmut/Ecommerce-go/libs/pkg/proto/users/v1"
+	"github.com/baothaihcmut/Ecommerce-go/libs/pkg/queue"
 	"github.com/baothaihcmut/Ecommerce-go/users/internal/adapter/db/postgres/repositories"
 	grpcService "github.com/baothaihcmut/Ecommerce-go/users/internal/adapter/grpc/services"
 	externalService "github.com/baothaihcmut/Ecommerce-go/users/internal/adapter/services"
 	"github.com/baothaihcmut/Ecommerce-go/users/internal/config"
 	coreService "github.com/baothaihcmut/Ecommerce-go/users/internal/core/services"
 	"github.com/jackc/pgx/v5/pgxpool"
+	"github.com/rabbitmq/amqp091-go"
+	"github.com/redis/go-redis/v9"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/keepalive"
 )
 
 type Server struct {
-	db  *pgxpool.Pool
-	cfg *config.CoreConfig
+	db       *pgxpool.Pool
+	redis    *redis.Client
+	rabbitMq *amqp091.Connection
+	cfg      *config.CoreConfig
 }
 
-func NewServer(db *pgxpool.Pool, cfg *config.CoreConfig) *Server {
+func NewServer(
+	db *pgxpool.Pool,
+	redis *redis.Client,
+	rabbitMq *amqp091.Connection,
+	cfg *config.CoreConfig) *Server {
 	return &Server{
-		db:  db,
-		cfg: cfg,
+		db:       db,
+		redis:    redis,
+		rabbitMq: rabbitMq,
+		cfg:      cfg,
 	}
 }
 func (s *Server) Start() {
+	queueService, err := queue.NewRabbitMqService(s.rabbitMq)
+	if err != nil {
+		return
+	}
+	redisService := cache.NewRedisService(s.redis)
 	//init external service
-	userConfirmService := externalService.NewUserConfirmService()
+	eventPublisher := externalService.NewEventPublisherService(queueService)
+	userConfirmService := externalService.NewUserConfirmService(redisService)
 	jwtService := externalService.NewJWTService()
 	//init repository
 	userRepo := repositories.NewPostgresUserRepo(s.db)
 	//init core
-	coreAuthService := coreService.NewAuthService(userRepo, jwtService, userConfirmService)
+	coreAuthService := coreService.NewAuthService(userRepo, jwtService, userConfirmService, eventPublisher)
+	//init exchange
+	queueService.InitExchange("user-events", "topic")
 	//init grpc handler
 	authHandler := grpcService.NewAuthService(coreAuthService)
-	err := make(chan error)
+	errCh := make(chan error)
 	go func() {
 		c := make(chan os.Signal, 1)
 		signal.Notify(c, syscall.SIGINT, syscall.SIGTERM, syscall.SIGALRM)
-		err <- fmt.Errorf("%s", <-c)
+		errCh <- fmt.Errorf("%s", <-c)
 	}()
 	grpcListener, listErr := net.Listen("tcp", fmt.Sprintf(":%d", s.cfg.Server.Port))
 	if listErr != nil {
@@ -68,5 +88,5 @@ func (s *Server) Start() {
 		fmt.Println("Server started successfully 🚀")
 		baseServer.Serve(grpcListener)
 	}()
-	<-err
+	<-errCh
 }

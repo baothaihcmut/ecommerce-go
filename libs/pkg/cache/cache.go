@@ -7,7 +7,8 @@ import (
 
 type CacheService interface {
 	SetValue(ctx context.Context, key string, value interface{}, ttl time.Duration) error
-	GetValue(ctx context.Context, key string) (interface{}, error)
+	GetValue(ctx context.Context, key string, output any) error
 	SetString(ctx context.Context, key string, val string, ttl time.Duration) error
 	GetString(ctx context.Context, key string) (string, error)
+	Remove(ctx context.Context, key string) error
 }

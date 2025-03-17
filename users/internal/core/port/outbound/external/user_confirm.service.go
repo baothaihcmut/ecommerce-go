@@ -15,5 +15,7 @@ type SendEmailArg struct {
 
 type UserConfirmService interface {
 	StoreUserInfo(context.Context, *entities.User) (string, error)
-	SendEmail(context.Context, SendEmailArg) error
+	GenerateUrlForConfirm(context.Context, string) (string, error)
+	IsUserPendingConfirmSignUp(context.Context, string) (bool, error)
+	GetUserInfo(context.Context, string) (*entities.User, error)
 }

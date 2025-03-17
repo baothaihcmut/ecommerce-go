@@ -19,8 +19,9 @@ import (
 const _ = grpc.SupportPackageIsVersion9
 
 const (
-	AuthService_LogIn_FullMethodName  = "/users.v1.AuthService/LogIn"
-	AuthService_SignUp_FullMethodName = "/users.v1.AuthService/SignUp"
+	AuthService_LogIn_FullMethodName         = "/users.v1.AuthService/LogIn"
+	AuthService_SignUp_FullMethodName        = "/users.v1.AuthService/SignUp"
+	AuthService_ConfirmSignUp_FullMethodName = "/users.v1.AuthService/ConfirmSignUp"
 )
 
 // AuthServiceClient is the client API for AuthService service.
@@ -29,6 +30,7 @@ const (
 type AuthServiceClient interface {
 	LogIn(ctx context.Context, in *LogInRequest, opts ...grpc.CallOption) (*LogInResponse, error)
 	SignUp(ctx context.Context, in *SignUpRequest, opts ...grpc.CallOption) (*SignUpResponse, error)
+	ConfirmSignUp(ctx context.Context, in *ConfirmSignUpRequest, opts ...grpc.CallOption) (*ConfirmSignUpResponse, error)
 }
 
 type authServiceClient struct {
@@ -59,12 +61,23 @@ func (c *authServiceClient) SignUp(ctx context.Context, in *SignUpRequest, opts 
 	return out, nil
 }
 
+func (c *authServiceClient) ConfirmSignUp(ctx context.Context, in *ConfirmSignUpRequest, opts ...grpc.CallOption) (*ConfirmSignUpResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(ConfirmSignUpResponse)
+	err := c.cc.Invoke(ctx, AuthService_ConfirmSignUp_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // AuthServiceServer is the server API for AuthService service.
 // All implementations must embed UnimplementedAuthServiceServer
 // for forward compatibility.
 type AuthServiceServer interface {
 	LogIn(context.Context, *LogInRequest) (*LogInResponse, error)
 	SignUp(context.Context, *SignUpRequest) (*SignUpResponse, error)
+	ConfirmSignUp(context.Context, *ConfirmSignUpRequest) (*ConfirmSignUpResponse, error)
 	mustEmbedUnimplementedAuthServiceServer()
 }
 
@@ -80,6 +93,9 @@ func (UnimplementedAuthServiceServer) LogIn(context.Context, *LogInRequest) (*Lo
 }
 func (UnimplementedAuthServiceServer) SignUp(context.Context, *SignUpRequest) (*SignUpResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method SignUp not implemented")
+}
+func (UnimplementedAuthServiceServer) ConfirmSignUp(context.Context, *ConfirmSignUpRequest) (*ConfirmSignUpResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method ConfirmSignUp not implemented")
 }
 func (UnimplementedAuthServiceServer) mustEmbedUnimplementedAuthServiceServer() {}
 func (UnimplementedAuthServiceServer) testEmbeddedByValue()                     {}
@@ -138,6 +154,24 @@ func _AuthService_SignUp_Handler(srv interface{}, ctx context.Context, dec func(
 	return interceptor(ctx, in, info, handler)
 }
 
+func _AuthService_ConfirmSignUp_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ConfirmSignUpRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(AuthServiceServer).ConfirmSignUp(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: AuthService_ConfirmSignUp_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(AuthServiceServer).ConfirmSignUp(ctx, req.(*ConfirmSignUpRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // AuthService_ServiceDesc is the grpc.ServiceDesc for AuthService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -152,6 +186,10 @@ var AuthService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "SignUp",
 			Handler:    _AuthService_SignUp_Handler,
+		},
+		{
+			MethodName: "ConfirmSignUp",
+			Handler:    _AuthService_ConfirmSignUp_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

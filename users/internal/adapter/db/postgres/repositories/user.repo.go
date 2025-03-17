@@ -7,6 +7,7 @@ import (
 	"github.com/baothaihcmut/Ecommerce-go/users/internal/adapter/db/postgres/sqlc"
 	"github.com/baothaihcmut/Ecommerce-go/users/internal/core/domain/entities"
 	"github.com/baothaihcmut/Ecommerce-go/users/internal/core/port/outbound/repositories"
+	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgtype"
 	"github.com/jackc/pgx/v5/pgxpool"
 )
@@ -35,9 +36,13 @@ func fromNullableString(s *string) pgtype.Text {
 }
 
 // CreateUser implements repositories.UserRepo.
-func (p PostgresUserRepo) CreateUser(ctx context.Context, user *entities.User) error {
+func (p PostgresUserRepo) CreateUser(ctx context.Context, user *entities.User, tx pgx.Tx) error {
+	q := p.q
+	if tx != nil {
+		q = sqlc.New(tx)
+	}
 	//create in user table
-	err := p.q.CreateUser(ctx, toDBUser(user))
+	err := q.CreateUser(ctx, toDBUser(user))
 	if err != nil {
 		return err
 	}
@@ -50,7 +55,7 @@ func (p PostgresUserRepo) CreateUser(ctx context.Context, user *entities.User) e
 		wg.Add(1)
 		go func() {
 			defer wg.Done()
-			err = p.q.CreateCustomer(ctx, sqlc.CreateCustomerParams{
+			err = q.CreateCustomer(ctx, sqlc.CreateCustomerParams{
 				UserId:     pgtype.UUID{Bytes: user.Id, Valid: true},
 				LoyalPoint: pgtype.Int4{Int32: int32(user.Customer.LoyaltyPoint), Valid: true},
 			})
@@ -69,7 +74,7 @@ func (p PostgresUserRepo) CreateUser(ctx context.Context, user *entities.User) e
 		wg.Add(1)
 		go func() {
 			defer wg.Done()
-			err = p.q.CreateShopOwner(ctx, sqlc.CreateShopOwnerParams{
+			err = q.CreateShopOwner(ctx, sqlc.CreateShopOwnerParams{
 				UserId:           pgtype.UUID{Bytes: user.Id, Valid: true},
 				BussinessLicense: pgtype.Text{String: user.ShopOwner.BussinessLicense, Valid: user.ShopOwner.BussinessLicense != ""},
 			})
@@ -87,7 +92,7 @@ func (p PostgresUserRepo) CreateUser(ctx context.Context, user *entities.User) e
 	for _, address := range user.Addresses {
 		wg.Add(1)
 		go func() {
-			err = p.q.CreateAddress(ctx, sqlc.CreateAddressParams{
+			err = q.CreateAddress(ctx, sqlc.CreateAddressParams{
 				Priority: pgtype.Int4{Int32: int32(address.Priority), Valid: true},
 				UserId:   pgtype.UUID{Bytes: user.Id, Valid: true},
 				Street:   pgtype.Text{String: address.Street, Valid: true},
@@ -125,6 +130,9 @@ func (p PostgresUserRepo) FindUserByEmail(ctx context.Context, email string) (*e
 		},
 	})
 	if err != nil {
+		if err == pgx.ErrNoRows {
+			return nil, nil
+		}
 		return nil, err
 	}
 	var currentRefreshToken *string
@@ -153,6 +161,9 @@ func (p PostgresUserRepo) FindUserByPhoneNumber(ctx context.Context, phoneNumber
 		},
 	})
 	if err != nil {
+		if err == pgx.ErrNoRows {
+			return nil, nil
+		}
 		return nil, err
 	}
 	var currentRefreshToken *string
@@ -174,6 +185,6 @@ func (p PostgresUserRepo) FindUserByPhoneNumber(ctx context.Context, phoneNumber
 
 func NewPostgresUserRepo(conn *pgxpool.Pool) repositories.UserRepo {
 	return PostgresUserRepo{
-		q: sqlc.New(conn),
+		q: sqlc.New(conn),	
 	}
 }

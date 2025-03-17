@@ -2,6 +2,7 @@ package services
 
 import (
 	"context"
+	"fmt"
 
 	v1 "github.com/baothaihcmut/Ecommerce-go/libs/pkg/proto/shared/v1"
 	userProto "github.com/baothaihcmut/Ecommerce-go/libs/pkg/proto/users/v1"
@@ -16,6 +17,10 @@ type AuthService struct {
 	authHandler handlers.AuthHandler
 }
 
+// ConfirmSignUp implements v1.AuthServiceServer.
+func (a *AuthService) ConfirmSignUp(context.Context, *userProto.ConfirmSignUpRequest) (*userProto.ConfirmSignUpResponse, error) {
+}
+
 // LogIn implements v1.AuthServiceServer.
 func (a *AuthService) LogIn(context.Context, *userProto.LogInRequest) (*userProto.LogInResponse, error) {
 	return &userProto.LogInResponse{
@@ -28,6 +33,7 @@ func (a *AuthService) LogIn(context.Context, *userProto.LogInRequest) (*userProt
 func (a *AuthService) SignUp(ctx context.Context, req *userProto.SignUpRequest) (*userProto.SignUpResponse, error) {
 	res, err := a.authHandler.SignUp(ctx, mappers.ToSignUpCommand(req))
 	if err != nil {
+		fmt.Println(err)
 		msg, code := exception.MapException(err)
 		return &userProto.SignUpResponse{
 			Data: nil,

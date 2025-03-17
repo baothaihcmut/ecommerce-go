@@ -19,6 +19,12 @@ service AuthService {
       body: "*"
     };
   }
+  rpc ConfirmSignUp(ConfirmSignUpRequest) returns (ConfirmSignUpResponse) {
+    option (google.api.http) = {
+      post: "/api/v1/auth/confirm"
+      body: "*"
+    };
+  }
 }
 
 message SignUpRequest {
@@ -48,4 +54,12 @@ message LogInResponse {
 message LogInData {
   string access_token = 1 [json_name = "access_token"];
   string refresh_token = 2 [json_name = "refresh_token"];
+}
+message ConfirmSignUpRequest {
+  string code = 1 [json_name = "code"];
+}
+message ConfirmSignUpData {}
+message ConfirmSignUpResponse {
+  shared.v1.Status status = 1 [json_name = "status"];
+  ConfirmSignUpData data = 2 [json_name = "data"];
 }

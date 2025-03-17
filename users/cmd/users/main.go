@@ -23,6 +23,20 @@ func main() {
 		return
 	}
 	defer pool.Close()
-	s := server.NewServer(pool, &config)
+	//init rabbitmq
+	rabbitMq, err := initialize.InitializeRabbitMq(config.RabbitMq)
+	if err != nil {
+		fmt.Printf("Error connect to Rabbitmq: %v\n", err)
+		return
+	}
+	defer rabbitMq.Close()
+	//init redis
+	redis, err := initialize.InitializeRedis(config.Redis)
+	if err != nil {
+		fmt.Printf("Error connect to Redis: %v\n", err)
+		return
+	}
+
+	s := server.NewServer(pool, redis, rabbitMq, &config)
 	s.Start()
 }

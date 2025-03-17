@@ -62,6 +62,6 @@ func NewUser(
 		CurrentRefreshToken: nil,
 		ShopOwner:           nil,
 	}
-	user.Customer = NewCustomer(user)
+	user.Customer = NewCustomer()
 	return user
 }

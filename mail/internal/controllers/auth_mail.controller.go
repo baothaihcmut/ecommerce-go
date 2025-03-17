@@ -14,7 +14,7 @@ import (
 )
 
 type AuthMailController interface {
-	Register(queue.QueueService,map[string]chan *amqp.Delivery) error
+	Register(queue.QueueService, map[string]chan *amqp.Delivery) error
 	Run(errCh chan error)
 }
 
@@ -24,12 +24,12 @@ type AuthMailControllerImpl struct {
 }
 
 // Register implements AuthMailController.
-func (a *AuthMailControllerImpl) Register(r queue.QueueService,msgChs map[string]chan *amqp.Delivery) error {
+func (a *AuthMailControllerImpl) Register(r queue.QueueService, msgChs map[string]chan *amqp.Delivery) error {
 	//register event
-	if err:= r.CreateQueue("mail-user-signup",true,false) ; err!= nil{
+	if err := r.CreateQueue("mail-user-signup", true, false); err != nil {
 		return err
 	}
-	if err := r.BindQueue("mail-user-signup","user.signup","user-events"); err != nil{
+	if err := r.BindQueue("mail-user-signup", "user.signup", "user-events"); err != nil {
 		return err
 	}
 	//create chanel for event
@@ -41,22 +41,22 @@ func (a *AuthMailControllerImpl) Register(r queue.QueueService,msgChs map[string
 
 func (a *AuthMailControllerImpl) Run(errCh chan error) {
 	localWg := sync.WaitGroup{}
-	for q,ch:= range a.msgChs{
+	for q, ch := range a.msgChs {
 		localWg.Add(1)
 		go func() {
 			defer localWg.Done()
-			for msg := range ch{
+			for msg := range ch {
 				ctx, cancel := context.WithTimeout(context.Background(), time.Second*5)
 				func() {
 					defer cancel()
 					var err error
-					switch q{
+					switch q {
 					case "mail-user-signup":
-						err= a.handleUserSignUpEvent(ctx,msg.Body)
+						err = a.handleUserSignUpEvent(ctx, msg.Body)
 					default:
-						err =errors.New("handler not found in Auth service")
+						err = errors.New("handler not found in Auth service")
 					}
-					if err!= nil{
+					if err != nil {
 						errCh <- err
 					}
 				}()
@@ -66,12 +66,12 @@ func (a *AuthMailControllerImpl) Run(errCh chan error) {
 	localWg.Wait()
 }
 
-func(a *AuthMailControllerImpl) handleUserSignUpEvent(ctx context.Context, message []byte)error {
+func (a *AuthMailControllerImpl) handleUserSignUpEvent(ctx context.Context, message []byte) error {
 	var e events.UserSignUpEvent
-	if err := json.Unmarshal(message,&e) ; err!= nil {
+	if err := json.Unmarshal(message, &e); err != nil {
 		return err
 	}
-	if err := a.authMailService.SendMailConfirmSignUp(ctx,&e); err!= nil{
+	if err := a.authMailService.SendMailConfirmSignUp(ctx, &e); err != nil {
 		return err
 	}
 	return nil
@@ -79,6 +79,6 @@ func(a *AuthMailControllerImpl) handleUserSignUpEvent(ctx context.Context, messa
 func NewAuthMailController(svc services.AuthMailService) AuthMailController {
 	return &AuthMailControllerImpl{
 		authMailService: svc,
-		msgChs: make(map[string]chan *amqp.Delivery,100),
+		msgChs:          make(map[string]chan *amqp.Delivery, 100),
 	}
 }

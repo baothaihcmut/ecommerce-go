@@ -5,6 +5,7 @@ import (
 	"sync"
 
 	"github.com/baothaihcmut/Ecommerce-go/users/internal/core/domain/entities"
+	"github.com/baothaihcmut/Ecommerce-go/users/internal/core/domain/events"
 	"github.com/baothaihcmut/Ecommerce-go/users/internal/core/exception"
 	"github.com/baothaihcmut/Ecommerce-go/users/internal/core/port/inbound/commands"
 	"github.com/baothaihcmut/Ecommerce-go/users/internal/core/port/inbound/handlers"
@@ -18,9 +19,31 @@ type AuthService struct {
 	userRepo           repositories.UserRepo
 	jwtService         external.JwtService
 	userConfirmService external.UserConfirmService
+	eventPublisher     external.EventPublisherService
+}
+
+// ConfirmSignUp implements handlers.AuthHandler.
+func (a *AuthService) ConfirmSignUp(ctx context.Context, command *commands.ConfirmSignUpCommand) (*results.ConfirmSignUpResult, error) {
+	//get user from cache
+	user, err := a.userConfirmService.GetUserInfo(ctx, command.Code)
+	if err != nil {
+		return nil, err
+	}
+	//save user to db
+	
+
 }
 
 func (a *AuthService) SignUp(ctx context.Context, command *commands.SignUpCommand) (*results.SignUpResult, error) {
+	//check if user pending for confirm
+	isPending, err := a.userConfirmService.IsUserPendingConfirmSignUp(ctx, command.Email)
+	if err != nil {
+		return nil, err
+	}
+	if isPending {
+		return nil, exception.ErrUserPendingForConfirm
+	}
+
 	//check if user phone number or email exist
 	wgCheck := sync.WaitGroup{}
 	errCheck := make(chan error, 1)
@@ -88,13 +111,19 @@ func (a *AuthService) SignUp(ctx context.Context, command *commands.SignUpComman
 	if err != nil {
 		return nil, err
 	}
-	//send email
-	err = a.userConfirmService.SendEmail(ctx, external.SendEmailArg{
-		Email:     user.Email,
-		Code:      code,
-		FirstName: user.FirstName,
-		LastName:  user.LastName,
-	})
+	//generate url for confrim
+	url, err := a.userConfirmService.GenerateUrlForConfirm(ctx, code)
+	if err != nil {
+		return nil, err
+	}
+	//publish event
+	e := events.UserSignUpEvent{
+		User:       user,
+		ConfrimUrl: url,
+	}
+	if err := a.eventPublisher.PublishUserSignUpEvent(ctx, e); err != nil {
+		return nil, err
+	}
 	return &results.SignUpResult{}, nil
 
 }
@@ -103,10 +132,12 @@ func NewAuthService(
 	userRepo repositories.UserRepo,
 	jwtService external.JwtService,
 	userConfirmService external.UserConfirmService,
+	eventPublisher external.EventPublisherService,
 ) handlers.AuthHandler {
 	return &AuthService{
 		userRepo:           userRepo,
 		jwtService:         jwtService,
 		userConfirmService: userConfirmService,
+		eventPublisher:     eventPublisher,
 	}
 }

@@ -9,4 +9,5 @@ import (
 
 type AuthHandler interface {
 	SignUp(context.Context, *commands.SignUpCommand) (*results.SignUpResult, error)
+	ConfirmSignUp(context.Context, *commands.ConfirmSignUpCommand) (*results.ConfirmSignUpResult, error)
 }
