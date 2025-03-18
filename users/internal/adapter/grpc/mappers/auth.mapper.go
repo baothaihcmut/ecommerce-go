@@ -19,3 +19,12 @@ func ToSignUpCommand(proto *v1.SignUpRequest) *commands.SignUpCommand {
 func ToSignUpResponse(result *results.SignUpResult) *v1.SignUpData {
 	return &v1.SignUpData{}
 }
+
+func ToConfirmSignUpCommand(proto *v1.ConfirmSignUpRequest) *commands.ConfirmSignUpCommand {
+	return &commands.ConfirmSignUpCommand{
+		Code: proto.Code,
+	}
+}
+func ToConfirmSignUpResponse(result *results.ConfirmSignUpResult) *v1.ConfirmSignUpData {
+	return &v1.ConfirmSignUpData{}
+}

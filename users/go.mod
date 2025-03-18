@@ -14,7 +14,9 @@ require (
 	github.com/jackc/pgx/v5 v5.7.2
 	github.com/rabbitmq/amqp091-go v1.10.0
 	github.com/redis/go-redis/v9 v9.7.1
+	github.com/sirupsen/logrus v1.9.3
 	google.golang.org/grpc v1.71.0
+	gopkg.in/natefinch/lumberjack.v2 v2.2.1
 )
 
 require (

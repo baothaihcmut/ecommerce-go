@@ -9,6 +9,8 @@ import (
 	"time"
 
 	"github.com/baothaihcmut/Ecommerce-go/libs/pkg/cache"
+	"github.com/baothaihcmut/Ecommerce-go/libs/pkg/db"
+	"github.com/baothaihcmut/Ecommerce-go/libs/pkg/logger"
 	userProto "github.com/baothaihcmut/Ecommerce-go/libs/pkg/proto/users/v1"
 	"github.com/baothaihcmut/Ecommerce-go/libs/pkg/queue"
 	"github.com/baothaihcmut/Ecommerce-go/users/internal/adapter/db/postgres/repositories"
@@ -19,6 +21,7 @@ import (
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/rabbitmq/amqp091-go"
 	"github.com/redis/go-redis/v9"
+	"github.com/sirupsen/logrus"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/keepalive"
 )
@@ -28,13 +31,16 @@ type Server struct {
 	redis    *redis.Client
 	rabbitMq *amqp091.Connection
 	cfg      *config.CoreConfig
+	logrus 	 *logrus.Logger
 }
 
 func NewServer(
 	db *pgxpool.Pool,
 	redis *redis.Client,
 	rabbitMq *amqp091.Connection,
-	cfg *config.CoreConfig) *Server {
+	logger *logrus.Logger,
+	cfg *config.CoreConfig,
+	) *Server {
 	return &Server{
 		db:       db,
 		redis:    redis,
@@ -43,6 +49,9 @@ func NewServer(
 	}
 }
 func (s *Server) Start() {
+	loggerService := logger.NewLogger(s.logrus)
+	dbService := db.NewPostgresService(s.db)
+	
 	queueService, err := queue.NewRabbitMqService(s.rabbitMq)
 	if err != nil {
 		return
@@ -55,7 +64,7 @@ func (s *Server) Start() {
 	//init repository
 	userRepo := repositories.NewPostgresUserRepo(s.db)
 	//init core
-	coreAuthService := coreService.NewAuthService(userRepo, jwtService, userConfirmService, eventPublisher)
+	coreAuthService := coreService.NewAuthService(userRepo, jwtService, userConfirmService, eventPublisher,dbService,loggerService)
 	//init exchange
 	queueService.InitExchange("user-events", "topic")
 	//init grpc handler

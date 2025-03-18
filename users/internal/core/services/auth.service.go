@@ -4,6 +4,8 @@ import (
 	"context"
 	"sync"
 
+	"github.com/baothaihcmut/Ecommerce-go/libs/pkg/db"
+	"github.com/baothaihcmut/Ecommerce-go/libs/pkg/logger"
 	"github.com/baothaihcmut/Ecommerce-go/users/internal/core/domain/entities"
 	"github.com/baothaihcmut/Ecommerce-go/users/internal/core/domain/events"
 	"github.com/baothaihcmut/Ecommerce-go/users/internal/core/exception"
@@ -20,6 +22,8 @@ type AuthService struct {
 	jwtService         external.JwtService
 	userConfirmService external.UserConfirmService
 	eventPublisher     external.EventPublisherService
+	dbService 		   db.DBService
+	logger 			   logger.Logger
 }
 
 // ConfirmSignUp implements handlers.AuthHandler.
@@ -30,8 +34,25 @@ func (a *AuthService) ConfirmSignUp(ctx context.Context, command *commands.Confi
 		return nil, err
 	}
 	//save user to db
-	
-
+	tx,err := a.dbService.BeginTransaction(ctx, db.DBTransactionReadWriteMode)
+	if err != nil{
+		return nil,err
+	}
+	defer func ()  {
+		if err != nil{
+			if err := a.dbService.RollBackTransaction(ctx,tx) ; err != nil {
+				a.logger.Errorf(ctx,nil,"Error rollback transaction: %v", err)
+			}
+		}	
+		if err := a.dbService.CommitTransaction(ctx,tx) ; err != nil {
+			a.logger.Errorf(ctx,nil,"Error commit transaction: %v", err)
+		}
+	}()
+	err = a.userRepo.CreateUser(ctx,user,tx)
+	if err != nil{
+		return nil,err
+	}
+	return &results.ConfirmSignUpResult{},nil
 }
 
 func (a *AuthService) SignUp(ctx context.Context, command *commands.SignUpCommand) (*results.SignUpResult, error) {
@@ -133,11 +154,15 @@ func NewAuthService(
 	jwtService external.JwtService,
 	userConfirmService external.UserConfirmService,
 	eventPublisher external.EventPublisherService,
+	dbService db.DBService,
+	logger logger.Logger,
 ) handlers.AuthHandler {
 	return &AuthService{
 		userRepo:           userRepo,
 		jwtService:         jwtService,
 		userConfirmService: userConfirmService,
 		eventPublisher:     eventPublisher,
+		logger: logger,
+		dbService: dbService,
 	}
 }

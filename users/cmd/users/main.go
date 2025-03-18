@@ -37,6 +37,9 @@ func main() {
 		return
 	}
 
-	s := server.NewServer(pool, redis, rabbitMq, &config)
+	//init logger
+	logrus:= initialize.InitializeLogrus(config.Logger)
+
+	s := server.NewServer(pool, redis, rabbitMq, logrus, &config)
 	s.Start()
 }
