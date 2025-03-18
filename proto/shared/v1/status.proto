@@ -5,6 +5,6 @@ option go_package = "github.com/baothaihcmut/Ecommerce-go/libs/pkg/proto/shared/
 
 
 message Status {
-    bool success = 1 [json_name = "success"];
+    int32  code = 1    [json_name = "code"];
     string message = 2 [json_name = "message"];
 }

@@ -65,3 +65,8 @@ func NewUser(
 	user.Customer = NewCustomer()
 	return user
 }
+
+func (u *User) ValidatePassword(in string) bool {
+	err := bcrypt.CompareHashAndPassword([]byte(u.Password),[]byte(in))
+	return err == nil
+}

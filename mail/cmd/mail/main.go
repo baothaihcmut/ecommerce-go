@@ -4,6 +4,7 @@ import (
 	"fmt"
 
 	configLib "github.com/baothaihcmut/Ecommerce-go/libs/pkg/config"
+	"github.com/baothaihcmut/Ecommerce-go/libs/pkg/logger"
 	"github.com/baothaihcmut/Ecommerce-go/mail/internal/config"
 	"github.com/baothaihcmut/Ecommerce-go/mail/internal/server"
 	"github.com/baothaihcmut/Ecommerce-go/mail/internal/server/initialize"
@@ -27,6 +28,7 @@ func main() {
 		fmt.Printf("Error connect to mail server: %v\n", err)
 		return
 	}
-	s := server.NewServer(rabbitMq, mailer, &cfg)
+	logrus := logger.InitializeLogrus(cfg.Logger)
+	s := server.NewServer(rabbitMq, mailer,logrus, &cfg)
 	s.Start()
 }

@@ -8,6 +8,8 @@ import (
 	userProto "github.com/baothaihcmut/Ecommerce-go/libs/pkg/proto/users/v1"
 	"github.com/baothaihcmut/Ecommerce-go/users/internal/adapter/grpc/mappers"
 	"github.com/baothaihcmut/Ecommerce-go/users/internal/core/port/inbound/handlers"
+	"google.golang.org/grpc"
+	"google.golang.org/grpc/metadata"
 )
 
 type AuthService struct {
@@ -31,13 +33,23 @@ func (a *AuthService) ConfirmSignUp(ctx context.Context,req *userProto.ConfirmSi
 }
 
 // LogIn implements v1.AuthServiceServer.
-func (a *AuthService) LogIn(context.Context, *userProto.LogInRequest) (*userProto.LogInResponse, error) {
+func (a *AuthService) LogIn(ctx context.Context,req *userProto.LogInRequest) (*userProto.LogInResponse, error) {
+	res,err:= a.authHandler.LogIn(ctx, mappers.ToLogInCommand(req))
+	if err != nil{
+		return nil,err
+	}
+	//set metadata
+	md :=metadata.Pairs("access_token",res.AccessToken,"refresh_token",res.RefreshToken)
+	if err := grpc.SendHeader(ctx,md) ; err!=nil{
+		return nil,err
+	}
 	return &userProto.LogInResponse{
-		Data: &userProto.LogInData{
-			AccessToken:  "hello",
-			RefreshToken: "hello",
+		Data: &userProto.LogInData{},
+		Status: &v1.Status{
+			Message: "Log in success",
+			Code: http.StatusCreated,
 		},
-	}, nil
+	},nil	
 }
 func (a *AuthService) SignUp(ctx context.Context, req *userProto.SignUpRequest) (*userProto.SignUpResponse, error) {
 	res, err := a.authHandler.SignUp(ctx, mappers.ToSignUpCommand(req))

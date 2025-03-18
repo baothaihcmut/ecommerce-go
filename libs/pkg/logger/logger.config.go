@@ -1,15 +1,29 @@
-package initialize
+package logger
 
 import (
 	"io"
 	"os"
 
-	"github.com/baothaihcmut/Ecommerce-go/libs/pkg/logger"
 	"github.com/sirupsen/logrus"
 	"gopkg.in/natefinch/lumberjack.v2"
 )
+type LoggerConfig struct {
+	Level      string `mapstructure:"level"`
+	Format     string `mapstructure:"format"`
+	Output     string `mapstructure:"output"`
+	FileConfig struct {
+		Path       string `mapstructure:"path"`
+		MaxSize    int    `mapstructure:"max_size"`
+		MaxBackups int    `mapstructure:"max_backups"`
+		MaxAge     int    `mapstructure:"max_age"`
+		Compress   bool   `mapstructure:"compress"`
+	} `mapstructure:"file_config"`
+	
+}
 
-func InitializeLogrus(cfg *logger.LoggerConfig) *logrus.Logger {
+
+
+func InitializeLogrus(cfg *LoggerConfig) *logrus.Logger {
 	l := logrus.New()
 	//parse level
 	level, err := logrus.ParseLevel(cfg.Level)

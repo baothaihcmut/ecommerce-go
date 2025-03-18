@@ -12,7 +12,7 @@ import (
 // FindUserByEmail implements repositories.UserRepo.
 func (p PostgresUserRepo) FindUserByEmail(ctx context.Context, email string) (*entities.User, error) {
 	res, err := p.q.FindUserByCriteria(ctx, sqlc.FindUserByCriteriaParams{
-		Criteria: "phone_number",
+		Criteria: "email",
 		Value: pgtype.Text{
 			String: email,
 			Valid:  true,

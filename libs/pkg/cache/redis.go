@@ -12,6 +12,21 @@ type RedisService struct {
 	client *redis.Client
 }
 
+
+
+func InitializeRedis(cfg *RedisConfig) (*redis.Client, error) {
+	rdb := redis.NewClient(&redis.Options{
+		Addr:     cfg.Endpoint,
+		Password: cfg.Password,
+		DB:       cfg.DB,
+		Username: cfg.Username,
+	})
+	_, err := rdb.Ping(context.Background()).Result()
+	if err != nil {
+		return nil, err
+	}
+	return rdb, nil
+}
 // Remove implements CacheService.
 func (r *RedisService) Remove(ctx context.Context, key string) error {
 	_, err := r.client.Del(ctx, key).Result()

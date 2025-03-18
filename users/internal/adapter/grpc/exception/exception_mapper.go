@@ -5,20 +5,18 @@ import (
 	"google.golang.org/grpc/codes"
 )
 
-type errorDetail struct {
-	Msg  string
-	Code codes.Code
-}
+
 
 var errorMap map[error]codes.Code = map[error]codes.Code{
 	exception.ErrEmailExist:            codes.AlreadyExists,
 	exception.ErrPhonenumberExist:      codes.AlreadyExists,
 	exception.ErrUserPendingForConfirm: codes.AlreadyExists,
+	exception.ErrWrongEmailOrPassword: codes.Unauthenticated,
 }
 
-func MapException(err error) (string, codes.Code) {
+func MapException(err error) ( codes.Code,string) {
 	if code, exist := errorMap[err]; exist {
-		return err.Error(), code
+		return code,err.Error()
 	}
-	return "Internal server error", codes.Internal
+	return  codes.Internal,"Internal server error"
 }

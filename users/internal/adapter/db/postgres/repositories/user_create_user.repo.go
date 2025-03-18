@@ -86,8 +86,10 @@ func (p PostgresUserRepo) CreateUser(ctx context.Context, user *entities.User, t
 		}()
 	}
 	for _, address := range user.Addresses {
+
 		wg.Add(1)
 		go func() {
+			defer wg.Done()
 			err = q.CreateAddress(ctx, sqlc.CreateAddressParams{
 				Priority: pgtype.Int4{Int32: int32(address.Priority), Valid: true},
 				UserId:   pgtype.UUID{Bytes: user.Id, Valid: true},
@@ -107,7 +109,7 @@ func (p PostgresUserRepo) CreateUser(ctx context.Context, user *entities.User, t
 			}
 		}()
 	}
-	wg.Done()
+	wg.Wait()
 	select {
 	case err = <-errCh:
 		return err

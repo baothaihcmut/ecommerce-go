@@ -1,41 +1,47 @@
 package server
 
 import (
-	"fmt"
+	"context"
 	"os"
 	"os/signal"
 	"sync"
 	"syscall"
 
+	"github.com/baothaihcmut/Ecommerce-go/libs/pkg/logger"
 	"github.com/baothaihcmut/Ecommerce-go/libs/pkg/queue"
 	"github.com/baothaihcmut/Ecommerce-go/mail/internal/config"
 	"github.com/baothaihcmut/Ecommerce-go/mail/internal/controllers"
 	"github.com/baothaihcmut/Ecommerce-go/mail/internal/mailer"
 	"github.com/baothaihcmut/Ecommerce-go/mail/internal/services"
 	amqp "github.com/rabbitmq/amqp091-go"
+	"github.com/sirupsen/logrus"
 	"gopkg.in/gomail.v2"
 )
 
 type Server struct {
 	rabbitmq *amqp.Connection
 	mail     *gomail.Dialer
+	logrus 	*logrus.Logger
 	cfg      *config.CoreConfig
 }
 
 func NewServer(
 	rabbitmq *amqp.Connection,
 	mailer *gomail.Dialer,
+	logrus *logrus.Logger,
 	cfg *config.CoreConfig,
 ) *Server {
 	return &Server{
 		rabbitmq: rabbitmq,
 		mail:     mailer,
 		cfg:      cfg,
+		logrus: logrus,
 	}
 }
 func (s *Server) Start() {
+	loggerService := logger.NewLogger(s.logrus)
 	//init mailer
-	mailer := mailer.NewMailer(s.mail, s.cfg.Mailer)
+	mailer := mailer.NewMailer(s.mail, s.cfg.Mailer,loggerService)
 
 	authMailService := services.NewAuthMailService(mailer)
 	authMailController := controllers.NewAuthMailController(authMailService)
@@ -70,6 +76,12 @@ func (s *Server) Start() {
 			}
 			go func() {
 				for msg := range msgs {
+					loggerService.Info(context.Background(),map[string]any{
+						"queue": q,
+						"route_key": msg.RoutingKey,
+						"exchange": msg.Exchange,
+						"time_stamp": msg.Timestamp,
+					},"Incomming event")
 					ch <- &msg
 				}
 			}()
@@ -79,10 +91,10 @@ func (s *Server) Start() {
 	go func() {
 		wg.Done()
 		for err := range errCh {
-			fmt.Println(err)
+			loggerService.Errorf(context.Background(),nil,"Error: %v",err)
 		}
 	}()
-	fmt.Println("Server is running")
+	loggerService.Info(context.Background(),nil,"Server is running")
 	<-sigChan
 	//close all channel
 	for _, ch := range mapCh {
@@ -93,5 +105,5 @@ func (s *Server) Start() {
 	//close error channel
 	close(errCh)
 
-	fmt.Println("Graceful shutdown completed.")
+	loggerService.Info(context.Background(),nil,"Graceful shutdown completed.")
 }

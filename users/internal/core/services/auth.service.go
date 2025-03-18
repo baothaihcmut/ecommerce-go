@@ -6,6 +6,7 @@ import (
 
 	"github.com/baothaihcmut/Ecommerce-go/libs/pkg/db"
 	"github.com/baothaihcmut/Ecommerce-go/libs/pkg/logger"
+	"github.com/baothaihcmut/Ecommerce-go/libs/pkg/queue"
 	"github.com/baothaihcmut/Ecommerce-go/users/internal/core/domain/entities"
 	"github.com/baothaihcmut/Ecommerce-go/users/internal/core/domain/events"
 	"github.com/baothaihcmut/Ecommerce-go/users/internal/core/exception"
@@ -22,8 +23,50 @@ type AuthService struct {
 	jwtService         external.JwtService
 	userConfirmService external.UserConfirmService
 	eventPublisher     external.EventPublisherService
-	dbService 		   db.DBService
-	logger 			   logger.Logger
+	dbService          db.DBService
+	queueService       queue.QueueService
+	logger             logger.Logger
+}
+
+// LogIn implements handlers.AuthHandler.
+func (a *AuthService) LogIn(ctx context.Context,command *commands.LogInCommand) (*results.LogInResult, error) {
+	//find user by email
+	user,err := a.userRepo.FindUserByEmail(ctx,command.Email)
+	if err!= nil {
+		a.logger.Errorf(ctx,map[string]any{
+			"email":command.Email,
+		},"Error find user by email: ",err)
+	}
+	if user == nil {
+		return nil, exception.ErrWrongEmailOrPassword
+	}
+	if !user.ValidatePassword(command.Password) {
+		return nil, exception.ErrWrongEmailOrPassword
+	}
+	//gen access and refresh token
+	accessToken,err := a.jwtService.GenerateAccessToken(ctx, external.AccessTokenPayload{
+		UserId: user.Id,
+		IsShopOwnerActive: user.IsShopOwnerActive,
+	})
+	if err != nil{
+		a.logger.Errorf(ctx,map[string]any{
+			"email":command.Email,
+		},"Error generate access token: ",err)
+		return nil,err
+	}
+	refreshToken,err := a.jwtService.GenerateRefreshToken(ctx, external.RefreshTokenPayload{
+		UserId: user.Id,
+	})
+	if err != nil{
+		a.logger.Errorf(ctx,map[string]any{
+			"email":command.Email,
+		},"Error generate refesh token: ",err)
+		return nil,err
+	}
+	return &results.LogInResult{
+		AccessToken: accessToken,
+		RefreshToken: refreshToken,
+	},nil
 }
 
 // ConfirmSignUp implements handlers.AuthHandler.
@@ -34,31 +77,35 @@ func (a *AuthService) ConfirmSignUp(ctx context.Context, command *commands.Confi
 		return nil, err
 	}
 	//save user to db
-	tx,err := a.dbService.BeginTransaction(ctx, db.DBTransactionReadWriteMode)
-	if err != nil{
-		return nil,err
+	tx, err := a.dbService.BeginTransaction(ctx, db.DBTransactionReadWriteMode)
+	if err != nil {
+		return nil, err
 	}
-	defer func ()  {
-		if err != nil{
-			if err := a.dbService.RollBackTransaction(ctx,tx) ; err != nil {
-				a.logger.Errorf(ctx,nil,"Error rollback transaction: %v", err)
+	defer func() {
+		if err != nil {
+			if err := a.dbService.RollBackTransaction(ctx, tx); err != nil {
+				a.logger.Errorf(ctx, nil, "Error rollback transaction: %v", err)
 			}
-		}	
-		if err := a.dbService.CommitTransaction(ctx,tx) ; err != nil {
-			a.logger.Errorf(ctx,nil,"Error commit transaction: %v", err)
+		} else {
+			if err := a.dbService.CommitTransaction(ctx, tx); err != nil {
+				a.logger.Errorf(ctx, nil, "Error commit transaction: %v", err)
+			}
 		}
 	}()
-	err = a.userRepo.CreateUser(ctx,user,tx)
-	if err != nil{
-		return nil,err
+	err = a.userRepo.CreateUser(ctx, user, tx)
+	if err != nil {
+		return nil, err
 	}
-	return &results.ConfirmSignUpResult{},nil
+	return &results.ConfirmSignUpResult{}, nil
 }
 
 func (a *AuthService) SignUp(ctx context.Context, command *commands.SignUpCommand) (*results.SignUpResult, error) {
 	//check if user pending for confirm
 	isPending, err := a.userConfirmService.IsUserPendingConfirmSignUp(ctx, command.Email)
 	if err != nil {
+		a.logger.Errorf(ctx, map[string]any{
+			"email": command.Email,
+		}, "Error check user pending sign up: %v", err)
 		return nil, err
 	}
 	if isPending {
@@ -80,6 +127,7 @@ func (a *AuthService) SignUp(ctx context.Context, command *commands.SignUpComman
 				return
 			default:
 			}
+			a.logger.Errorf(ctx, nil, "Error get user by email: %v", err)
 			cancelCheck()
 			errCheck <- err
 		}
@@ -97,6 +145,7 @@ func (a *AuthService) SignUp(ctx context.Context, command *commands.SignUpComman
 				return
 			default:
 			}
+			a.logger.Errorf(ctx, nil, "Error get user by phone number: %v", err)
 			cancelCheck()
 			errCheck <- err
 		}
@@ -130,6 +179,8 @@ func (a *AuthService) SignUp(ctx context.Context, command *commands.SignUpComman
 	//store user info
 	code, err := a.userConfirmService.StoreUserInfo(ctx, user)
 	if err != nil {
+		a.logger.Errorf(ctx, nil, "Error store user to cache: %v", err)
+
 		return nil, err
 	}
 	//generate url for confrim
@@ -143,6 +194,7 @@ func (a *AuthService) SignUp(ctx context.Context, command *commands.SignUpComman
 		ConfrimUrl: url,
 	}
 	if err := a.eventPublisher.PublishUserSignUpEvent(ctx, e); err != nil {
+		a.logger.Errorf(ctx, nil, "Error publish event: %v", err)
 		return nil, err
 	}
 	return &results.SignUpResult{}, nil
@@ -155,6 +207,7 @@ func NewAuthService(
 	userConfirmService external.UserConfirmService,
 	eventPublisher external.EventPublisherService,
 	dbService db.DBService,
+	queueService queue.QueueService,
 	logger logger.Logger,
 ) handlers.AuthHandler {
 	return &AuthService{
@@ -162,7 +215,14 @@ func NewAuthService(
 		jwtService:         jwtService,
 		userConfirmService: userConfirmService,
 		eventPublisher:     eventPublisher,
-		logger: logger,
-		dbService: dbService,
+		logger:             logger,
+		queueService:       queueService,
+		dbService:          dbService,
 	}
+}
+
+func (a *AuthService) RunBootstrap() {
+	//init exchange
+	a.queueService.InitExchange("user-events", "topic")
+	a.queueService.BindQueue("mail-user-signup", "user.signup", "user-events")
 }

@@ -8,6 +8,8 @@
       "GOPATH": "/home/baothai/go",
       "GOROOT": "/home/baothai/.gvm/gos/go1.23.7",
       "PATH": "/home/baothai/.gvm/gos/go1.23.7/bin:$PATH"
-    }
+    },
+    "go.formatTool": "default",
+    "editor.formatOnSave": true
   }
   

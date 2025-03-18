@@ -8,6 +8,9 @@ import (
 	amqp "github.com/rabbitmq/amqp091-go"
 )
 
+
+
+
 type RabbitMqServiceImpl struct {
 	conn *amqp.Connection
 	ch   *amqp.Channel
@@ -44,8 +47,12 @@ func (r *RabbitMqServiceImpl) Send(ctx context.Context, exchange string, binding
 	return nil
 }
 
-func ConnectRabbitMq(username, password, host, vhost string) (*amqp.Connection, error) {
-	conn, err := amqp.Dial(fmt.Sprintf("amqp://%s:%s@%s/%s", username, password, host, vhost))
+func ConnectRabbitMq(username, password, host, vhost string,isSecure bool) (*amqp.Connection, error) {
+	var protocol = "amqp"
+	if isSecure {
+		protocol = "amqps"
+	}
+	conn, err := amqp.Dial(fmt.Sprintf("%s://%s:%s@%s/%s",protocol,username, password, host, vhost))
 	if err != nil {
 		return nil, err
 	}

@@ -1,244 +1,160 @@
 package logger
 
 import (
-	"fmt"
-	"os"
-	"runtime"
-	"strings"
+	"context"
 
-	"github.com/google/uuid"
-	"go.uber.org/zap"
-	"go.uber.org/zap/zapcore"
-	"gopkg.in/natefinch/lumberjack.v2"
+	"github.com/baothaihcmut/Ecommerce-go/libs/pkg/constant"
+	"github.com/sirupsen/logrus"
 )
 
-type ConfigLogger struct {
-	Mode              string `yaml:"mode" mapstructure:"mode"`
-	DisableCaller     bool   `yaml:"disable_caller" mapstructure:"disable_caller"`
-	DisableStacktrace bool   `yaml:"disable_stacktrace" mapstructure:"disable_stacktrace"`
-	Encoding          string `yaml:"encoding" mapstructure:"encoding"`
-	Level             string `yaml:"level" mapstructure:"level"`
-	ZapType           string `yaml:"zap_type" mapstructure:"zap_type"`
+// Logger interface to support different log levels
+type Logger interface {
+	Debug(ctx context.Context, args map[string]any, msg string)
+	Debugf(ctx context.Context, args map[string]any, template string, format ...interface{})
+	Info(ctx context.Context, args map[string]any, msg string)
+	Infof(ctx context.Context, args map[string]any, template string, format ...interface{})
+	Warn(ctx context.Context, args map[string]any, msg string)
+	Warnf(ctx context.Context, args map[string]any, template string, format ...interface{})
+	Error(ctx context.Context, args map[string]any, msg string)
+	Errorf(ctx context.Context, args map[string]any, template string, format ...interface{})
+	Fatal(ctx context.Context, args map[string]any, msg string)
+	Fatalf(ctx context.Context, args map[string]any, template string, format ...interface{})
+	Panic(ctx context.Context, args map[string]any, msg string)
+	Panicf(ctx context.Context, args map[string]any, template string, format ...interface{})
 }
 
-var loggerLevelMap = map[string]zapcore.Level{
-	"debug":  zapcore.DebugLevel,
-	"info":   zapcore.InfoLevel,
-	"warn":   zapcore.WarnLevel,
-	"error":  zapcore.ErrorLevel,
-	"dpanic": zapcore.DPanicLevel,
-	"panic":  zapcore.PanicLevel,
-	"fatal":  zapcore.FatalLevel,
-}
-
-type ILogger interface {
-	Debug(args ...interface{})
-	Debugf(template string, args ...interface{})
-	Info(args ...interface{})
-	Infof(template string, args ...interface{})
-	Warn(args ...interface{})
-	Warnf(template string, args ...interface{})
-	Error(args ...interface{})
-	Errorf(template string, args ...interface{})
-	DPanic(args ...interface{})
-	DPanicf(template string, args ...interface{})
-	Fatal(args ...interface{})
-	Fatalf(template string, args ...interface{})
-}
+// logger is the concrete implementation of the Logger interface
 type logger struct {
-	sugarLogger *zap.SugaredLogger
-	logger      *zap.Logger
-	key         string
-	zapSugar    bool
+	l *logrus.Logger
 }
 
-// DPanic implements ILogger.
-
-var Logger *logger = &logger{}
-
-func getPath() string {
-	path := ""
-	dir, err := os.Getwd()
-	if err != nil {
-		panic(err)
-	}
-	path = dir + "/logs"
-	if _, err := os.Stat(path); os.IsNotExist(err) {
-		err := os.Mkdir(path, os.ModeDir)
-		if err != nil {
-			panic(err)
-		}
-	}
-	if strings.Contains(runtime.GOOS, "window") {
-		path = path + "\\"
-	} else {
-		path = path + "/"
-	}
-	return path + "log.log"
-}
-func configure() zapcore.WriteSyncer {
-	path := getPath()
-	w := zapcore.AddSync(&lumberjack.Logger{
-		Filename:   path,
-		MaxSize:    1,
-		MaxBackups: 4,
-	})
-	return zapcore.NewMultiWriteSyncer(
-		zapcore.AddSync(os.Stderr),
-		zapcore.AddSync(w),
-	)
+// NewLogger initializes and returns a logger instance
+func NewLogger(l *logrus.Logger) Logger {
+	return &logger{l: l}
 }
 
-func GetLogger() *logger {
-	return Logger
-}
-func Newlogger(cfg ConfigLogger) ILogger {
-	logLevel, exist := loggerLevelMap[cfg.Level]
-	if !exist {
-		logLevel = zapcore.DebugLevel
+// Debug level logging with context
+func (l *logger) Debug(ctx context.Context, args map[string]any, msg string) {
+	if args == nil {
+		args = make(map[string]any)
 	}
-
-	var encoderCfg zapcore.EncoderConfig
-	if cfg.Mode == "pro" {
-		encoderCfg = zap.NewProductionEncoderConfig()
-	} else {
-		encoderCfg = zap.NewDevelopmentEncoderConfig()
-
+	if requestID := ctx.Value(constant.RequestIdKey); requestID != nil {
+		args["request_id"] = requestID
 	}
-	encoderCfg.LevelKey = "LEVEL"
-	encoderCfg.CallerKey = "CALLER"
-	encoderCfg.TimeKey = "TIME"
-	encoderCfg.NameKey = "NAME"
-	encoderCfg.MessageKey = "MESSAGE"
-	encoderCfg.EncodeDuration = zapcore.NanosDurationEncoder
-	encoderCfg.EncodeTime = zapcore.ISO8601TimeEncoder
-	encoderCfg.FunctionKey = "FUNC"
-	var encoder zapcore.Encoder
-	if cfg.Encoding == "console" {
-		encoder = zapcore.NewConsoleEncoder(encoderCfg)
-	} else {
-		encoder = zapcore.NewJSONEncoder(encoderCfg)
-	}
-
-	core := zapcore.NewCore(encoder, configure(), zap.NewAtomicLevelAt(logLevel))
-	loggerzap := zap.New(core, zap.AddCaller(), zap.AddCallerSkip(0))
-	sugarLogger := loggerzap.Sugar()
-
-	logging := &logger{
-		sugarLogger: sugarLogger,
-		logger:      loggerzap,
-		key:         uuid.NewString(),
-		zapSugar:    strings.Contains(cfg.ZapType, "sugar"),
-	}
-
-	Logger = logging
-	return logging
-}
-func (l *logger) SetLogID(key string) {
-	l.key = key
+	l.l.WithFields(logrus.Fields(args)).Debug(msg)
 }
 
-func (l *logger) Debug(args ...interface{}) {
-	if l.zapSugar {
-		l.sugarLogger.Debug(args...)
-		return
+func (l *logger) Debugf(ctx context.Context, args map[string]any, template string, format ...interface{}) {
+	if args == nil {
+		args = make(map[string]any)
 	}
-	str := fmt.Sprintf("%s", args...)
-	fields := []zapcore.Field{
-		zap.String("UUID", l.key),
+	if requestID := ctx.Value(constant.RequestIdKey); requestID != nil {
+		args["request_id"] = requestID
 	}
-	l.logger.Debug(str, fields...)
+	l.l.WithFields(logrus.Fields(args)).Debugf(template, format...)
 }
 
-func (l *logger) Debugf(template string, args ...interface{}) {
-	if l.zapSugar {
-		str := fmt.Sprintf("UUID:%s, %s", l.key, template)
-		l.sugarLogger.Debugf(str, args...)
-		return
+// Info level logging with context
+func (l *logger) Info(ctx context.Context, args map[string]any, msg string) {
+	if args == nil {
+		args = make(map[string]any)
 	}
-	str := fmt.Sprintf("%s", args...)
-	fields := []zapcore.Field{
-		zap.String("UUID", l.key),
+	if requestID := ctx.Value(constant.RequestIdKey); requestID != nil {
+		args["request_id"] = requestID
 	}
-	l.logger.Debug(str, fields...)
+	l.l.WithFields(logrus.Fields(args)).Info(msg)
 }
 
-func (l *logger) Info(args ...interface{}) {
-	if l.zapSugar {
-		l.sugarLogger.Info(args...)
-		return
+func (l *logger) Infof(ctx context.Context, args map[string]any, template string, format ...interface{}) {
+	if args == nil {
+		args = make(map[string]any)
 	}
-	str := fmt.Sprintf("%s", args...)
-	fields := []zapcore.Field{
-		zap.String("UUID", l.key),
+	if requestID := ctx.Value(constant.RequestIdKey); requestID != nil {
+		args["request_id"] = requestID
 	}
-	l.logger.Info(str, fields...)
+	l.l.WithFields(logrus.Fields(args)).Infof(template, format...)
 }
 
-func (l *logger) Infof(template string, args ...interface{}) {
-	if l.zapSugar {
-		str := fmt.Sprintf("UUID:%s, %s", l.key, template)
-		l.sugarLogger.Infof(str, args...)
-		return
+// Warn level logging with context
+func (l *logger) Warn(ctx context.Context, args map[string]any, msg string) {
+	if args == nil {
+		args = make(map[string]any)
 	}
-	fields := []zapcore.Field{
-		zap.String("UUID", l.key),
+	if requestID := ctx.Value(constant.RequestIdKey); requestID != nil {
+		args["request_id"] = requestID
 	}
-	l.logger.Info(fmt.Sprintf(template, args...), fields...)
+	l.l.WithFields(logrus.Fields(args)).Warn(msg)
 }
 
-func (l *logger) Warn(args ...interface{}) {
-	l.sugarLogger.Warn(args...)
-}
-
-func (l *logger) Warnf(template string, args ...interface{}) {
-	l.sugarLogger.Warnf(template, args...)
-}
-
-func (l *logger) Error(args ...interface{}) {
-	if l.zapSugar {
-		l.sugarLogger.Error(args...)
-		return
+func (l *logger) Warnf(ctx context.Context, args map[string]any, template string, format ...interface{}) {
+	if args == nil {
+		args = make(map[string]any)
 	}
-	str := fmt.Sprintf("%s", args...)
-	fields := []zapcore.Field{
-		zap.String("UUID", l.key),
+	if requestID := ctx.Value(constant.RequestIdKey); requestID != nil {
+		args["request_id"] = requestID
 	}
-	l.logger.Error(str, fields...)
+	l.l.WithFields(logrus.Fields(args)).Warnf(template, format...)
 }
 
-func (l *logger) Errorf(template string, args ...interface{}) {
-	if l.zapSugar {
-		str := fmt.Sprintf("UUID:%s, %s", l.key, template)
-		l.sugarLogger.Errorf(str, args...)
-		return
+// Error level logging with context
+func (l *logger) Error(ctx context.Context, args map[string]any, msg string) {
+	if args == nil {
+		args = make(map[string]any)
 	}
-	fields := []zapcore.Field{
-		zap.String("UUID", l.key),
+	if requestID := ctx.Value(constant.RequestIdKey); requestID != nil {
+		args["request_id"] = requestID
 	}
-	l.logger.Error(fmt.Sprintf(template, args...), fields...)
+	l.l.WithFields(logrus.Fields(args)).Error(msg)
 }
 
-func (l *logger) DPanic(args ...interface{}) {
-	l.sugarLogger.DPanic(args...)
+func (l *logger) Errorf(ctx context.Context, args map[string]any, template string, format ...interface{}) {
+	if args == nil {
+		args = make(map[string]any)
+	}
+	if requestID := ctx.Value(constant.RequestIdKey); requestID != nil {
+		args["request_id"] = requestID
+	}
+	l.l.WithFields(logrus.Fields(args)).Errorf(template, format...)
 }
 
-func (l *logger) DPanicf(template string, args ...interface{}) {
-	l.sugarLogger.DPanicf(template, args...)
+// Fatal level logging with context
+func (l *logger) Fatal(ctx context.Context, args map[string]any, msg string) {
+	if args == nil {
+		args = make(map[string]any)
+	}
+	if requestID := ctx.Value(constant.RequestIdKey); requestID != nil {
+		args["request_id"] = requestID
+	}
+	l.l.WithFields(logrus.Fields(args)).Fatal(msg)
 }
 
-func (l *logger) Panic(args ...interface{}) {
-	l.sugarLogger.Panic(args...)
+func (l *logger) Fatalf(ctx context.Context, args map[string]any, template string, format ...interface{}) {
+	if args == nil {
+		args = make(map[string]any)
+	}
+	if requestID := ctx.Value(constant.RequestIdKey); requestID != nil {
+		args["request_id"] = requestID
+	}
+	l.l.WithFields(logrus.Fields(args)).Fatalf(template, format...)
 }
 
-func (l *logger) Panicf(template string, args ...interface{}) {
-	l.sugarLogger.Panicf(template, args...)
+// Panic level logging with context
+func (l *logger) Panic(ctx context.Context, args map[string]any, msg string) {
+	if args == nil {
+		args = make(map[string]any)
+	}
+	if requestID := ctx.Value(constant.RequestIdKey); requestID != nil {
+		args["request_id"] = requestID
+	}
+	l.l.WithFields(logrus.Fields(args)).Panic(msg)
 }
 
-func (l *logger) Fatal(args ...interface{}) {
-	l.sugarLogger.Fatal(args...)
-}
-
-func (l *logger) Fatalf(template string, args ...interface{}) {
-	l.sugarLogger.Fatalf(template, args...)
+func (l *logger) Panicf(ctx context.Context, args map[string]any, template string, format ...interface{}) {
+	if args == nil {
+		args = make(map[string]any)
+	}
+	if requestID := ctx.Value(constant.RequestIdKey); requestID != nil {
+		args["request_id"] = requestID
+	}
+	l.l.WithFields(logrus.Fields(args)).Panicf(template, format...)
 }

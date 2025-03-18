@@ -3,7 +3,9 @@ package main
 import (
 	"fmt"
 
+	"github.com/baothaihcmut/Ecommerce-go/libs/pkg/cache"
 	cfgLib "github.com/baothaihcmut/Ecommerce-go/libs/pkg/config"
+	"github.com/baothaihcmut/Ecommerce-go/libs/pkg/logger"
 	"github.com/baothaihcmut/Ecommerce-go/users/internal/config"
 	"github.com/baothaihcmut/Ecommerce-go/users/internal/server"
 	"github.com/baothaihcmut/Ecommerce-go/users/internal/server/initialize"
@@ -31,14 +33,14 @@ func main() {
 	}
 	defer rabbitMq.Close()
 	//init redis
-	redis, err := initialize.InitializeRedis(config.Redis)
+	redis, err := cache.InitializeRedis(config.Redis)
 	if err != nil {
 		fmt.Printf("Error connect to Redis: %v\n", err)
 		return
 	}
 
 	//init logger
-	logrus:= initialize.InitializeLogrus(config.Logger)
+	logrus:= logger.InitializeLogrus(config.Logger)
 
 	s := server.NewServer(pool, redis, rabbitMq, logrus, &config)
 	s.Start()

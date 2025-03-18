@@ -1,6 +1,7 @@
 package server
 
 import (
+	"context"
 	"fmt"
 	"net"
 	"os"
@@ -8,12 +9,15 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/baothaihcmut/Ecommerce-go/libs/pkg/bootstrap"
 	"github.com/baothaihcmut/Ecommerce-go/libs/pkg/cache"
 	"github.com/baothaihcmut/Ecommerce-go/libs/pkg/db"
+	"github.com/baothaihcmut/Ecommerce-go/libs/pkg/interceptors"
 	"github.com/baothaihcmut/Ecommerce-go/libs/pkg/logger"
 	userProto "github.com/baothaihcmut/Ecommerce-go/libs/pkg/proto/users/v1"
 	"github.com/baothaihcmut/Ecommerce-go/libs/pkg/queue"
 	"github.com/baothaihcmut/Ecommerce-go/users/internal/adapter/db/postgres/repositories"
+	"github.com/baothaihcmut/Ecommerce-go/users/internal/adapter/grpc/exception"
 	grpcService "github.com/baothaihcmut/Ecommerce-go/users/internal/adapter/grpc/services"
 	externalService "github.com/baothaihcmut/Ecommerce-go/users/internal/adapter/services"
 	"github.com/baothaihcmut/Ecommerce-go/users/internal/config"
@@ -25,6 +29,9 @@ import (
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/keepalive"
 )
+type OnApplicationBootstrap interface{
+	Run()
+}
 
 type Server struct {
 	db       *pgxpool.Pool
@@ -45,10 +52,14 @@ func NewServer(
 		db:       db,
 		redis:    redis,
 		rabbitMq: rabbitMq,
+		logrus:   logger,
 		cfg:      cfg,
 	}
 }
 func (s *Server) Start() {
+	//bootstrap container
+	bootstrapContainer := bootstrap.NewApplicationBootstrapContainer()
+
 	loggerService := logger.NewLogger(s.logrus)
 	dbService := db.NewPostgresService(s.db)
 	
@@ -60,13 +71,12 @@ func (s *Server) Start() {
 	//init external service
 	eventPublisher := externalService.NewEventPublisherService(queueService)
 	userConfirmService := externalService.NewUserConfirmService(redisService)
-	jwtService := externalService.NewJWTService()
+	jwtService := externalService.NewJWTService(s.cfg.Jwt)
 	//init repository
 	userRepo := repositories.NewPostgresUserRepo(s.db)
 	//init core
-	coreAuthService := coreService.NewAuthService(userRepo, jwtService, userConfirmService, eventPublisher,dbService,loggerService)
-	//init exchange
-	queueService.InitExchange("user-events", "topic")
+	coreAuthService := coreService.NewAuthService(userRepo, jwtService, userConfirmService, eventPublisher,dbService,queueService,loggerService)
+	bootstrapContainer.Register(coreAuthService.(*coreService.AuthService))
 	//init grpc handler
 	authHandler := grpcService.NewAuthService(coreAuthService)
 	errCh := make(chan error)
@@ -82,7 +92,9 @@ func (s *Server) Start() {
 	// grpc options
 	serverOptions := []grpc.ServerOption{
 		// Unary option
-		grpc.ChainUnaryInterceptor(),
+		grpc.ChainUnaryInterceptor(
+			grpc.UnaryServerInterceptor(interceptors.ErrorHandler(exception.MapException)),
+		),
 		//keep alive option
 		grpc.KeepaliveParams(keepalive.ServerParameters{
 			MaxConnectionIdle: 5 * time.Duration(s.cfg.Server.MaxConnectionIdle),
@@ -94,7 +106,8 @@ func (s *Server) Start() {
 	baseServer := grpc.NewServer(serverOptions...)
 	go func() {
 		userProto.RegisterAuthServiceServer(baseServer, authHandler)
-		fmt.Println("Server started successfully 🚀")
+		bootstrapContainer.Run()
+		loggerService.Info(context.Background(),nil,"Server started successfully 🚀")
 		baseServer.Serve(grpcListener)
 	}()
 	<-errCh

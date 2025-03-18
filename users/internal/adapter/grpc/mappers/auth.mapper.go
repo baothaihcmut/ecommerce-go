@@ -28,3 +28,14 @@ func ToConfirmSignUpCommand(proto *v1.ConfirmSignUpRequest) *commands.ConfirmSig
 func ToConfirmSignUpResponse(result *results.ConfirmSignUpResult) *v1.ConfirmSignUpData {
 	return &v1.ConfirmSignUpData{}
 }
+
+func ToLogInCommand(proto *v1.LogInRequest) *commands.LogInCommand{
+	return &commands.LogInCommand{
+		Email: proto.Email,
+		Password: proto.Password,
+	}
+}
+func ToLogInResponse(result *results.LogInResult) *v1.LogInData{
+	return &v1.LogInData{
+	}
+}
