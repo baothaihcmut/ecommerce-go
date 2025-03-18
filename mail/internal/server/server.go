@@ -1,7 +1,6 @@
 package server
 
 import (
-	"context"
 	"os"
 	"os/signal"
 	"sync"
@@ -76,7 +75,7 @@ func (s *Server) Start() {
 			}
 			go func() {
 				for msg := range msgs {
-					loggerService.Info(context.Background(),map[string]any{
+					loggerService.Info(map[string]any{
 						"queue": q,
 						"route_key": msg.RoutingKey,
 						"exchange": msg.Exchange,
@@ -91,10 +90,10 @@ func (s *Server) Start() {
 	go func() {
 		wg.Done()
 		for err := range errCh {
-			loggerService.Errorf(context.Background(),nil,"Error: %v",err)
+			loggerService.Errorf(nil,"Error: %v",err)
 		}
 	}()
-	loggerService.Info(context.Background(),nil,"Server is running")
+	loggerService.Info(nil,"Server is running")
 	<-sigChan
 	//close all channel
 	for _, ch := range mapCh {
@@ -105,5 +104,5 @@ func (s *Server) Start() {
 	//close error channel
 	close(errCh)
 
-	loggerService.Info(context.Background(),nil,"Graceful shutdown completed.")
+	loggerService.Info(nil,"Graceful shutdown completed.")
 }

@@ -8,7 +8,8 @@ import (
 )
 
 type UserRepo interface {
-	CreateUser(context.Context, *entities.User, pgx.Tx) error
+	CreateUser(context.Context, *entities.User) error
 	FindUserByEmail(context.Context, string) (*entities.User, error)
 	FindUserByPhoneNumber(context.Context, string) (*entities.User, error)
+	WithTx(pgx.Tx) UserRepo
 }

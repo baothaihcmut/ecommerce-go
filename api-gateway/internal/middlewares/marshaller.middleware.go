@@ -18,6 +18,8 @@ type CustomMarshaller struct {
 // Marshal transforms the gRPC response before sending it to the client
 func (c *CustomMarshaller) Marshal(v any) ([]byte, error) {
 	var message string
+	var data any
+
     vReflect := reflect.Indirect(reflect.ValueOf(v))
 	statusField := vReflect.FieldByName("Status")
 	if statusField.IsValid() && statusField.Kind() == reflect.Ptr {
@@ -28,15 +30,18 @@ func (c *CustomMarshaller) Marshal(v any) ([]byte, error) {
 		}
 	}
     dataField := vReflect.FieldByName("Data")
-	if dataField.IsValid() && dataField.Kind() == reflect.Ptr{
-		dataField = dataField.Elem() 
+	if dataField.IsValid() {
+		if dataField.Kind() == reflect.Ptr && !dataField.IsNil() {
+			dataField = dataField.Elem()
+		}
+
+		data = dataField.Interface()
 	}
-   
     // Build the transformed response
     modifiedResponse := map[string]any{
         "success": true,
         "message": message,
-        "data":    dataField,
+        "data":    data,
     }
 
     return json.Marshal(modifiedResponse)

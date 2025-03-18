@@ -6,7 +6,6 @@ import (
 
 	"github.com/baothaihcmut/Ecommerce-go/users/internal/adapter/db/postgres/sqlc"
 	"github.com/baothaihcmut/Ecommerce-go/users/internal/core/domain/entities"
-	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgtype"
 )
 
@@ -32,13 +31,10 @@ func fromNullableString(s *string) pgtype.Text {
 }
 
 // CreateUser implements repositories.UserRepo.
-func (p PostgresUserRepo) CreateUser(ctx context.Context, user *entities.User, tx pgx.Tx) error {
-	q := p.q
-	if tx != nil {
-		q = sqlc.New(tx)
-	}
+func (p PostgresUserRepo) CreateUser(ctx context.Context, user *entities.User) error {
+	
 	//create in user table
-	err := q.CreateUser(ctx, toDBUser(user))
+	err := p.q.CreateUser(ctx, toDBUser(user))
 	if err != nil {
 		return err
 	}
@@ -51,7 +47,7 @@ func (p PostgresUserRepo) CreateUser(ctx context.Context, user *entities.User, t
 		wg.Add(1)
 		go func() {
 			defer wg.Done()
-			err = q.CreateCustomer(ctx, sqlc.CreateCustomerParams{
+			err = p.q.CreateCustomer(ctx, sqlc.CreateCustomerParams{
 				UserId:     pgtype.UUID{Bytes: user.Id, Valid: true},
 				LoyalPoint: pgtype.Int4{Int32: int32(user.Customer.LoyaltyPoint), Valid: true},
 			})
@@ -70,7 +66,7 @@ func (p PostgresUserRepo) CreateUser(ctx context.Context, user *entities.User, t
 		wg.Add(1)
 		go func() {
 			defer wg.Done()
-			err = q.CreateShopOwner(ctx, sqlc.CreateShopOwnerParams{
+			err = p.q.CreateShopOwner(ctx, sqlc.CreateShopOwnerParams{
 				UserId:           pgtype.UUID{Bytes: user.Id, Valid: true},
 				BussinessLicense: pgtype.Text{String: user.ShopOwner.BussinessLicense, Valid: user.ShopOwner.BussinessLicense != ""},
 			})
@@ -90,7 +86,7 @@ func (p PostgresUserRepo) CreateUser(ctx context.Context, user *entities.User, t
 		wg.Add(1)
 		go func() {
 			defer wg.Done()
-			err = q.CreateAddress(ctx, sqlc.CreateAddressParams{
+			err = p.q.CreateAddress(ctx, sqlc.CreateAddressParams{
 				Priority: pgtype.Int4{Int32: int32(address.Priority), Valid: true},
 				UserId:   pgtype.UUID{Bytes: user.Id, Valid: true},
 				Street:   pgtype.Text{String: address.Street, Valid: true},

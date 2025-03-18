@@ -9,19 +9,19 @@ option go_package = "github.com/baothaihcmut/Ecommerce-go/libs/pkg/proto/users/v
 service AuthService {
   rpc LogIn(LogInRequest) returns (LogInResponse) {
     option (google.api.http) = {
-      post: "/api/v1/auth/log-in"
+      post: "/auth/log-in"
       body: "*"
     };
   }
   rpc SignUp(SignUpRequest) returns (SignUpResponse) {
     option (google.api.http) = {
-      post: "/api/v1/auth/sign-up"
+      post: "/auth/sign-up"
       body: "*"
     };
   }
   rpc ConfirmSignUp(ConfirmSignUpRequest) returns (ConfirmSignUpResponse) {
     option (google.api.http) = {
-      post: "/api/v1/auth/confirm"
+      post: "/auth/confirm"
       body: "*"
     };
   }
@@ -51,7 +51,10 @@ message LogInResponse {
   shared.v1.Status status = 1 [json_name = "status"];
   LogInData data = 2 [json_name = "data"];
 }
-message LogInData {}
+message LogInData {
+  string access_token = 1 [json_name = "accessToken"];
+  string refresh_token = 2 [json_name = "refreshToken"];
+}
 message ConfirmSignUpRequest {
   string code = 1 [json_name = "code"];
 }

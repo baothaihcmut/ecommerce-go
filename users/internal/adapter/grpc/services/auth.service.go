@@ -8,8 +8,6 @@ import (
 	userProto "github.com/baothaihcmut/Ecommerce-go/libs/pkg/proto/users/v1"
 	"github.com/baothaihcmut/Ecommerce-go/users/internal/adapter/grpc/mappers"
 	"github.com/baothaihcmut/Ecommerce-go/users/internal/core/port/inbound/handlers"
-	"google.golang.org/grpc"
-	"google.golang.org/grpc/metadata"
 )
 
 type AuthService struct {
@@ -38,13 +36,12 @@ func (a *AuthService) LogIn(ctx context.Context,req *userProto.LogInRequest) (*u
 	if err != nil{
 		return nil,err
 	}
-	//set metadata
-	md :=metadata.Pairs("access_token",res.AccessToken,"refresh_token",res.RefreshToken)
-	if err := grpc.SendHeader(ctx,md) ; err!=nil{
-		return nil,err
-	}
+	
 	return &userProto.LogInResponse{
-		Data: &userProto.LogInData{},
+		Data: &userProto.LogInData{
+			AccessToken: res.AccessToken,
+			RefreshToken: res.RefreshToken,
+		},
 		Status: &v1.Status{
 			Message: "Log in success",
 			Code: http.StatusCreated,

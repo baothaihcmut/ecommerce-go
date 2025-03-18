@@ -14,6 +14,7 @@ import (
 	"github.com/grpc-ecosystem/grpc-gateway/v2/runtime"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
+	"google.golang.org/grpc/metadata"
 )
 
 
@@ -46,12 +47,16 @@ func initGrpcClient(
 }
 
 func (s *Server) Start() {
-	
 	mux := runtime.NewServeMux(
+		runtime.WithMetadata(func(ctx context.Context, r *http.Request) metadata.MD {
+			return metadata.Pairs("prefix", s.cfg.Web.Prefix)
+		}),
 		runtime.WithForwardResponseOption(middlewares.SetHTTPStatusFromResponse),
 		runtime.WithMarshalerOption(runtime.MIMEWildcard, &middlewares.CustomMarshaller{}),
 		runtime.WithErrorHandler(middlewares.CustomErrorHandler),
 	)
+	authMux := middlewares.AuthMiddleware(s.cfg.Jwt, s.cfg.Web)(mux)
+	
 	clientOptions :=[]grpc.DialOption{
 		grpc.WithTransportCredentials(insecure.NewCredentials()),
 	}
@@ -69,10 +74,19 @@ func (s *Server) Start() {
 		errCh <- fmt.Errorf("%s", <-c)
 	}()
 	go func ()  {
+		httpMux :=http.NewServeMux()
+		httpMux.Handle(s.cfg.Web.Prefix+"/", http.StripPrefix(s.cfg.Web.Prefix, authMux))
 		fmt.Println("Server is running")
-		http.ListenAndServe(fmt.Sprintf(":%d",s.cfg.Server.Port),mux)
+		server := &http.Server{
+			Addr:    ":8080",
+			Handler: httpMux,
+		}
+		if err := server.ListenAndServe(); err != nil {
+			errCh<-err
+		}
 	}()
-	<-errCh
+	err=<-errCh
+	fmt.Println(err)
 	fmt.Println("Shut down server")	
 }
 

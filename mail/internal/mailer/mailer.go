@@ -43,13 +43,13 @@ func (g *MailerImpl) SendMail(ctx context.Context, arg SendMailArg) error {
 	m.SetHeader("Subject", arg.Subject)
 	m.SetBody("text/html", body.String())
 	if err := g.dialer.DialAndSend(m); err != nil {
-		g.logger.Errorf(ctx,map[string]any{
+		g.logger.Errorf(map[string]any{
 			"to": arg.To,
 			"subject": arg.Subject,
 		}, "Error send mail: %v", err)
 		return err
 	}
-	g.logger.Info(ctx,map[string]any{
+	g.logger.WithCtx(ctx).Info(map[string]any{
 		"to": arg.To,
 		"subject": arg.Subject,
 	}, "Send mail success")

@@ -1,7 +1,6 @@
 package server
 
 import (
-	"context"
 	"fmt"
 	"net"
 	"os"
@@ -94,6 +93,7 @@ func (s *Server) Start() {
 		// Unary option
 		grpc.ChainUnaryInterceptor(
 			grpc.UnaryServerInterceptor(interceptors.ErrorHandler(exception.MapException)),
+			grpc.UnaryServerInterceptor(interceptors.LoggingInterceptor(loggerService)),
 		),
 		//keep alive option
 		grpc.KeepaliveParams(keepalive.ServerParameters{
@@ -107,8 +107,9 @@ func (s *Server) Start() {
 	go func() {
 		userProto.RegisterAuthServiceServer(baseServer, authHandler)
 		bootstrapContainer.Run()
-		loggerService.Info(context.Background(),nil,"Server started successfully 🚀")
+		loggerService.Info(nil,"Server started successfully 🚀")
 		baseServer.Serve(grpcListener)
 	}()
 	<-errCh
+	loggerService.Info(nil,"Server shutdown")
 }

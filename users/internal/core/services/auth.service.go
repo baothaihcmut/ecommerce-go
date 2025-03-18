@@ -33,7 +33,7 @@ func (a *AuthService) LogIn(ctx context.Context,command *commands.LogInCommand) 
 	//find user by email
 	user,err := a.userRepo.FindUserByEmail(ctx,command.Email)
 	if err!= nil {
-		a.logger.Errorf(ctx,map[string]any{
+		a.logger.WithCtx(ctx).Errorf(map[string]any{
 			"email":command.Email,
 		},"Error find user by email: ",err)
 	}
@@ -49,7 +49,7 @@ func (a *AuthService) LogIn(ctx context.Context,command *commands.LogInCommand) 
 		IsShopOwnerActive: user.IsShopOwnerActive,
 	})
 	if err != nil{
-		a.logger.Errorf(ctx,map[string]any{
+		a.logger.WithCtx(ctx).Errorf(map[string]any{
 			"email":command.Email,
 		},"Error generate access token: ",err)
 		return nil,err
@@ -58,7 +58,7 @@ func (a *AuthService) LogIn(ctx context.Context,command *commands.LogInCommand) 
 		UserId: user.Id,
 	})
 	if err != nil{
-		a.logger.Errorf(ctx,map[string]any{
+		a.logger.WithCtx(ctx).Errorf(map[string]any{
 			"email":command.Email,
 		},"Error generate refesh token: ",err)
 		return nil,err
@@ -84,15 +84,15 @@ func (a *AuthService) ConfirmSignUp(ctx context.Context, command *commands.Confi
 	defer func() {
 		if err != nil {
 			if err := a.dbService.RollBackTransaction(ctx, tx); err != nil {
-				a.logger.Errorf(ctx, nil, "Error rollback transaction: %v", err)
+				a.logger.WithCtx(ctx).Errorf( nil, "Error rollback transaction: %v", err)
 			}
 		} else {
 			if err := a.dbService.CommitTransaction(ctx, tx); err != nil {
-				a.logger.Errorf(ctx, nil, "Error commit transaction: %v", err)
+				a.logger.WithCtx(ctx).Errorf( nil, "Error commit transaction: %v", err)
 			}
 		}
 	}()
-	err = a.userRepo.CreateUser(ctx, user, tx)
+	err = a.userRepo.WithTx(tx).CreateUser(ctx, user)
 	if err != nil {
 		return nil, err
 	}
@@ -103,7 +103,7 @@ func (a *AuthService) SignUp(ctx context.Context, command *commands.SignUpComman
 	//check if user pending for confirm
 	isPending, err := a.userConfirmService.IsUserPendingConfirmSignUp(ctx, command.Email)
 	if err != nil {
-		a.logger.Errorf(ctx, map[string]any{
+		a.logger.WithCtx(ctx).Errorf( map[string]any{
 			"email": command.Email,
 		}, "Error check user pending sign up: %v", err)
 		return nil, err
@@ -127,7 +127,7 @@ func (a *AuthService) SignUp(ctx context.Context, command *commands.SignUpComman
 				return
 			default:
 			}
-			a.logger.Errorf(ctx, nil, "Error get user by email: %v", err)
+			a.logger.WithCtx(ctx).Errorf( nil, "Error get user by email: %v", err)
 			cancelCheck()
 			errCheck <- err
 		}
@@ -145,7 +145,7 @@ func (a *AuthService) SignUp(ctx context.Context, command *commands.SignUpComman
 				return
 			default:
 			}
-			a.logger.Errorf(ctx, nil, "Error get user by phone number: %v", err)
+			a.logger.WithCtx(ctx).Errorf( nil, "Error get user by phone number: %v", err)
 			cancelCheck()
 			errCheck <- err
 		}
@@ -179,7 +179,7 @@ func (a *AuthService) SignUp(ctx context.Context, command *commands.SignUpComman
 	//store user info
 	code, err := a.userConfirmService.StoreUserInfo(ctx, user)
 	if err != nil {
-		a.logger.Errorf(ctx, nil, "Error store user to cache: %v", err)
+		a.logger.WithCtx(ctx).Errorf( nil, "Error store user to cache: %v", err)
 
 		return nil, err
 	}
@@ -194,7 +194,7 @@ func (a *AuthService) SignUp(ctx context.Context, command *commands.SignUpComman
 		ConfrimUrl: url,
 	}
 	if err := a.eventPublisher.PublishUserSignUpEvent(ctx, e); err != nil {
-		a.logger.Errorf(ctx, nil, "Error publish event: %v", err)
+		a.logger.WithCtx(ctx).Errorf( nil, "Error publish event: %v", err)
 		return nil, err
 	}
 	return &results.SignUpResult{}, nil
