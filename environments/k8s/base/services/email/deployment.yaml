@@ -1,0 +1,36 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: mail-service-deployment
+  namespace: ecommerce-app
+  labels:
+    app: mail-service
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: mail-service
+  template:
+    metadata:
+      labels:
+        app: mail-service
+    spec:
+      containers:
+        - name: mail-service
+          image: baothaihcmut/ecommerce-email-service:v1
+          imagePullPolicy: Always
+          volumeMounts:
+            - name: config-volume
+              mountPath: /app/config/config.yaml  
+              subPath: config.yaml
+          resources:
+            requests:
+              cpu: "250m"  
+              memory: "128Mi"  
+            limits:
+              cpu: "500m"   
+              memory: "256Mi"
+      volumes:
+        - name: config-volume
+          configMap:
+            name: mail-service-config-map

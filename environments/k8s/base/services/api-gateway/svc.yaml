@@ -1,0 +1,14 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: api-gateway-svc
+  namespace: ecommerce-app
+spec:
+  selector:
+    app: api-gateway
+  ports:
+    - name: http
+      protocol: TCP
+      port: 80  
+      targetPort: http 
+  type: ClusterIP

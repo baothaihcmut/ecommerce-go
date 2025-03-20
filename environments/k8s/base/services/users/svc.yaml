@@ -1,0 +1,14 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: user-service-svc
+  namespace: ecommerce-app
+spec:
+  selector:
+    app: user-service  
+  ports:
+    - name: grpc
+      protocol: TCP
+      port: 50051        
+      targetPort: grpc 
+  type: ClusterIP

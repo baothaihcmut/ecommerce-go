@@ -1,0 +1,45 @@
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: redis-statefulset
+  namespace: ecommerce-app
+spec:
+  serviceName: "redis-headless"
+  replicas: 1
+  selector:
+    matchLabels:
+      app: redis
+  template: 
+    metadata:
+      labels:
+        app: redis
+    spec:
+      containers:
+        - name: redis
+          image: redis:latest
+          command: ["redis-server", "--appendonly", "yes"]
+          envFrom:
+            - configMapRef:
+                name: redis-config-map
+          ports:
+            - name: redis-server
+              containerPort: 6379
+          volumeMounts:
+            - name: redis-storage
+              mountPath: /data
+          resources:
+            limits:
+              cpu: "1"
+              memory: "128Mi"
+            requests:
+              cpu: "500m"
+              memory: "64Mi"
+  volumeClaimTemplates:
+    - metadata:
+        name: redis-storage
+      spec:
+        accessModes: ["ReadWriteOnce"]
+        resources:
+          requests:
+            storage: 200Mi
+        storageClassName: local-path 

@@ -1,0 +1,7 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: redis-config-map
+  namespace: ecommerce-app
+data:
+  REDIS_PASSWORD: "redis"

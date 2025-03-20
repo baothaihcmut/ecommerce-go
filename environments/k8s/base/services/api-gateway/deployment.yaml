@@ -1,0 +1,39 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: api-gateway-deployment
+  namespace: ecommerce-app
+  labels:
+    app: api-gateway
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: api-gateway
+  template:
+    metadata:
+      labels:
+        app: api-gateway
+    spec:
+      containers:
+        - name: api-gateway
+          image: baothaihcmut/ecommerce-api-gateway:v1
+          imagePullPolicy: Always
+          ports:
+            - name: http
+              containerPort: 8080
+          volumeMounts:
+            - name: config-volume
+              mountPath: /app/config/config.yaml  
+              subPath: config.yaml
+          resources:
+            requests:
+              cpu: "250m"  
+              memory: "128Mi"  
+            limits:
+              cpu: "500m"   
+              memory: "256Mi"
+      volumes:
+        - name: config-volume
+          configMap:
+            name: api-gateway-config-map

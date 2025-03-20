@@ -1,0 +1,37 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: user-service-config-map
+  namespace: ecommerce-app
+data:
+  config.yaml: |
+    server:
+      port: 50051
+      max_connection_idle: 5
+    db:
+      uri: "postgresql://neondb_owner:npg_ARFzU8NZupg7@ep-tight-glitter-a17vbx2k-pooler.ap-southeast-1.aws.neon.tech/ecommerce-go-users?sslmode=require"
+      max_connection: 10
+      min_connection: 2
+      max_connection_idle_time: 5
+    rabbitmq:
+      endpoint: "rabbitmq-statefulset-0.rabbitmq-headless.ecommerce-app.svc.cluster.local:5672"
+      user_name: "admin"
+      password: "admin"
+      vhost: "my_vhost"
+      is_secure: false
+    redis:
+      endpoint: "redis-statefulset-0.redis-headless.ecommerce-app.svc.cluster.local:6379"
+      password: ""
+      db: 0
+      user_name: "default"
+    logger:
+      level: "debug"
+      format: "json"
+      output: "stdout"
+    jwt:
+      access_token:
+        secret: "access token secret"
+        age: 3000
+      refresh_token:
+        secret: "refresh token secret"
+        age: 7000

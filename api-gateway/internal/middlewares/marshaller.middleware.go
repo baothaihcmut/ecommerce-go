@@ -7,13 +7,10 @@ import (
 	"github.com/grpc-ecosystem/grpc-gateway/v2/runtime"
 )
 
-
-
-
-
 type CustomMarshaller struct {
     runtime.JSONPb
 }
+
 
 // Marshal transforms the gRPC response before sending it to the client
 func (c *CustomMarshaller) Marshal(v any) ([]byte, error) {

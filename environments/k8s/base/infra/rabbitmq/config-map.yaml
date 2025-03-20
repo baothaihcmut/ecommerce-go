@@ -1,0 +1,9 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: rabbitmq-config-map
+  namespace: ecommerce-app
+data:
+  RABBITMQ_DEFAULT_VHOST: my_vhost
+  RABBITMQ_DEFAULT_USER: admin
+  RABBITMQ_DEFAULT_PASS: admin

@@ -78,7 +78,7 @@ func (s *Server) Start() {
 		httpMux.Handle(s.cfg.Web.Prefix+"/", http.StripPrefix(s.cfg.Web.Prefix, authMux))
 		fmt.Println("Server is running")
 		server := &http.Server{
-			Addr:    ":8080",
+			Addr:    fmt.Sprintf(":%d",s.cfg.Server.Port),
 			Handler: httpMux,
 		}
 		if err := server.ListenAndServe(); err != nil {

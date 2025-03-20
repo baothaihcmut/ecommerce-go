@@ -1,0 +1,47 @@
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: rabbitmq-statefulset
+  namespace: ecommerce-app
+spec:
+  serviceName: "rabbitmq-headless"
+  replicas: 1
+  selector:
+    matchLabels:
+      app: rabbitmq
+  template: 
+    metadata:
+      labels:
+        app: rabbitmq
+    spec:
+      containers:
+        - name: rabbitmq
+          image: rabbitmq:3.12-management
+          envFrom:
+            - configMapRef:
+                name: rabbitmq-config-map
+          ports:
+            - name: amqp
+              containerPort: 5672
+
+            - name: ui
+              containerPort: 15672 
+          resources:
+            limits:
+              cpu: "1"
+              memory: "128Mi"
+            requests:
+              cpu: "500m"
+              memory: "64Mi"
+          volumeMounts:
+            - name: data
+              mountPath: /var/lib/rabbitmq
+  volumeClaimTemplates:
+    - metadata:
+        name: data
+      spec:
+        accessModes: ["ReadWriteOnce"]
+        resources:
+          requests:
+            storage: 200Mi
+        storageClassName: local-path 

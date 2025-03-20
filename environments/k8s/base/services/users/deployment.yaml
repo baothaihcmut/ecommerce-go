@@ -1,0 +1,39 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: user-service-deployment
+  namespace: ecommerce-app
+  labels:
+    app: user-service
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: user-service
+  template:
+    metadata:
+      labels:
+        app: user-service
+    spec:
+      containers:
+        - name: user-service
+          image: baothaihcmut/user-service:v1
+          imagePullPolicy: Always
+          ports:
+            - name: grpc
+              containerPort: 50051
+          volumeMounts:
+            - name: config-volume
+              mountPath: /app/config/config.yaml  
+              subPath: config.yaml
+          resources:
+            requests:
+              cpu: "250m"  
+              memory: "128Mi"  
+            limits:
+              cpu: "500m"   
+              memory: "256Mi"
+      volumes:
+        - name: config-volume
+          configMap:
+            name: user-service-config-map

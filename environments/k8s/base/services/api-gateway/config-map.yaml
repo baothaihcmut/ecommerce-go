@@ -1,0 +1,27 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: api-gateway-config-map
+  namespace: ecommerce-app
+data:
+  config.yaml: |
+    server:
+      port: 8080
+
+    addresses:
+      user_service: "user-service-svc.ecommerce-app.svc.cluster.local:50051"
+
+    jwt:
+      access_token:
+        secret: "access token secret"
+        age: 3000
+      refresh_token:
+        secret: "refresh token secret"
+        age: 7000
+
+    web:
+      prefix: /api/v1
+      public:
+        - "/auth/log-in"
+        - "/auth/sign-up"
+        - "/auth/confirm"
