@@ -68,6 +68,7 @@ func (s *Server) initApp() {
 		// Unary option
 		grpc.ChainUnaryInterceptor(
 			grpc.UnaryServerInterceptor(interceptors.ErrorHandler(exception.MapException)),
+			grpc.UnaryServerInterceptor(interceptors.ExtractAuthInterceptor()),
 			grpc.UnaryServerInterceptor(interceptors.LoggingInterceptor(loggerService)),
 			grpc.UnaryServerInterceptor(interceptors.ValidateInterceptor),
 		),
