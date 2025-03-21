@@ -5,6 +5,6 @@ import (
 )
 
 type UserContext struct {
-	Id   uuid.UUID
-	Role Role
+	UserId            uuid.UUID
+	IsShopOwnerActive bool
 }

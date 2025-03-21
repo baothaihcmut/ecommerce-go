@@ -1,0 +1,66 @@
+syntax = "proto3";
+package products.v1;
+
+import "google/api/annotations.proto";
+import "google/protobuf/timestamp.proto";
+import "shared/v1/status.proto";
+import "validate/validate.proto";
+
+option go_package = "github.com/baothaihcmut/Ecommerce-go/libs/pkg/proto/products/v1";
+
+service ProductService {
+  rpc CreateProduct(CreateProductRequest) returns (CreateProductResponse) {
+    option (google.api.http) = {
+      post: "/product/add"
+      body: "*"
+    };
+  }
+}
+
+message CreateProductRequest {
+  string name = 1 [
+    json_name = "name",
+    (validate.rules).string.min_len = 1
+  ];
+  string description = 2 [json_name = "description"];
+  string shop_id = 3 [
+    json_name = "shopId",
+    (validate.rules).string.min_len = 1
+  ];
+  repeated string category_ids = 4 [json_name = "categoyIds"];
+  int32 num_of_image = 5 [
+    json_name = "numOfImage",
+    (validate.rules).int32 = {
+      gte: 0
+      lte: 10
+    }
+  ];
+  bool has_thumbnail = 6 [json_name = "hasThumbnail"];
+  repeated string variations = 7 [json_name = "variations"];
+}
+
+message ProductData {
+  string id = 1 [json_name = "id"];
+  string name = 2 [json_name = "name"];
+  string description = 3 [json_name = "description"];
+  repeated string category_ids = 4 [json_name = "categoryIds"]; // List of Mongo ObjectIDs
+  string shop_id = 5 [json_name = "shopIds"];
+  repeated string variations = 6 [json_name = "variations"];
+  int32 sold_total = 7 [json_name = "soldTotal"];
+  google.protobuf.Timestamp created_at = 8 [json_name = "createdAt"];
+  google.protobuf.Timestamp updated_at = 9 [json_name = "updatedAt"];
+}
+message UploadDetail {
+  string url = 1 [json_name = "url"];
+  string method = 2 [json_name = "method"];
+  int32 expiry = 3 [json_name = "expiry"];
+}
+message CreateProductData {
+  ProductData product = 1 [json_name = "product"];
+  UploadDetail thumb_nail_upload_detail = 2 [json_name = "thumbnailUploadDetail"];
+  repeated UploadDetail image_upload_details = 3 [json_name = "imageUploadDetails"];
+}
+message CreateProductResponse {
+  shared.v1.Status status = 1 [json_name = "status"];
+  CreateProductData data = 2 [json_name = "data"];
+}

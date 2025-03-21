@@ -17,6 +17,7 @@ type AuthService struct {
 
 // ConfirmSignUp implements v1.AuthServiceServer.
 func (a *AuthService) ConfirmSignUp(ctx context.Context, req *userProto.ConfirmSignUpRequest) (*userProto.ConfirmSignUpResponse, error) {
+
 	res, err := a.authHandler.ConfirmSignUp(ctx, mappers.ToConfirmSignUpCommand(req))
 	if err != nil {
 		return nil, err

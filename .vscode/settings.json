@@ -1,13 +1,13 @@
 {
-    "go.goroot": "/home/baothai/.gvm/gos/go1.23.7",
-    "go.gopath": "/home/baothai/go",
+    "go.goroot": "/Users/thaibao/.gvm/gos/go1.23.7",
+    "go.gopath": "/Users/thaibao/go",
     "go.alternateTools": {
-      "go": "/home/baothai/.gvm/gos/go1.23.7/bin/go"
+      "go": "/Users/thaibao/.gvm/gos/go1.23.7/bin/go"
     },
     "terminal.integrated.env.osx": {
-      "GOPATH": "/home/baothai/go",
-      "GOROOT": "/home/baothai/.gvm/gos/go1.23.7",
-      "PATH": "/home/baothai/.gvm/gos/go1.23.7/bin:$PATH"
+      "GOPATH": "/Users/thaibao/go",
+      "GOROOT": "/Users/thaibao/.gvm/gos/go1.23.7",
+      "PATH": "/Users/thaibao/.gvm/gos/go1.23.7/bin:$PATH"
     },
     "go.formatTool": "default",
     "editor.formatOnSave": true

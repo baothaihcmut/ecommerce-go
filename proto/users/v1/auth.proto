@@ -45,13 +45,19 @@ message SignUpData {}
 
 message LogInRequest {
   string email = 1 [
-  json_name = "email",
-  (validate.rules).string = {email: true, min_len: 1}
+    json_name = "email",
+    (validate.rules).string = {
+      email: true
+      min_len: 1
+    }
   ];
 
   string password = 2 [
-  json_name = "password",
-  (validate.rules).string = {min_len: 6, max_len: 32}
+    json_name = "password",
+    (validate.rules).string = {
+      min_len: 6
+      max_len: 32
+    }
   ];
 }
 

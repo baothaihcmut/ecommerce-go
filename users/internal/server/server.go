@@ -28,7 +28,8 @@ import (
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/keepalive"
 )
-type OnApplicationBootstrap interface{
+
+type OnApplicationBootstrap interface {
 	Run()
 }
 
@@ -37,7 +38,7 @@ type Server struct {
 	redis    *redis.Client
 	rabbitMq *amqp091.Connection
 	cfg      *config.CoreConfig
-	logrus 	 *logrus.Logger
+	logrus   *logrus.Logger
 }
 
 func NewServer(
@@ -46,7 +47,7 @@ func NewServer(
 	rabbitMq *amqp091.Connection,
 	logger *logrus.Logger,
 	cfg *config.CoreConfig,
-	) *Server {
+) *Server {
 	return &Server{
 		db:       db,
 		redis:    redis,
@@ -61,7 +62,7 @@ func (s *Server) Start() {
 
 	loggerService := logger.NewLogger(s.logrus)
 	dbService := db.NewPostgresService(s.db)
-	
+
 	queueService, err := queue.NewRabbitMqService(s.rabbitMq)
 	if err != nil {
 		return
@@ -74,7 +75,7 @@ func (s *Server) Start() {
 	//init repository
 	userRepo := repositories.NewPostgresUserRepo(s.db)
 	//init core
-	coreAuthService := coreService.NewAuthService(userRepo, jwtService, userConfirmService, eventPublisher,dbService,queueService,loggerService)
+	coreAuthService := coreService.NewAuthService(userRepo, jwtService, userConfirmService, eventPublisher, dbService, queueService, loggerService)
 	bootstrapContainer.Register(coreAuthService.(*coreService.AuthService))
 	//init grpc handler
 	authHandler := grpcService.NewAuthService(coreAuthService)
@@ -94,6 +95,7 @@ func (s *Server) Start() {
 		grpc.ChainUnaryInterceptor(
 			grpc.UnaryServerInterceptor(interceptors.ErrorHandler(exception.MapException)),
 			grpc.UnaryServerInterceptor(interceptors.LoggingInterceptor(loggerService)),
+			grpc.UnaryServerInterceptor(interceptors.ValidateInterceptor),
 		),
 		//keep alive option
 		grpc.KeepaliveParams(keepalive.ServerParameters{
@@ -107,9 +109,9 @@ func (s *Server) Start() {
 	go func() {
 		userProto.RegisterAuthServiceServer(baseServer, authHandler)
 		bootstrapContainer.Run()
-		loggerService.Info(nil,"Server started successfully 🚀")
+		loggerService.Info(nil, "Server started successfully 🚀")
 		baseServer.Serve(grpcListener)
 	}()
 	<-errCh
-	loggerService.Info(nil,"Server shutdown")
+	loggerService.Info(nil, "Server shutdown")
 }

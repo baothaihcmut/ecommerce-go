@@ -6,4 +6,5 @@ lint:
 breaking:
   use:
     - FILE
-
+deps:
+  - buf.build/envoyproxy/protoc-gen-validate

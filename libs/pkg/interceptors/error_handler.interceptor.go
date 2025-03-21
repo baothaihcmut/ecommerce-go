@@ -8,26 +8,27 @@ import (
 	"google.golang.org/grpc/status"
 )
 
-
-
-
-func ErrorHandler(mapErrorFunc func(error)(codes.Code,string)) func (
+func ErrorHandler(mapErrorFunc func(error) (codes.Code, string)) func(
 	ctx context.Context,
 	req any,
 	info *grpc.UnaryServerInfo,
 	handler grpc.UnaryHandler,
-) (any, error)  {
+) (any, error) {
 	return func(
-		ctx context.Context, 
-		req any, 
-		info *grpc.UnaryServerInfo, 
+		ctx context.Context,
+		req any,
+		info *grpc.UnaryServerInfo,
 		handler grpc.UnaryHandler) (any, error) {
-		res,err := handler(ctx,req)
-		if err!= nil{
-			code,msg:= mapErrorFunc(err)
-			return nil, status.Error(code,msg)
+		res, err := handler(ctx, req)
+		if err != nil {
+			if grpcErr, ok := status.FromError(err); ok {
+				if grpcErr.Code() == codes.InvalidArgument {
+					return nil, err
+				}
+			}
+			code, msg := mapErrorFunc(err)
+			return nil, status.Error(code, msg)
 		}
-		return res,nil
+		return res, nil
 	}
 }
-
