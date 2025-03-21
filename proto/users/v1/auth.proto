@@ -3,6 +3,7 @@ package users.v1;
 
 import "google/api/annotations.proto";
 import "shared/v1/status.proto";
+import "validate/validate.proto";
 
 option go_package = "github.com/baothaihcmut/Ecommerce-go/libs/pkg/proto/users/v1";
 
@@ -43,8 +44,15 @@ message SignUpResponse {
 message SignUpData {}
 
 message LogInRequest {
-  string email = 1 [json_name = "email"];
-  string password = 2 [json_name = "password"];
+  string email = 1 [
+  json_name = "email",
+  (validate.rules).string = {email: true, min_len: 1}
+  ];
+
+  string password = 2 [
+  json_name = "password",
+  (validate.rules).string = {min_len: 6, max_len: 32}
+  ];
 }
 
 message LogInResponse {

@@ -11,3 +11,6 @@ plugins:
   - name: grpc-gateway
     out: ../libs/pkg/proto
     opt: paths=source_relative
+  - name: protoc-gen-validate
+    out: ../libs/pkg/proto
+    opt: lang=go

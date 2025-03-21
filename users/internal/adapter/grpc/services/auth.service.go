@@ -16,47 +16,47 @@ type AuthService struct {
 }
 
 // ConfirmSignUp implements v1.AuthServiceServer.
-func (a *AuthService) ConfirmSignUp(ctx context.Context,req *userProto.ConfirmSignUpRequest) (*userProto.ConfirmSignUpResponse, error) {
-	res,err := a.authHandler.ConfirmSignUp(ctx, mappers.ToConfirmSignUpCommand(req))
-	if err != nil{
-		return nil,err
+func (a *AuthService) ConfirmSignUp(ctx context.Context, req *userProto.ConfirmSignUpRequest) (*userProto.ConfirmSignUpResponse, error) {
+	res, err := a.authHandler.ConfirmSignUp(ctx, mappers.ToConfirmSignUpCommand(req))
+	if err != nil {
+		return nil, err
 	}
 	return &userProto.ConfirmSignUpResponse{
 		Data: mappers.ToConfirmSignUpResponse(res),
 		Status: &v1.Status{
 			Message: "Confirm sign up success",
-			Code: http.StatusCreated,
+			Code:    http.StatusCreated,
 		},
-	},nil
+	}, nil
 }
 
 // LogIn implements v1.AuthServiceServer.
-func (a *AuthService) LogIn(ctx context.Context,req *userProto.LogInRequest) (*userProto.LogInResponse, error) {
-	res,err:= a.authHandler.LogIn(ctx, mappers.ToLogInCommand(req))
-	if err != nil{
-		return nil,err
+func (a *AuthService) LogIn(ctx context.Context, req *userProto.LogInRequest) (*userProto.LogInResponse, error) {
+	res, err := a.authHandler.LogIn(ctx, mappers.ToLogInCommand(req))
+	if err != nil {
+		return nil, err
 	}
-	
+
 	return &userProto.LogInResponse{
 		Data: &userProto.LogInData{
-			AccessToken: res.AccessToken,
+			AccessToken:  res.AccessToken,
 			RefreshToken: res.RefreshToken,
 		},
 		Status: &v1.Status{
 			Message: "Log in success",
-			Code: http.StatusCreated,
+			Code:    http.StatusCreated,
 		},
-	},nil	
+	}, nil
 }
 func (a *AuthService) SignUp(ctx context.Context, req *userProto.SignUpRequest) (*userProto.SignUpResponse, error) {
 	res, err := a.authHandler.SignUp(ctx, mappers.ToSignUpCommand(req))
 	if err != nil {
-		return nil,err
+		return nil, err
 	}
 	return &userProto.SignUpResponse{
 		Data: mappers.ToSignUpResponse(res),
 		Status: &v1.Status{
-			Code: http.StatusCreated,
+			Code:    http.StatusCreated,
 			Message: "Sign up success",
 		},
 	}, nil
