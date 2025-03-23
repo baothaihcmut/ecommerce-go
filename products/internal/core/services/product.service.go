@@ -22,7 +22,7 @@ type ProductService struct {
 	categoryRepo   repositories.CategoryRepo
 	shopService    external.ShopService
 	logger         logger.Logger
-	mongoService   mongo.MongoTransactionService
+	mongoService   mongo.MongoService
 	storageService storage.StorageService
 }
 
@@ -31,7 +31,7 @@ func NewProductService(
 	categoryRepo repositories.CategoryRepo,
 	shopService external.ShopService,
 	logger logger.Logger,
-	mongoService mongo.MongoTransactionService,
+	mongoService mongo.MongoService,
 	storageService storage.StorageService,
 ) *ProductService {
 	return &ProductService{

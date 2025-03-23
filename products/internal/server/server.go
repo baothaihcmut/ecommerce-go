@@ -33,9 +33,9 @@ type Server struct {
 	cfg    *config.CoreConfig
 }
 
-func (s *Server) initApp() {
+func (s *Server) Start() {
 	//external service
-	mongoService := mongoLib.NewMongoTransactionService(s.mongo)
+	mongoService := mongoLib.NewMongoService(s.mongo)
 	loggerService := logger.NewLogger(s.logrus)
 	storageService := storage.NewS3Service(s.s3, s.cfg.S3)
 	shopSerice := external.NewShopService()
@@ -90,6 +90,16 @@ func (s *Server) initApp() {
 	loggerService.Info(nil, "Server shutdown")
 }
 
-func (s *Server) Start() {
-
+func NewServer(
+	mongo *mongo.Client,
+	s3 *s3.Client,
+	logrus *logrus.Logger,
+	cfg *config.CoreConfig,
+) *Server {
+	return &Server{
+		mongo:  mongo,
+		s3:     s3,
+		logrus: logrus,
+		cfg:    cfg,
+	}
 }
